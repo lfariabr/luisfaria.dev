@@ -5,19 +5,32 @@ import config from './config/config';
 import fs from 'fs';
 import path from 'path';
 
+// Apollo + GraphQL
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
-import { typeDefs } from './schemas/typeDefs';
-import { resolvers } from './resolvers';
+
+// Auth / Middleware
+import { applyMiddleware } from 'graphql-middleware';
 import { getUser } from './middleware/auth';
+
+// DB MongoDB / Redis
 import { connectDB } from './db/connection';
 import { connectRedis, disconnectRedis } from './services/redis';
+
+// GraphQL
+import { typeDefs } from './schemas/typeDefs';
+import { resolvers } from './resolvers';
 import { makeExecutableSchema } from '@graphql-tools/schema';
+
+// Shield
 import { permissions } from './validation/shield';
+
+// Utils
 import { logger, requestLogger } from './utils/logger';
-import { applyMiddleware } from 'graphql-middleware';
+
+// Models
 import { UserRole } from './models/User';
 
 console.log(`Starting server in ${config.nodeEnv} mode`);
