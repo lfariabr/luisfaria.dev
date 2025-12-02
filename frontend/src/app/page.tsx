@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { MainLayout } from "@/components/layouts/MainLayout";
 import { Button } from "@/components/ui/button";
+import { CORE_STACK } from "@/utils/data";
 
 export default function Home() {
   return (
     <MainLayout>
-            <div className="flex flex-col items-center justify-center min-h-[80vh] bg-gradient-to-b from-background to-slate-50 dark:from-background dark:to-slate-950">
+      <div className="flex flex-col items-center justify-center min-h-[80vh] bg-gradient-to-b from-background to-slate-50 dark:from-background dark:to-slate-950">
         {/* Hero Section */}
-        <main className="container max-w-4xl px-6 py-16 space-y-12">
+        <div className="container max-w-4xl px-6 py-16 space-y-12">
           {/* Hero Copy */}
           <div className="space-y-8 sm:space-y-10 text-center">
             {/* Badge */}
@@ -47,26 +48,7 @@ export default function Home() {
                 Core Stack
               </p>
               <div className="flex flex-wrap justify-center gap-2 text-[11px] sm:text-xs">
-                {[
-                  "Python",
-                  "Django",
-                  "Flask",
-                  "FastAPI",
-                  "Node.js",
-                  "Express",
-                  "Apollo Server",
-                  "TypeScript",
-                  "React",
-                  "Next.js",
-                  "GraphQL",
-                  "REST APIs",
-                  "Supabase",
-                  "PostgreSQL",
-                  "Redis",
-                  "Docker",
-                  "Celery",
-                  "AI / ML",
-                ].map((tag) => (
+                {CORE_STACK.map((tag) => (
                   <span key={tag} className="rounded-full bg-muted px-3 py-1.5 font-medium transition-colors hover:bg-muted/80">
                     {tag}
                   </span>
@@ -74,7 +56,7 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </main>
+        </div>
       </div>
     </MainLayout>
   );
