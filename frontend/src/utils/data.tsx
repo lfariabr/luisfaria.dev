@@ -1,0 +1,20 @@
+export const CORE_STACK = [
+  "Python",
+  "Django",
+  "Flask",
+  "FastAPI",
+  "Node.js",
+  "Express",
+  "Apollo Server",
+  "TypeScript",
+  "React",
+  "Next.js",
+  "GraphQL",
+  "REST APIs",
+  "Supabase",
+  "PostgreSQL",
+  "Redis",
+  "Docker",
+  "Celery",
+  "AI / ML"
+];

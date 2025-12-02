@@ -5,91 +5,65 @@ import { Button } from "@/components/ui/button";
 export default function Home() {
   return (
     <MainLayout>
-      <div className="min-h-screen">
+      <div className="flex flex-col items-center justify-center min-h-[80vh] bg-gradient-to-b from-background to-slate-50 dark:from-background dark:to-slate-950">
         {/* Hero Section */}
-        <section className="mx-auto max-w-6xl px-4 pb-20 pt-16">
-          <div className="space-y-6">
-            <p className="inline-flex items-center gap-2 rounded-full border border-border bg-muted/60 px-3 py-1 text-xs font-medium">
-              Available for Senior / Lead roles · Sydney, Australia
+        <main className="container max-w-4xl px-6 py-16 space-y-12">
+          {/* Hero Copy */}
+          <div className="space-y-8 sm:space-y-10 text-center">
+            {/* Badge */}
+            <p className="inline-flex items-center justify-center gap-2 rounded-full border border-border bg-muted/60 px-4 py-1 text-xs font-medium text-muted-foreground">
+              Senior Software Engineer & Project Lead · Master&apos;s SWE & AI
             </p>
 
-            <div>
-              <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-                Software Engineer &{" "}
-                <span className="bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
-                  Product-minded Builder
+            {/* Heading + subheading */}
+            <div className="space-y-4 sm:space-y-6">
+              <h1 className="text-3xl font-extrabold tracking-tight leading-tight sm:text-5xl lg:text-6xl">
+                I build end-to-end systems
+                <span className="block bg-gradient-to-r from-emerald-400 to-emerald-600 bg-clip-text text-transparent">
+                  that turn manual workflows into scalable products.
                 </span>
               </h1>
-              <p className="mt-4 max-w-2xl text-base text-muted-foreground sm:text-lg">
-                I design, build, and ship AI-powered systems end-to-end — from
-                backend architecture to polished frontends. My work runs across
-                20+ clinics, 1M+ records, and thousands of real users.
+
+              <p className="mx-auto max-w-[720px] text-base text-muted-foreground sm:text-lg">
+                I&apos;m Luis, a Senior Software Engineer with 10+ years leading technical projects
+                end-to-end across healthcare, tech, agencies and games. I ship solutions that turn
+                messy processes into automated, KPI-driven workflows.
               </p>
             </div>
 
-            {/* Hero CTAs */}
-            <div className="flex flex-wrap items-center gap-3">
+            {/* Primary CTAs */}
+            <div className="flex flex-wrap justify-center gap-3">
               <Button asChild className="rounded-full px-6">
-                <Link href="#projects">View featured work</Link>
+                <Link href="/projects">View featured work</Link>
               </Button>
               <Button asChild variant="outline" className="rounded-full px-6">
-                <Link href="#assistant">Try my AI assistant</Link>
+                <Link href="/chatbot">Try my AI assistant</Link>
               </Button>
             </div>
 
-            {/* Core Stack */}
-            <div className="mt-8 rounded-2xl border bg-card p-6">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Core Stack
+            {/* Core stack pills */}
+            <div className="mt-10 sm:mt-12 rounded-2xl border bg-card p-4">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                Core stack
               </p>
-              <div className="flex flex-wrap gap-2 text-xs">
+              <div className="flex flex-wrap justify-center gap-2 text-[11px] sm:text-xs">
                 {[
-                  "Python",
-                  "Django",
-                  "FastAPI",
+                  "Python (Django, FastAPI, Flask)",
                   "Node.js",
-                  "Express",
                   "TypeScript",
-                  "React",
-                  "Next.js",
-                  "GraphQL",
-                  "Supabase",
-                  "PostgreSQL",
-                  "Redis",
-                  "Docker",
-                  "Celery",
-                  "AI / ML",
+                  "React & Next.js",
+                  "GraphQL APIs",
+                  "PostgreSQL · MongoDB · Redis",
+                  "Docker & NGINX",
+                  "Pandas · Scikit-Learn · Streamlit",
                 ].map((tag) => (
-                  <span
-                    key={tag}
-                    className="rounded-full bg-muted px-3 py-1.5 font-medium"
-                  >
+                  <span key={tag} className="rounded-full bg-muted px-3 py-1.5 font-medium">
                     {tag}
                   </span>
                 ))}
               </div>
             </div>
           </div>
-        </section>
-
-        {/* Metrics */}
-        <section className="border-y bg-muted/30">
-          <div className="mx-auto grid max-w-6xl grid-cols-2 gap-6 px-4 py-12 text-center sm:grid-cols-4">
-            {[
-              { label: "Automated messages / month", value: "30K+" },
-              { label: "Clinics using my software", value: "20+" },
-              { label: "Customer records handled", value: "1M+" },
-              { label: "AI / SaaS projects shipped", value: "6+" },
-            ].map((item) => (
-              <div key={item.label} className="space-y-2">
-                <p className="text-3xl font-bold tracking-tight">
-                  {item.value}
-                </p>
-                <p className="text-xs text-muted-foreground">{item.label}</p>
-              </div>
-            ))}
-          </div>
-        </section>
 
         {/* Featured Projects */}
         <section
@@ -344,6 +318,7 @@ export default function Home() {
             </ol>
           </div>
         </section>
+        </main>
       </div>
     </MainLayout>
   );
