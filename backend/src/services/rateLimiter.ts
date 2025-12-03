@@ -28,6 +28,9 @@ export class RateLimiter {
       
       if current >= limit then
         local ttl = redis.call('TTL', key)
+          if ttl < 0 then
+            ttl = expiry
+          end
         return {0, 0, ttl}
       end
       
@@ -58,21 +61,33 @@ export class RateLimiter {
   ): Promise<RateLimitResult> {
     const redisKey = `${this.prefix}${key}`;
     
-    // Execute Lua script atomically
-    const result = await redisClient.eval(this.luaScript, {
-      keys: [redisKey],
-      arguments: [limit.toString(), expiry.toString()],
-    }) as number[];
+    try {
+      // Execute Lua script atomically
+      const result = await redisClient.eval(this.luaScript, {
+        keys: [redisKey],
+        arguments: [limit.toString(), expiry.toString()],
+      }) as number[];
 
-    const [success, remaining, ttl] = result;
-    const resetTime = new Date(Date.now() + ttl * 1000);
+      const [success, remaining, ttl] = result;
+      const resetTime = new Date(Date.now() + ttl * 1000);
 
-    return {
-      success: success === 1,
-      limit,
-      remaining,
-      resetTime,
-    };
+      return {
+        success: success === 1,
+        limit,
+        remaining,
+        resetTime,
+      };
+    }
+    catch (error) {
+      // Fallback in case of Lua script error
+      console.error('Rate limit check failed:', error);
+      return {
+        success: true,
+        limit,
+        remaining: limit,
+        resetTime: new Date(Date.now() + expiry * 1000),
+      };
+    }
   }
 
   /**
