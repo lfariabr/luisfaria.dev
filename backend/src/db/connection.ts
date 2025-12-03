@@ -1,18 +1,14 @@
 import mongoose from 'mongoose';
 import config from '../config/config';
 
-const options = {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-} as mongoose.ConnectOptions;
-
+// Remove lines 4-7 and simplify to:
 export const connectDB = async (): Promise<void> => {
   try {
-    await mongoose.connect(config.mongodbUri, options);
+    await mongoose.connect(config.mongodbUri);
     console.log('MongoDB connected successfully');
   } catch (error) {
     console.error('MongoDB connection error:', error);
-    process.exit(1); // Exit with failure
+    process.exit(1);
   }
 };
 
