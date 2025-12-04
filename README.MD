@@ -1,5 +1,10 @@
 # Luis Faria Portfolio Project
 
+[![Build Status](https://github.com/lfariabr/luisfaria/workflows/CI/badge.svg)](https://github.com/lfariabr/luisfaria/actions)
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://luisfaria.dev)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue)](https://www.typescriptlang.org/)
+
 ## Project Overview
 A modern portfolio application built with Next.js, TypeScript, Node.js, GraphQL and DigitalOcean.
 This project is live at [luisfaria.dev](https://luisfaria.dev)
