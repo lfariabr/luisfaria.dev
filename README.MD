@@ -11,6 +11,7 @@ A modern portfolio application built with Next.js, TypeScript, Node.js, GraphQL 
 | **v1.3.0** | `feature/auth` | Secure login area with JWT authentication | ✅ Complete |
 | **v1.4.0** | `feature/chatbot` | AI-powered chatbot (rate-limited to 1 question per hour per user) | ✅ Complete |
 | **v2.0.0** | `feature/goggins-mode` | Goggins Mode feature (rate-limited to 2 questions per 24h per user) | ✅ Complete |
+| **v2.0.1** | `feature/atomic-rate-limiting` | Atomic rate limiting with Lua scripts | ✅ Complete |
 | **v3.0.0** | `feature/resend` | Resend integration | ⚠️ In Progress |
 
 ## Tech Stack

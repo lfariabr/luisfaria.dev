@@ -9,6 +9,7 @@ export interface IProject extends Document {
   liveUrl?: string;
   featured: boolean;
   order: number;
+  slug: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -23,6 +24,7 @@ const ProjectSchema: Schema = new Schema(
     liveUrl: { type: String },
     featured: { type: Boolean, default: false },
     order: { type: Number, default: 0 },
+    slug: { type: String, required: true, unique: true, trim: true },
   },
   { timestamps: true }
 );

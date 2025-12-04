@@ -31,7 +31,7 @@ export default function RootLayout({
               <GoogleAnalytics />
               {children}
               <Toaster />
-              <GogginsFab />
+              {/* <GogginsFab /> */}
             </AuthProvider>
           </ApolloProvider>
         </ThemeProvider>
