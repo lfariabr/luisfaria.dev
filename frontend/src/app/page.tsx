@@ -2,6 +2,7 @@ import Link from "next/link";
 import { MainLayout } from "@/components/layouts/MainLayout";
 import { Button } from "@/components/ui/button";
 import { CORE_STACK } from "@/utils/data";
+import { MetricsSection } from "@/components/sections/MetricsSection";
 
 export default function Home() {
   return (
@@ -55,6 +56,8 @@ export default function Home() {
                 ))}
               </div>
             </div>
+
+            <MetricsSection />
           </div>
         </div>
       </div>
