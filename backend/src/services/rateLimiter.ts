@@ -8,13 +8,47 @@ export interface RateLimitResult {
 }
 
 export class RateLimiter {
-    constructor(
-      private prefix: string = 'rate-limit:',
-      private defaultExpiry: number = 3600 // 1 hour in seconds
-) {}
+  private luaScript: string;
 
-    /**
-   * Check if a key is rate limited
+  constructor(
+    private prefix: string = 'rate-limit:',
+    private defaultExpiry: number = 3600 // 1 hour in seconds
+  ) {
+    // Lua script for atomic rate limiting
+    // KEYS[1] = redis key
+    // ARGV[1] = limit
+    // ARGV[2] = expiry
+    // Returns: {success (0|1), remaining, ttl}
+    this.luaScript = `
+      local key = KEYS[1]
+      local limit = tonumber(ARGV[1])
+      local expiry = tonumber(ARGV[2])
+      
+      local current = tonumber(redis.call('GET', key) or '0')
+      
+      if current >= limit then
+        local ttl = redis.call('TTL', key)
+          if ttl < 0 then
+            ttl = expiry
+          end
+        return {0, 0, ttl}
+      end
+      
+      local newCount = redis.call('INCR', key)
+      
+      if newCount == 1 then
+        redis.call('EXPIRE', key, expiry)
+      end
+      
+      local ttl = redis.call('TTL', key)
+      local remaining = limit - newCount
+      
+      return {1, remaining, ttl}
+    `;
+  }
+
+  /**
+   * Atomic rate limit check using Lua script
    * @param key The unique key to check (e.g., userId or IP)
    * @param limit Maximum number of requests allowed in the time window
    * @param expiry Time window in seconds
@@ -27,42 +61,33 @@ export class RateLimiter {
   ): Promise<RateLimitResult> {
     const redisKey = `${this.prefix}${key}`;
     
-    // Get current count
-    const count = await redisClient.get(redisKey);
-    const currentCount = count ? parseInt(count, 10) : 0;
-    
-    // Check if limit is reached
-    if (currentCount >= limit) {
-      // Get time to reset
-      const ttl = await redisClient.ttl(redisKey);
+    try {
+      // Execute Lua script atomically
+      const result = await redisClient.eval(this.luaScript, {
+        keys: [redisKey],
+        arguments: [limit.toString(), expiry.toString()],
+      }) as number[];
+
+      const [success, remaining, ttl] = result;
       const resetTime = new Date(Date.now() + ttl * 1000);
-      
+
       return {
-        success: false,
+        success: success === 1,
         limit,
-        remaining: 0,
+        remaining,
         resetTime,
       };
     }
-    
-    // Increment count
-    await redisClient.incr(redisKey);
-    
-    // Set expiry if it's a new key
-    if (currentCount === 0) {
-      await redisClient.expire(redisKey, expiry);
+    catch (error) {
+      // Fallback in case of Lua script error
+      console.error('Rate limit check failed:', error);
+      return {
+        success: true,
+        limit,
+        remaining: limit,
+        resetTime: new Date(Date.now() + expiry * 1000),
+      };
     }
-    
-    // Get time to reset
-    const ttl = await redisClient.ttl(redisKey);
-    const resetTime = new Date(Date.now() + ttl * 1000);
-    
-    return {
-      success: true,
-      limit,
-      remaining: limit - (currentCount + 1),
-      resetTime,
-    };
   }
 
   /**
