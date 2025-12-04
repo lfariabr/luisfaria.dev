@@ -9,6 +9,7 @@
 - Add support to images on Projects and Articles (uses markdown syntax)
 - Optimize the flow of chatbot, make it more clear to user
 - Update Articles and Projects URL exhibition to match url strucutre instead of random code
+
 ### v2.0.0 🔥 | `feature/goglins-mode`
 > Goal: Activate "Goggins Mode" — a mysterious floating button opens a modal asking for email. After a valid email and clicking "Surprise Me", generate a short, intense, motivational message tailored for builders version 18+ and version 18- (depending on choice, either safe and respectful tone or adult language, profanity or insults; motivate with discipline, ownership, and action.) using the existing OpenAI service.
 
@@ -21,16 +22,9 @@
 
 ---
 
-## In Progress:
-
-### v3.0.0 🔥 | `feature/resend`
-> Goal: Integrate Resend to send emails to users when they activate Goggins Mode. Prepare terrain to receive emails according to desired settings (Desired Hour, Daily, Weekly, Monthly, etc)
-
-- [X] Study Resend's API
-- [ ] Integrate Resend to send emails to users when they activate Goggins Mode
-- [ ] Prepare terrain to receive emails according to desired settings (Desired Hour, Daily, Weekly, Monthly, etc)
-
 ## Backlog:
-- [ ] When rate limit is achieved, load previous message from registered email
-- [ ] Check SEO's progress
-- [ ] Add a second tab later: "APOD Time Travel" using NASA for an image-based surprise
+- Core tech stack display component
+- Integrate Resend to send emails to users when they create account + 1 per month CRM
+- When rate limit is achieved, load previous message from registered email
+- Check SEO's progress
+- Add a second tab later: "APOD Time Travel" using NASA for an image-based surprise
