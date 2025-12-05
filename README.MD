@@ -1,14 +1,21 @@
 # Luis Faria Portfolio Project
+Modern full-stack portfolio powering projects, articles, AI tools, and Goggins Mode.
 
-[![Build Status](https://github.com/lfariabr/luisfaria/workflows/CI/badge.svg)](https://github.com/lfariabr/luisfaria/actions)
 [![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://luisfaria.dev)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue)](https://www.typescriptlang.org/)
 
 ## Project Overview
-A modern portfolio application built with Next.js, TypeScript, Node.js, GraphQL and DigitalOcean.
-This project is live at [luisfaria.dev](https://luisfaria.dev)
-It has been used as a skeleton for my Wedstack Project. Read more about it: [Groomzilla](https://luisfaria.dev/projects/from-groomzilla-to-full-stack-engineer-building-wedstack)
+This repository contains my personal portfolio, built with Next.js, Node.js, GraphQL, and Redis. It serves as my digital home for:
+- Showcasing engineering projects
+- Writing technical articles
+- Demonstrating full-stack and AI capabilities
+- Hosting an authenticated AI assistant
+- Running Goggins Mode, a motivational AI mini-product
+
+Live at: [luisfaria.dev](https://luisfaria.dev)
+
+This codebase also became the starter foundation for Wedstack, a full-stack event platform that I've shipped: [From Groomzilla to Full-Stack Engineer: Building Wedstack](https://luisfaria.dev/projects/from-groomzilla-to-full-stack-engineer-building-wedstack)
 
 ## Key Features
 | Version | Feature | Milestone
@@ -49,6 +56,51 @@ luisfaria/
 ├── backend/        # Node.js, Apollo, GraphQL API
 └── server/         # Nginx and GoLive procedure (hidden)
 ```
+
+## Architecture
+
+### System Design
+- **Frontend**: Next.js 14+ with App Router, Server-Side Rendering (SSR)
+- **API Layer**: GraphQL with Apollo Server (type-safe, efficient queries)
+- **State Management**: Apollo Client cache + Context API
+- **Authentication**: JWT with secure httpOnly cookies
+- **Rate Limiting**: Redis-based with atomic Lua scripts
+- **Caching Strategy**: Multi-layer (Redis + Apollo cache)
+
+### Key Design Patterns
+- Repository pattern for data access
+- Middleware pattern for authentication/authorization
+- Rate limiting with sliding window algorithm
+- Modular GraphQL schema with resolver composition
+
+## Testing
+
+### Backend Tests
+```bash
+cd backend
+npm test                    # Run all tests
+npm run test:watch         # Watch mode
+npm run test:coverage      # Coverage report
+```
+
+#### Backend Test Coverage
+- Unit tests for validation schemas
+- Integration tests for GraphQL resolvers
+- MongoDB Memory Server for database testing
+- Mocked external services (OpenAI, Resend)
+
+### Frontend Tests
+```bash
+cd frontend
+npm test                    # Run Jest tests
+npm run test:watch         # Watch mode
+npm run test:coverage      # Coverage report
+```
+
+#### Frontend Test Coverage
+- Component tests with React Testing Library
+- Custom hook tests with Apollo mocks
+- Page rendering and navigation tests
 
 ## Feature Highlights
 
@@ -95,4 +147,9 @@ luisfaria/
 6. Testing and deployment
 7. SEO optimization
 8. Goggins Mode integration
-9. ***Who knows?*** Stay tuned!
+9. Home page redesign
+10. ***Who knows?*** Stay tuned!
+
+---
+
+Built with ❤️ & ☕ using the MERN stack + Next.js

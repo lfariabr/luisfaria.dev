@@ -9,7 +9,7 @@ export function TimelineSection() {
           Key career milestones and technical achievements
         </p>
 
-        <ol className="space-y-6 border-l-2 border-border pl-6 text-sm">
+        <ol className="space-y-6 border-l-2 border-border pl-6 text-sm" aria-label="Career timeline">
 
           <li>
             <span className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -17,7 +17,7 @@ export function TimelineSection() {
             </span>
             <p className="mt-1">
               Tech Project Manager at ABlab Marketing, coordinating 3 agile squads and delivering 
-              digital products for clients such as Sodexo, Citroën, and Tegra/Brookfield.
+              digital projects for clients such as Sodexo, Citroën, and Tegra/Brookfield.
             </p>
           </li>
 
