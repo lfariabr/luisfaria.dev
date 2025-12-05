@@ -284,11 +284,21 @@ export default function Home() {
             <ol className="space-y-6 border-l-2 border-border pl-6 text-sm">
               <li>
                 <span className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  2016–2018
+                </span>
+                <p className="mt-1">
+                  Tech Project Manager at ABlab Marketing, coordinating 3 agile squads and delivering
+                  digital projects for clients like Sodexo, Citroën, and Tegra/Brookfield.
+                </p>
+              </li>
+              <li>
+                <span className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   2018–2023
                 </span>
                 <p className="mt-1">
-                  Built and maintained internal ERP & CRM systems for a
-                  multi-clinic healthcare group.
+                  Moved into Software Engineering, leading development of a custom ERP & CRM 
+                  (Laravel + React + PostgreSQL) for a 20+-clinic healthcare group serving 1M+ 
+                  client records. Built BI dashboards, ad spend automation, and lead scoring models.
                 </p>
               </li>
               <li>
@@ -296,8 +306,9 @@ export default function Home() {
                   2023–2024
                 </span>
                 <p className="mt-1">
-                  Designed and shipped Konquista, a WhatsApp automation platform
-                  used across 20+ clinics.
+                  Designed and shipped <strong>Konquista</strong>, a Django + Celery/Redis WhatsApp 
+                  automation platform powering 30K+ monthly messages across all clinics. Scaled Python 
+                  expertise across FastAPI, Flask, and Streamlit for production ML pipelines.
                 </p>
               </li>
               <li>
@@ -305,8 +316,9 @@ export default function Home() {
                   2024
                 </span>
                 <p className="mt-1">
-                  Moved to Sydney, started a Master&apos;s in Software Engineering
-                  & AI, and began building AI-powered tools.
+                  Relocated to Sydney and expanded into the TypeScript/Node.js ecosystem. 
+                  Built <strong>Wedstack</strong> (Next.js + GraphQL + Stripe) and ExcelPilot 
+                  (AI assistant with OpenAI integration). Contributed to open-source projects.
                 </p>
               </li>
               <li>
@@ -314,8 +326,9 @@ export default function Home() {
                   2025 →
                 </span>
                 <p className="mt-1">
-                  Focusing on AI systems, backend architecture, and high-impact
-                  engineering roles in Australia.
+                  Started Master&apos;s in Software Engineering & AI at Torrens University. 
+                  Completed Stanford&apos;s Machine Learning Specialization. Building AI-powered 
+                  tools and sharing technical writing on Dev.to.
                 </p>
               </li>
             </ol>
