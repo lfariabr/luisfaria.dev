@@ -3,6 +3,7 @@ import { MainLayout } from "@/components/layouts/MainLayout";
 import { Button } from "@/components/ui/button";
 import { CORE_STACK } from "@/utils/data";
 import { MetricsSection } from "@/components/sections/MetricsSection";
+import { TimelineSection } from "@/components/sections/TimelineSection";
 
 export default function Home() {
   return (
@@ -56,9 +57,9 @@ export default function Home() {
                 ))}
               </div>
             </div>
-
             <MetricsSection />
           </div>
+          <TimelineSection />
         </div>
       </div>
     </MainLayout>

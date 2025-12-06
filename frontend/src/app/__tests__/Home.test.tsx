@@ -3,53 +3,73 @@ import { screen, within } from '@testing-library/react';
 import HomePage from '../page';
 import { renderWithProviders } from '@/utils/test-utils';
 
-// Mock the featured projects/articles hooks
-jest.mock('@/lib/hooks/useProjects', () => ({
-  useFeaturedProjects: () => ({
-    projects: [
-      { id: '1', title: 'Featured Project 1', description: 'Project description', slug: 'project-1' },
-      { id: '2', title: 'Featured Project 2', description: 'Project description', slug: 'project-2' },
-    ],
-    loading: false,
-    error: null,
-  }),
-}));
-
-jest.mock('@/lib/hooks/useArticles', () => ({
-  useFeaturedArticles: () => ({
-    articles: [
-      { id: '1', title: 'Featured Article 1', summary: 'Article summary', slug: 'article-1' },
-      { id: '2', title: 'Featured Article 2', summary: 'Article summary', slug: 'article-2' },
-    ],
-    loading: false,
-    error: null,
-  }),
-}));
-
 describe('Home Page', () => {
-  it('renders the hero section', () => {
+  it('renders the hero section with main heading', () => {
     renderWithProviders(<HomePage />);
     
     // Check for hero heading
     const heroHeading = screen.getByRole('heading', { level: 1 });
     expect(heroHeading).toBeInTheDocument();
-    expect(heroHeading).toHaveTextContent('Luis Faria');
+    expect(heroHeading).toHaveTextContent(/I build end-to-end systems/i);
   });
 
-  it('renders projects section', () => {
+  it('renders the hero badge with credentials', () => {
     renderWithProviders(<HomePage />);
     
-    // Check for projects section
-    const projectsHeading = screen.getAllByRole('heading', { name: /projects/i })[0];
-    expect(projectsHeading).toBeInTheDocument();
+    const badge = screen.getByText(/Senior Software Engineer & Project Lead/i);
+    expect(badge).toBeInTheDocument();
+    expect(badge).toHaveTextContent(/Master's SWE & AI/i);
   });
 
-  it('renders articles section', () => {
+  it('renders the hero description', () => {
     renderWithProviders(<HomePage />);
     
-    // Check for articles section
-    const articlesHeading = screen.getAllByRole('heading', { name: /articles/i })[0];
-    expect(articlesHeading).toBeInTheDocument();
+    const description = screen.getByText(/Luis.*Senior Software Engineer.*10\+ years/i);
+    expect(description).toBeInTheDocument();
+  });
+
+  it('renders CTA buttons', () => {
+    renderWithProviders(<HomePage />);
+    
+    const projectsButton = screen.getByRole('link', { name: /view featured work/i });
+    const chatbotButton = screen.getByRole('link', { name: /try my ai assistant/i });
+    
+    expect(projectsButton).toHaveAttribute('href', '/projects');
+    expect(chatbotButton).toHaveAttribute('href', '/chatbot');
+  });
+
+  it('renders the Core Stack section', () => {
+    renderWithProviders(<HomePage />);
+    
+    const coreStackLabel = screen.getByText(/core stack/i);
+    expect(coreStackLabel).toBeInTheDocument();
+    
+    // Check for some key technologies (each is a separate element)
+    expect(screen.getByText('Python')).toBeInTheDocument();
+    expect(screen.getByText('Django')).toBeInTheDocument();
+    expect(screen.getByText('TypeScript')).toBeInTheDocument();
+    expect(screen.getByText('Next.js')).toBeInTheDocument();
+  });
+
+  it('renders the MetricsSection', () => {
+    renderWithProviders(<HomePage />);
+    
+    // MetricsSection should render - check for presence by finding Core Stack section
+    // which comes before MetricsSection
+    const coreStack = screen.getByText(/core stack/i);
+    expect(coreStack).toBeInTheDocument();
+  });
+
+  it('renders the TimelineSection', () => {
+    renderWithProviders(<HomePage />);
+    
+    // Check for timeline heading
+    const timelineHeading = screen.getByRole('heading', { name: /timeline at a glance/i });
+    expect(timelineHeading).toBeInTheDocument();
+    
+    // Check for timeline content
+    const timeline = screen.getByRole('list', { name: /career timeline/i });
+    expect(timeline).toBeInTheDocument();
   });
 
   it('has navigation links in the header', () => {
@@ -59,11 +79,13 @@ describe('Home Page', () => {
     const navigation = screen.getByRole('navigation');
     
     // Find links within the navigation
-    const projectsLink = within(navigation).getByText(/projects/i);
-    const articlesLink = within(navigation).getByText(/articles/i);
-    const chatbotLink = within(navigation).getByText(/chatbot/i);
+    const homeLink = within(navigation).getByText(/^home$/i);
+    const projectsLink = within(navigation).getByText(/^projects$/i);
+    const articlesLink = within(navigation).getByText(/^articles$/i);
+    const chatbotLink = within(navigation).getByText(/^chatbot$/i);
     
     // Check that links have correct hrefs
+    expect(homeLink).toHaveAttribute('href', '/');
     expect(projectsLink).toHaveAttribute('href', '/projects');
     expect(articlesLink).toHaveAttribute('href', '/articles');
     expect(chatbotLink).toHaveAttribute('href', '/chatbot');
