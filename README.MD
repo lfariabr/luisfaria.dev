@@ -73,6 +73,17 @@ luisfaria/
 - Rate limiting with sliding window algorithm
 - Modular GraphQL schema with resolver composition
 
+### Frontend Components
+- **TimelineSection**: Displays career timeline entries with styled milestones
+- **MetricsSection**: Presents performance metrics on home page
+- **Header**: Navigation and authentication UI
+- **Footer**: Site information and links
+- **ArticleList**: Displays articles with filtering and pagination
+- **ProjectGrid**: Shows project cards with tags and descriptions
+- **Chatbot**: AI-powered chat interface with rate limiting
+- **ArticleDetail**: Single article view with comments
+- **ProjectDetail**: Individual project page with detailed information
+
 ## Testing
 
 ### Backend Tests
