@@ -14,8 +14,6 @@ This repository contains my personal portfolio, built with Next.js, TypeScript, 
 - Hosting an authenticated AI assistant with rate limiting
 - Running Goggins Mode, a focused motivational AI mini-product
 
-> *Live at: [luisfaria.dev](https://luisfaria.dev)*
-
 **If you're reviewing this for hiring or collaboration**, start here:
 
 - Visit the live site: [luisfaria.dev](https://luisfaria.dev)
@@ -42,23 +40,15 @@ This repository contains my personal portfolio, built with Next.js, TypeScript, 
 
 ## Tech Stack
 
-### Frontend
-- Next.js 14+ with TypeScript
-- Apollo Client for GraphQL integration
-- TailwindCSS for styling
-- shadcn/ui for components
-- NextAuth.js for authentication (UI & flows)
-- OpenAI for AI chatbot
-- Goggins Mode component
-
-### Backend
-- Node.js with Express
-- Apollo Server for GraphQL
-- Redis for caching and rate limiting
-- MongoDB for data storage
-- JWT for secure authentication
-- OpenAI client
-- Resend for email notifications
+| **Frontend** | **Backend** |
+|----------|---------|
+| Next.js 14+ with TypeScript | Node.js with Express |
+| Apollo Client for GraphQL integration | Apollo Server for GraphQL |
+| TailwindCSS for styling | Redis for caching and rate limiting |
+| shadcn/ui for components | MongoDB for data storage |
+| NextAuth.js for authentication (UI & flows) | JWT for secure authentication |
+| OpenAI for AI chatbot | OpenAI client |
+| Goggins Mode component | Resend for email notifications |
 
 ---
 
@@ -94,15 +84,15 @@ luisfaria/
 
 - Frontend Components 
 > *These are some of the reusable components that showcase UI architecture and state management:*
-- **TimelineSection**: Displays career timeline entries with styled milestones
-- **MetricsSection**: Presents performance metrics on home page
-- **Header**: Navigation and authentication UI
-- **Footer**: Site information and links
-- **ArticleList**: Displays articles with filtering and pagination
-- **ProjectGrid**: Shows project cards with tags and descriptions
-- **Chatbot**: AI-powered chat interface with rate limiting
-- **ArticleDetail**: Single article view with comments
-- **ProjectDetail**: Individual project page with detailed information
+   - **TimelineSection**: Displays career timeline entries with styled milestones
+   - **MetricsSection**: Presents performance metrics on home page
+   - **Header**: Navigation and authentication UI
+   - **Footer**: Site information and links
+   - **ArticleList**: Displays articles with filtering and pagination
+   - **ProjectGrid**: Shows project cards with tags and descriptions
+   - **Chatbot**: AI-powered chat interface with rate limiting
+   - **ArticleDetail**: Single article view with comments
+   - **ProjectDetail**: Individual project page with detailed information
 
 ---
 
@@ -182,7 +172,7 @@ npm run test:coverage      # Coverage report
 9. Home page redesign
 
 **Planned / Future**
-10. ***Who knows?*** Stay tuned!
+- ***Who knows?*** Stay tuned!
 
 ---
 
