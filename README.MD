@@ -83,7 +83,6 @@ luisfaria/
   - Typed operations with shared input/output contracts
 
 - Frontend Components 
-> *These are some of the reusable components that showcase UI architecture and state management:*
    - **TimelineSection**: Displays career timeline entries with styled milestones
    - **MetricsSection**: Presents performance metrics on home page
    - **Header**: Navigation and authentication UI
@@ -93,6 +92,8 @@ luisfaria/
    - **Chatbot**: AI-powered chat interface with rate limiting
    - **ArticleDetail**: Single article view with comments
    - **ProjectDetail**: Individual project page with detailed information
+   
+   > *These are some of the reusable components that showcase UI architecture and state management:*
 
 ---
 
