@@ -93,7 +93,7 @@ luisfaria/
    - **ArticleDetail**: Single article view with comments
    - **ProjectDetail**: Individual project page with detailed information
    
-   > *These are some of the reusable components that showcase UI architecture and state management:*
+   > *These are some of the reusable components that showcase UI architecture and state management.*
 
 ---
 
@@ -171,6 +171,9 @@ npm run test:coverage      # Coverage report
 7. SEO optimization
 8. Goggins Mode integration
 9. Home page redesign
+
+**Work In Progress**
+- 10. Security Authentication (`feature/secure-authentication`)
 
 **Planned / Future**
 - ***Who knows?*** Stay tuned!
