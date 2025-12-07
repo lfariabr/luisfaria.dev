@@ -99,9 +99,16 @@ export const userMutations = {
     };
   },
   
-  // Logout (client-side only, but we'll still implement it)
-  // TODO: Clear the cookie on logout
-  logout: async () => {
+  // Logout - clear auth cookie
+  logout: async (_: any, __: any, context: any) => {
+    if (context?.res?.clearCookie) {
+      context.res.clearCookie('token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        path: '/',
+      });
+    }
     return true;
   },
 
