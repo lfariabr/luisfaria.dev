@@ -3,7 +3,7 @@ import { GraphQLError } from 'graphql';
 
 export const userMutations = {
   // Register a new user
-  register: async (_: any, { input }: any) => {
+  register: async (_: any, { input }: any, context: any) => {
     const { name, email, password } = input;
     
     // Check if user already exists
@@ -29,6 +29,17 @@ export const userMutations = {
     
     // Generate token
     const token = user.generateAuthToken();
+
+    // Set secure httpOnly cookie with the token
+    if (context?.res?.cookie) {
+      context.res.cookie('token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        path: '/',
+      });
+    }
     
     // Update last login
     user.lastLogin = new Date();
@@ -41,7 +52,7 @@ export const userMutations = {
   },
   
   // Login a user
-  login: async (_: any, { input }: any) => {
+  login: async (_: any, { input }: any, context: any) => {
     const { email, password } = input;
     
     // Find the user
@@ -66,6 +77,17 @@ export const userMutations = {
     
     // Generate token
     const token = user.generateAuthToken();
+
+    // Set secure httpOnly cookie with the token
+    if (context?.res?.cookie) {
+      context.res.cookie('token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        path: '/',
+      });
+    }
     
     // Update last login
     user.lastLogin = new Date();
@@ -78,6 +100,7 @@ export const userMutations = {
   },
   
   // Logout (client-side only, but we'll still implement it)
+  // TODO: Clear the cookie on logout
   logout: async () => {
     return true;
   },
