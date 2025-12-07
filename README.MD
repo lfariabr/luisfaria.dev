@@ -6,49 +6,63 @@ Modern full-stack portfolio powering projects, articles, AI tools, and Goggins M
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue)](https://www.typescriptlang.org/)
 
 ## Project Overview
-This repository contains my personal portfolio, built with Next.js, Node.js, GraphQL, and Redis. It serves as my digital home for:
-- Showcasing engineering projects
-- Writing technical articles
-- Demonstrating full-stack and AI capabilities
-- Hosting an authenticated AI assistant
-- Running Goggins Mode, a motivational AI mini-product
+This repository contains my personal portfolio, built with Next.js, TypeScript, Node.js, GraphQL, MongoDB, and Redis. It serves as my digital home for:
 
-Live at: [luisfaria.dev](https://luisfaria.dev)
+- Showcasing engineering projects and real-world architectures
+- Publishing long-form technical articles
+- Demonstrating full-stack and AI integration patterns
+- Hosting an authenticated AI assistant with rate limiting
+- Running Goggins Mode, a focused motivational AI mini-product
 
-This codebase also became the starter foundation for Wedstack, a full-stack event platform that I've shipped: [From Groomzilla to Full-Stack Engineer: Building Wedstack](https://luisfaria.dev/projects/from-groomzilla-to-full-stack-engineer-building-wedstack)
+> *Live at: [luisfaria.dev](https://luisfaria.dev)*
 
-## Key Features
+**If you're reviewing this for hiring or collaboration**, start here:
+
+- Visit the live site: [luisfaria.dev](https://luisfaria.dev)
+- Try the AI chatbot (authenticated users, rate-limited)
+- Explore Goggins Mode
+- Browse the Articles and Projects sections
+- Check out the article: [From Groomzilla to Full-Stack Engineer](https://luisfaria.dev/projects/from-groomzilla-to-full-stack-engineer-building-wedstack)
+
+---
+
+## Features & Milestones
+
 | Version | Feature | Milestone
 | --- | --- | ---
 | **v1.1.0** | `feature/portfolio` | Portfolio showcase with project highlights |
 | **v1.2.0** | `feature/articles` | Articles section with categorization |
 | **v1.3.0** | `feature/auth` | Secure login area with JWT authentication |
-| **v1.4.0** | `feature/chatbot` | AI-powered chatbot (rate-limited to 1 question per hour per user) |
+| **v1.4.0** | `feature/chatbot` | AI-powered chatbot (rate-limited to 5 questions per hour per user) |
 | **v2.0.0** | `feature/goggins-mode` | Goggins Mode feature (rate-limited to 2 questions per 24h per user) |
 | **v2.0.1** | `feature/atomic-rate-limiting` | Atomic rate limiting with Lua scripts |
 | **v2.0.2** | `feature/home` | V2 home page with improved design |
 
+---
+
 ## Tech Stack
+
 ### Frontend
 - Next.js 14+ with TypeScript
 - Apollo Client for GraphQL integration
 - TailwindCSS for styling
 - shadcn/ui for components
-- NextAuth.js for authentication
+- NextAuth.js for authentication (UI & flows)
 - OpenAI for AI chatbot
 - Goggins Mode component
 
 ### Backend
 - Node.js with Express
 - Apollo Server for GraphQL
-- Relay for efficient data fetching
 - Redis for caching and rate limiting
 - MongoDB for data storage
 - JWT for secure authentication
 - OpenAI client
 - Resend for email notifications
 
-## Project Structure
+---
+
+## Project Structure & Architecture
 ```
 luisfaria/
 ├── _docs/          # Project documentation
@@ -68,12 +82,18 @@ luisfaria/
 - **Caching Strategy**: Multi-layer (Redis + Apollo cache)
 
 ### Key Design Patterns
-- Repository pattern for data access
-- Middleware pattern for authentication/authorization
-- Rate limiting with sliding window algorithm
-- Modular GraphQL schema with resolver composition
 
-### Frontend Components
+- **Backend**
+  - Repository pattern for data access
+  - Middleware pattern for authentication/authorization
+  - Rate limiting with sliding window algorithm
+
+- **GraphQL**
+  - Modular schema with resolver composition
+  - Typed operations with shared input/output contracts
+
+- Frontend Components 
+> *These are some of the reusable components that showcase UI architecture and state management:*
 - **TimelineSection**: Displays career timeline entries with styled milestones
 - **MetricsSection**: Presents performance metrics on home page
 - **Header**: Navigation and authentication UI
@@ -84,9 +104,14 @@ luisfaria/
 - **ArticleDetail**: Single article view with comments
 - **ProjectDetail**: Individual project page with detailed information
 
+---
+
 ## Testing
 
+> *This project treats testing as a first-class citizen, with both backend and frontend covered by automated tests.*
+
 ### Backend Tests
+
 ```bash
 cd backend
 npm test                    # Run all tests
@@ -113,33 +138,23 @@ npm run test:coverage      # Coverage report
 - Custom hook tests with Apollo mocks
 - Page rendering and navigation tests
 
-## Feature Highlights
+---
 
-### 🤖 AI-Powered Chatbot
-- GPT-3.5-turbo integration with custom prompt engineering
-- Rate-limited (5 questions/hour) to manage API costs
-- Authenticated access with chat history
-- Real-time rate limit display
+## Highlights
 
-### 💪 Goggins Mode
-- Motivational AI coach inspired by David Goggins
-- Enhanced rate limiting (2 questions/24h) for premium experience
-- Personalized responses based on user context
-- Discord webhook integration for notifications
+| Feature | Description | Tech | Notes |
+|--------|-------------|------|-------|
+| **AI-Powered Chatbot** | Conversational assistant with custom prompt engineering | OpenAI (GPT-3.5), GraphQL, Next.js | Authenticated, stores chat history |
+| **Rate Limiting** | Per-user quotas for chatbot + Goggins Mode | Redis + Lua scripts | 5 req/hr (standard), 2 req/24h (Goggins) |
+| **Goggins Mode** | Motivational AI coach with tough-love persona | OpenAI, Redis | Discord webhook integration |
+| **Authentication** | Secure login & role-based access | JWT (httpOnly), bcrypt | Roles: ADMIN, EDITOR, USER |
+| **Real-Time Limit Display** | Shows remaining questions | GraphQL subscriptions | Live updates in UI |
+| **Performance Optimizations** | Faster loads & API responses | Redis cache, Apollo Client | Code splitting, image optimization |
 
-### 🔐 Secure Authentication
-- JWT with httpOnly cookies
-- Role-based access control (ADMIN, EDITOR, USER)
-- Password hashing with bcrypt
-- CSRF protection
-
-### ⚡ Performance Optimizations
-- Redis caching for frequently accessed data
-- Apollo Client cache optimization
-- Code splitting and lazy loading
-- Image optimization with Next.js Image component
+---
 
 ## Getting Started
+
 1. Clone this repository
 2. Set up environment variables
 3. Install dependencies
@@ -149,7 +164,13 @@ npm run test:coverage      # Coverage report
    - Frontend: `cd frontend && npm run dev`
    - Backend: `cd backend && npm run dev`
 
+> *Note: For containerized development and production deployment, see `docker-compose.yml` and the docs in `backend/docs/` and `frontend/docs/`.*
+
+---
+
 ## Development Roadmap
+
+**Completed**
 1. Project setup and configuration
 2. Backend API development
 3. Frontend pages and components
@@ -159,6 +180,8 @@ npm run test:coverage      # Coverage report
 7. SEO optimization
 8. Goggins Mode integration
 9. Home page redesign
+
+**Planned / Future**
 10. ***Who knows?*** Stay tuned!
 
 ---
