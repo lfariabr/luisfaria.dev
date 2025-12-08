@@ -1,5 +1,6 @@
 import User, { UserRole } from '../../models/User';
 import { GraphQLError } from 'graphql';
+import { AUTH_COOKIE_BASE_OPTIONS, AUTH_COOKIE_MAX_AGE } from '../../utils/authUtils';
 
 export const userMutations = {
   // Register a new user
@@ -33,11 +34,8 @@ export const userMutations = {
     // Set secure httpOnly cookie with the token
     if (context?.res?.cookie) {
       context.res.cookie('token', token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-        path: '/',
+        ...AUTH_COOKIE_BASE_OPTIONS,
+        maxAge: AUTH_COOKIE_MAX_AGE,
       });
     }
     
@@ -81,11 +79,8 @@ export const userMutations = {
     // Set secure httpOnly cookie with the token
     if (context?.res?.cookie) {
       context.res.cookie('token', token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-        path: '/',
+        ...AUTH_COOKIE_BASE_OPTIONS,
+        maxAge: AUTH_COOKIE_MAX_AGE,
       });
     }
     
@@ -103,10 +98,7 @@ export const userMutations = {
   logout: async (_: any, __: any, context: any) => {
     if (context?.res?.clearCookie) {
       context.res.clearCookie('token', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        path: '/',
+        ...AUTH_COOKIE_BASE_OPTIONS
       });
     }
     return true;

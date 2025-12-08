@@ -28,3 +28,13 @@ export const checkRole = (context: any, requiredRole: string = 'admin') => {
   
   return user;
 };
+
+// Cookie Options
+export const AUTH_COOKIE_BASE_OPTIONS = {
+  httpOnly: true,
+  sameSite: 'strict' as const,
+  path: '/',
+  secure: process.env.NODE_ENV === 'production',
+};
+
+export const AUTH_COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
