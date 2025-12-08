@@ -1,9 +1,10 @@
 import User, { UserRole } from '../../models/User';
 import { GraphQLError } from 'graphql';
+import { AUTH_COOKIE_BASE_OPTIONS, AUTH_COOKIE_MAX_AGE } from '../../utils/authUtils';
 
 export const userMutations = {
   // Register a new user
-  register: async (_: any, { input }: any) => {
+  register: async (_: any, { input }: any, context: any) => {
     const { name, email, password } = input;
     
     // Check if user already exists
@@ -29,6 +30,14 @@ export const userMutations = {
     
     // Generate token
     const token = user.generateAuthToken();
+
+    // Set secure httpOnly cookie with the token
+    if (context?.res?.cookie) {
+      context.res.cookie('token', token, {
+        ...AUTH_COOKIE_BASE_OPTIONS,
+        maxAge: AUTH_COOKIE_MAX_AGE,
+      });
+    }
     
     // Update last login
     user.lastLogin = new Date();
@@ -41,7 +50,7 @@ export const userMutations = {
   },
   
   // Login a user
-  login: async (_: any, { input }: any) => {
+  login: async (_: any, { input }: any, context: any) => {
     const { email, password } = input;
     
     // Find the user
@@ -66,6 +75,14 @@ export const userMutations = {
     
     // Generate token
     const token = user.generateAuthToken();
+
+    // Set secure httpOnly cookie with the token
+    if (context?.res?.cookie) {
+      context.res.cookie('token', token, {
+        ...AUTH_COOKIE_BASE_OPTIONS,
+        maxAge: AUTH_COOKIE_MAX_AGE,
+      });
+    }
     
     // Update last login
     user.lastLogin = new Date();
@@ -77,8 +94,13 @@ export const userMutations = {
     };
   },
   
-  // Logout (client-side only, but we'll still implement it)
-  logout: async () => {
+  // Logout - clear auth cookie
+  logout: async (_: any, __: any, context: any) => {
+    if (context?.res?.clearCookie) {
+      context.res.clearCookie('token', {
+        ...AUTH_COOKIE_BASE_OPTIONS
+      });
+    }
     return true;
   },
 

@@ -127,12 +127,12 @@ async function startServer() {
       cors(corsOptions),
       // @ts-ignore - Ignoring type issues with Express middleware
       expressMiddleware(server, {
-        context: async ({ req }: any) => {
+        context: async ({ req, res }: any) => {
           // Get the user from the token
           const user = getUser(req);
           
-          // Add the user to the context
-          return { user };
+          // Add the user and response object to the context
+          return { user, req, res };
         },
       })
     );
