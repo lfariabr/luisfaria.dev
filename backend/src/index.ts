@@ -111,7 +111,7 @@ async function startServer() {
     // Configure CORS with specific options
     const corsOptions = {
       origin: config.nodeEnv === 'production' 
-        ? ['http://localhost:3000'] // Add production domains here
+        ? ['https://luisfaria.dev'] // Add production domains here
         : 'http://localhost:3000', // In development, specify exact origin instead of wildcard
       credentials: true
     };
