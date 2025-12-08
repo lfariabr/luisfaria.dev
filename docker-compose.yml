@@ -17,6 +17,14 @@ services:
     networks:
       - app-net
     restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 64M
+        reservations:
+          cpus: '0.05'
+          memory: 32M
 
   webapp:
     build: ./frontend
@@ -26,6 +34,14 @@ services:
     networks:
       - app-net
     restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 256M
 
   api:
     build: ./backend
@@ -48,6 +64,14 @@ services:
     networks:
       - app-net
     restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 384M
+        reservations:
+          cpus: '0.1'
+          memory: 192M
 
   db:
     image: mongo:4.4
@@ -57,6 +81,14 @@ services:
     networks:
       - app-net
     restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.4'
+          memory: 384M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
 
   cache:
     image: redis:alpine
@@ -66,6 +98,14 @@ services:
     networks:
       - app-net
     restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 64M
+        reservations:
+          cpus: '0.05'
+          memory: 32M
 
 volumes:
   mongodb-data:
