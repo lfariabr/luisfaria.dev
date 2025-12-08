@@ -19,17 +19,17 @@ const DANGEROUS_PATTERNS = [
   /\/bin\//i,                         // Binary paths
   /\/dev\//i,                         // Device paths
   
-  // Common exploit patterns
-  /wget\s/i,                          // wget command
-  /curl\s/i,                          // curl command
-  /chmod\s/i,                         // chmod command
-  /bash/i,                            // bash shell
-  /\/bin\/sh/i,                       // sh shell
-  /python/i,                          // python interpreter
-  /perl/i,                            // perl interpreter
-  /nc\s+-/i,                          // netcat
-  /eval\s*\(/i,                       // eval function
-  /exec\s*\(/i,                       // exec function
+  // Common exploit patterns - surgical blocking of EXECUTION CONTEXTS, not technology names
+  /wget\s+http/i,                     // wget downloading (allows "what is wget?")
+  /curl\s+(-|http)/i,                 // curl with flags or URLs (allows "explain curl")
+  /chmod\s+[0-7]/i,                   // chmod with permissions (allows "what does chmod do?")
+  /\bbash\s+-/i,                      // bash with flags (e.g., bash -c) - allows "bash scripting"
+  /\/bin\/sh/i,                       // sh shell path
+  /\bpython\s+-/i,                    // python with flags (e.g., python -c) - allows "Python experience"
+  /\bperl\s+-e/i,                     // perl one-liner - allows "Perl regex"
+  /\bnc\s+-[a-z]/i,                   // netcat with flags
+  /eval\s*\([^)]/i,                   // eval with content (allows "what is eval?")
+  /exec\s*\([^)]/i,                   // exec with content (allows "explain exec")
   
   // URL-encoded dangerous chars
   /%00/,                              // Null byte

