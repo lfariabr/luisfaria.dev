@@ -27,13 +27,13 @@ export const getUser = (req: Request): JWTPayload | null => {
         if (decoded.role) {
             // Convert legacy lowercase roles to the new uppercase format
             switch(decoded.role.toLowerCase()) {
-                case 'ADMIN':
+                case 'admin':
                     decoded.role = UserRole.ADMIN;
                     break;
-                case 'EDITOR':
+                case 'editor':
                     decoded.role = UserRole.EDITOR;
                     break;
-                case 'USER':
+                case 'user':
                     decoded.role = UserRole.USER;
                     break;
             }
