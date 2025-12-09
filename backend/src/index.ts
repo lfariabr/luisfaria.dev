@@ -1,6 +1,7 @@
 import express from 'express';
 import http from 'http';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import config from './config/config';
 import fs from 'fs';
 import path from 'path';
@@ -118,6 +119,7 @@ async function startServer() {
     
     app.use(cors(corsOptions));
     app.use(express.json());
+    app.use(cookieParser());
     app.get('/health', (_, res) => {
       res.status(200).send('OK');
     });
