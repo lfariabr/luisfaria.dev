@@ -10,22 +10,14 @@ interface JWTPayload {
     role: string;
 }
 
-// Get auth user from the token
+// Get auth user from the token (cookie-based auth)
 export const getUser = (req: Request): JWTPayload | null => {
-    // Get the token from header
-    const authHeader = req.headers.authorization || '';
+    // Get token directly from httpOnly cookie
+    const token = req.cookies?.token;
     
-    if (!authHeader){
+    if (!token) {
         return null;
     }
-
-   // Check if the header has the Bearer format
-    const parts = authHeader.split(' ');
-    if (parts.length !== 2 || parts[0] !== 'Bearer') {
-        return null;
-    }
-
-    const token = parts[1];
 
     try {
         // Verify token
@@ -35,13 +27,13 @@ export const getUser = (req: Request): JWTPayload | null => {
         if (decoded.role) {
             // Convert legacy lowercase roles to the new uppercase format
             switch(decoded.role.toLowerCase()) {
-                case 'ADMIN':
+                case 'admin':
                     decoded.role = UserRole.ADMIN;
                     break;
-                case 'EDITOR':
+                case 'editor':
                     decoded.role = UserRole.EDITOR;
                     break;
-                case 'USER':
+                case 'user':
                     decoded.role = UserRole.USER;
                     break;
             }

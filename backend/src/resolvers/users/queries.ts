@@ -20,8 +20,7 @@ export const userQueries = {
         
         // Return all users
         return await User.find({}).sort({ createdAt: -1 });
-    },
-    
+    },    
     // Get a single user by ID (admin only)
     user: async (_: any, { id }: { id: string }, context: any) => {
         // Check if user is authenticated and is an admin
@@ -41,7 +40,6 @@ export const userQueries = {
         // Return the user
         return await User.findById(id);
     },
-    
     // Get the current auth user
     me: async (_: any, __: any, context: any) => {
         // Check if user is authenticated
