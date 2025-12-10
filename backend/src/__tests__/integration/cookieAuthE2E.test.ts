@@ -6,7 +6,7 @@ import jwt from 'jsonwebtoken';
 import config from '../../config/config';
 import bcrypt from 'bcryptjs';
 import { Express } from 'express';
-import { ApolloServer } from '@apollo/server';
+import type { ApolloServer } from '@apollo/server';
 
 const ME_QUERY = `
   query Me {
@@ -43,7 +43,7 @@ const USER_QUERY = `
 
 describe('Cookie Auth E2E - Full HTTP Flow', () => {
   let app: Express;
-  let server: ApolloServer;
+  let server: ApolloServer<any>;
   let testUser: any;
   let adminUser: any;
   let validToken: string;
@@ -333,9 +333,9 @@ describe('Cookie Auth E2E - Full HTTP Flow', () => {
       expect(response.status).toBe(200);
       // Admin should be able to access users list
       if (response.body.data?.users) {
-        expect(response.body.data.users.length).toBeGreaterThanOrEqual(2);
-        expect(response.body.data?.users).toBeDefined();
         expect(response.body.errors).toBeUndefined();
+        expect(response.body.data?.users).toBeDefined();
+        expect(response.body.data.users.length).toBeGreaterThanOrEqual(2);
       }
     });
   });
