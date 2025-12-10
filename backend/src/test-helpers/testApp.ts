@@ -5,17 +5,10 @@ import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { applyMiddleware } from 'graphql-middleware';
-import { typeDefs } from '../../schemas/typeDefs';
-import { resolvers } from '../../resolvers';
-import { permissions } from '../../validation/shield';
-import { getUser } from '../../middleware/auth';
-
-// Dummy test to avoid Jest's "no tests" error
-describe('Test App Helper', () => {
-  it('should export createTestApp function', () => {
-    expect(typeof createTestApp).toBe('function');
-  });
-});
+import { typeDefs } from '../schemas/typeDefs';
+import { resolvers } from '../resolvers';
+import { permissions } from '../validation/shield';
+import { getUser } from '../middleware/auth';
 
 /**
  * Creates a fully configured Express app with Apollo Server for integration testing.

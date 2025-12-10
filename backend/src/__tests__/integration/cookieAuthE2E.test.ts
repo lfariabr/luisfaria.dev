@@ -1,6 +1,6 @@
 import request from 'supertest';
 import * as dbHandler from '../helpers/dbHandler';
-import { createTestApp } from '../helpers/testApp';
+import { createTestApp } from '../../test-helpers/testApp';
 import User, { UserRole } from '../../models/User';
 import jwt from 'jsonwebtoken';
 import config from '../../config/config';
@@ -185,6 +185,8 @@ describe('Cookie Auth E2E - Full HTTP Flow', () => {
 
       expect(response.status).toBe(200);
       if (response.body.data?.users) {
+        expect(response.body.errors).toBeUndefined();
+        expect(response.body.data?.users).toBeDefined();
         expect(response.body.data.users.length).toBeGreaterThanOrEqual(2);
       }
     });
@@ -221,6 +223,8 @@ describe('Cookie Auth E2E - Full HTTP Flow', () => {
 
       expect(response.status).toBe(200);
       if (response.body.data?.user) {
+        expect(response.body.errors).toBeUndefined();
+        expect(response.body.data?.user).toBeDefined();
         expect(response.body.data.user.email).toBe(testUser.email);
       }
     });
@@ -236,6 +240,8 @@ describe('Cookie Auth E2E - Full HTTP Flow', () => {
 
       expect(response.status).toBe(200);
       if (response.body.data?.user) {
+        expect(response.body.data?.user).toBeDefined();
+        expect(response.body.errors).toBeUndefined();
         expect(response.body.data.user.email).toBe(testUser.email);
       }
     });
@@ -270,6 +276,8 @@ describe('Cookie Auth E2E - Full HTTP Flow', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.data?.me).toBeTruthy();
+      expect(response.body.data?.me).toBeDefined();
+      expect(response.body.errors).toBeUndefined();
       expect(response.body.data.me.email).toBe(testUser.email);
     });
 
@@ -288,6 +296,8 @@ describe('Cookie Auth E2E - Full HTTP Flow', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.data?.me).toBeTruthy();
+      expect(response.body.data?.me).toBeDefined();
+      expect(response.body.errors).toBeUndefined();
     });
 
     it('should handle mixed case role in token', async () => {
@@ -304,6 +314,8 @@ describe('Cookie Auth E2E - Full HTTP Flow', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.data?.me).toBeTruthy();
+      expect(response.body.data?.me).toBeDefined();
+      expect(response.body.errors).toBeUndefined();
     });
 
     it('should handle legacy admin role in token', async () => {
@@ -322,6 +334,8 @@ describe('Cookie Auth E2E - Full HTTP Flow', () => {
       // Admin should be able to access users list
       if (response.body.data?.users) {
         expect(response.body.data.users.length).toBeGreaterThanOrEqual(2);
+        expect(response.body.data?.users).toBeDefined();
+        expect(response.body.errors).toBeUndefined();
       }
     });
   });
