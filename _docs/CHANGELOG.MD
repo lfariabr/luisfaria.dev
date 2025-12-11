@@ -1,6 +1,33 @@
 # Backlog / Changelog
 > This document is a list of features and bug fixes that have been completed, are in progress, or are planned for future development. DRAFT MODE ONLY!
 
+---
+
+## 🔥 IN PROGRESS
+
+![Running](https://media.istockphoto.com/id/904171918/photo/taking-my-fitness-outdoors.jpg?s=612x612&w=0&k=20&c=02oxKdpbN8J5HnP3NwYpln7L_7Dkxm4H2UYy72XRZAI=)
+
+### v2.2.0 🔥 | `feature/secure-authentication`
+
+I've found some vulnerabilities in the current authentication system and need to secure it. [Feature Secure Authentication](https://github.com/lfariabr/luisfaria.dev/blob/master/_docs/featureBreakdown/v2.2-secAuth.MD)
+
+Also, I have gotten some attacks on my server, so I need to secure the authentication system and the application itself. [Security Incident Report](https://github.com/lfariabr/luisfaria.dev/blob/master/_docs/featureBreakdown/v2.2-secIncident.MD)
+
+---
+
+## 📂 BACKLOG
+- Integrate Resend to send emails to users when they create account + 1 per month CRM
+- When rate limit is achieved, load previous message from registered email
+- Check SEO's progress
+- Add a second tab later: "APOD Time Travel" using NASA for an image-based surprise
+
+*Post feat-sec https://github.com/lfariabr/luisfaria.dev/pull/42*
+- Redis blacklist: Store invalidated JTIs (JWT IDs) with TTL matching token expiry
+- Token version: Add tokenVersion field to User model, increment on logout, reject tokens with old version
+- Short-lived tokens + refresh: Use 15-min access tokens with refresh token rotation
+
+---
+
 ## ✅ DONE
 - Fix "tags" at projects that are not being properly saved
 - Integrate discord webhook to notify about new users + chatbot messages 
@@ -19,21 +46,3 @@
   - [X] persist email and auto hide field from dialog for better UX
   - [X] persist last generated quote
   - [X] tests
-
----
-
-## 🔥 IN PROGRESS
-
-### v2.2.0 🔥 | `feature/secure-authentication`
-
-I've found some vulnerabilities in the current authentication system and need to secure it. [Feature Secure Authentication](https://github.com/lfariabr/luisfaria.dev/blob/master/_docs/featureBreakdown/v2.2-secAuth.MD)
-
-Also, I have gotten some attacks on my server, so I need to secure the authentication system and the application itself. [Security Incident Report](https://github.com/lfariabr/luisfaria.dev/blob/master/_docs/featureBreakdown/v2.2-secIncident.MD)
-
----
-
-## 📂 BACKLOG
-- Integrate Resend to send emails to users when they create account + 1 per month CRM
-- When rate limit is achieved, load previous message from registered email
-- Check SEO's progress
-- Add a second tab later: "APOD Time Travel" using NASA for an image-based surprise
