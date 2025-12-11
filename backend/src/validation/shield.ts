@@ -1,4 +1,5 @@
 import { shield, rule, allow } from 'graphql-shield';
+import { GraphQLError } from 'graphql';
 import { checkAuth, checkRole } from '../utils/authUtils';
 import { validateInput } from './middleware';
 import { registerSchema, loginSchema } from './schemas/user.schema';
@@ -14,7 +15,9 @@ const isAuthenticated = rule({ cache: 'contextual' })(
       checkAuth(context);
       return true;
     } catch (error) {
-      return false;
+      return new GraphQLError('Not authenticated', {
+        extensions: { code: 'UNAUTHENTICATED' }
+      });
     }
   }
 );
@@ -25,7 +28,9 @@ const isAdmin = rule({ cache: 'contextual' })(
       checkRole(context, 'ADMIN');
       return true;
     } catch (error) {
-      return false;
+      return new GraphQLError('Not authorized', {
+        extensions: { code: 'FORBIDDEN' }
+      });
     }
   }
 );
