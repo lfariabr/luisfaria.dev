@@ -41,6 +41,12 @@ const USER_QUERY = `
   }
 `;
 
+const LOGOUT_MUTATION = `
+  mutation Logout {
+    logout
+  }
+`;
+
 describe('Cookie Auth E2E - Full HTTP Flow', () => {
   let app: Express;
   let server: ApolloServer<any>;
@@ -337,6 +343,110 @@ describe('Cookie Auth E2E - Full HTTP Flow', () => {
         expect(response.body.data?.users).toBeDefined();
         expect(response.body.data.users.length).toBeGreaterThanOrEqual(2);
       }
+    });
+  });
+
+  describe('Logout - Cookie Clearing Flow', () => {
+    it('should clear cookie on logout and return true', async () => {
+      // First, verify we're authenticated
+      const authCheck = await request(app)
+        .post('/graphql')
+        .set('Cookie', [`token=${validToken}`])
+        .send({ query: ME_QUERY });
+
+      expect(authCheck.status).toBe(200);
+      expect(authCheck.body.data?.me).toBeDefined();
+
+      // Now logout
+      const logoutResponse = await request(app)
+        .post('/graphql')
+        .set('Cookie', [`token=${validToken}`])
+        .send({ query: LOGOUT_MUTATION });
+
+      expect(logoutResponse.status).toBe(200);
+      expect(logoutResponse.body.data?.logout).toBe(true);
+      expect(logoutResponse.body.errors).toBeUndefined();
+
+      // Verify Set-Cookie header clears the token
+      const setCookieHeader = logoutResponse.headers['set-cookie'];
+      expect(setCookieHeader).toBeDefined();
+      expect(setCookieHeader[0]).toMatch(/token=/);
+      // Cookie should be cleared (empty or expired)
+      expect(setCookieHeader[0]).toMatch(/Max-Age=0|Expires=.*1970/i);
+    });
+
+    it('should return auth error on me query without cookie', async () => {
+      // After logout, browser won't send the cookie anymore
+      // Simulate this by not sending any cookie
+      const response = await request(app)
+        .post('/graphql')
+        .send({ query: ME_QUERY });
+
+      expect(response.status).toBe(200);
+      expect(response.body.errors).toBeDefined();
+      // Shield returns NOT_AUTHORIZED for unauthenticated requests
+      expect(['UNAUTHENTICATED', 'NOT_AUTHORIZED']).toContain(
+        response.body.errors[0].extensions.code
+      );
+    });
+
+    it('should document token behavior after logout - cookie clearing only (no server-side blacklist)', async () => {
+      // First, verify we're authenticated with the token
+      const authCheck = await request(app)
+        .post('/graphql')
+        .set('Cookie', [`token=${validToken}`])
+        .send({ query: ME_QUERY });
+
+      expect(authCheck.status).toBe(200);
+      expect(authCheck.body.data?.me).toBeDefined();
+
+      // Now logout with the same token
+      const logoutResponse = await request(app)
+        .post('/graphql')
+        .set('Cookie', [`token=${validToken}`])
+        .send({ query: LOGOUT_MUTATION });
+
+      expect(logoutResponse.status).toBe(200);
+      expect(logoutResponse.body.data?.logout).toBe(true);
+
+      // Attempt me query reusing the same cookie header
+      // IMPORTANT: Current implementation only clears cookies (client-side)
+      // Without server-side token blacklist, the JWT remains valid until expiry
+      // In a real browser, Set-Cookie from logout clears the cookie so this scenario
+      // (client manually re-sending old token) wouldn't happen normally
+      const postLogoutResponse = await request(app)
+        .post('/graphql')
+        .set('Cookie', [`token=${validToken}`])
+        .send({ query: ME_QUERY });
+
+      expect(postLogoutResponse.status).toBe(200);
+      // Token is still cryptographically valid - this documents current behavior
+      // TODO: For true server-side invalidation, implement Redis token blacklist
+      expect(postLogoutResponse.body.data?.me).toBeDefined();
+    });
+
+    it('should require authentication to call logout', async () => {
+      // Logout without any cookie should fail (shield requires auth)
+      const response = await request(app)
+        .post('/graphql')
+        .send({ query: LOGOUT_MUTATION });
+
+      expect(response.status).toBe(200);
+      expect(response.body.errors).toBeDefined();
+      // Shield blocks unauthenticated logout attempts
+    });
+
+    it('should clear cookie with httpOnly and sameSite attributes', async () => {
+      const logoutResponse = await request(app)
+        .post('/graphql')
+        .set('Cookie', [`token=${validToken}`])
+        .send({ query: LOGOUT_MUTATION });
+
+      const setCookieHeader = logoutResponse.headers['set-cookie'];
+      expect(setCookieHeader).toBeDefined();
+      // Verify security attributes are preserved when clearing
+      expect(setCookieHeader[0]).toMatch(/HttpOnly/i);
+      expect(setCookieHeader[0]).toMatch(/SameSite=Strict/i);
     });
   });
 });
