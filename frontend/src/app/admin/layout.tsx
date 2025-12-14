@@ -1,8 +1,9 @@
 'use client';
 
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { useIsAdmin } from '@/lib/auth/isAdmin';
 import { 
   LayoutDashboard, 
   FileText, 
@@ -19,39 +20,20 @@ interface AdminLayoutProps {
 }
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
-  const { user, isAuthenticated, loading, logout } = useAuth();
+  const { isAuthenticated, loading, logout } = useAuth();
+  const isAdmin = useIsAdmin();
   const router = useRouter();
-  const [initialized, setInitialized] = useState(false);
-  
-  // Backup check to ensure we have user data from localStorage
-  useEffect(() => {
-    if (!initialized && !loading && !user) {
-      // Double-check localStorage directly as a fallback
-      try {
-        const storedUser = localStorage.getItem('user');
-        console.log('Checking localStorage directly:', storedUser);
-        if (storedUser) {
-          // Force page reload to ensure AuthContext picks up the localStorage data
-          window.location.reload();
-        }
-      } catch (err) {
-        console.error('Error checking localStorage:', err);
-      }
-      setInitialized(true);
-    }
-  }, [initialized, loading, user]);
 
   // Check if user is admin, redirect if not
   useEffect(() => {
     if (!loading) {
       if (!isAuthenticated) {
         router.push('/login?redirect=/admin');
-      } else if (isAuthenticated && user?.role !== 'ADMIN') {
-        console.log('User is not admin, redirecting to home');
+      } else if (!isAdmin) {
         router.push('/');
       }
     }
-  }, [loading, isAuthenticated, user, router]);
+  }, [loading, isAuthenticated, isAdmin, router]);
 
   // If still loading or user not authenticated, show loading state
   if (loading || !isAuthenticated) {
