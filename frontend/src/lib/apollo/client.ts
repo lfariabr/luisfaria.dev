@@ -1,4 +1,4 @@
-import { ApolloClient, InMemoryCache, HttpLink, from, ApolloLink, NormalizedCacheObject } from '@apollo/client';
+import { ApolloClient, InMemoryCache, HttpLink, from, NormalizedCacheObject } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
 import { RetryLink } from '@apollo/client/link/retry';
 
@@ -21,27 +21,6 @@ export function createApolloClient(): ApolloClient<NormalizedCacheObject> {
     if (networkError) {
       console.error(`[Network error]: ${networkError}`);
     }
-  });
-
-  // Auth link for adding token to requests
-  const authLink = new ApolloLink((operation, forward) => {
-    let token = null;
-    if (typeof window !== 'undefined') {
-      try {
-        token = localStorage.getItem('token');
-      } catch (e) {
-        console.error('Error accessing localStorage:', e);
-      }
-    }
-
-    operation.setContext(({ headers = {} }) => ({
-      headers: {
-        ...headers,
-        authorization: token ? `Bearer ${token}` : '',
-      },
-    }));
-
-    return forward(operation);
   });
 
   // Retry link for handling transient network issues
@@ -77,8 +56,8 @@ export function createApolloClient(): ApolloClient<NormalizedCacheObject> {
     },
   });
 
-  // Combine all links
-  const link = from([errorLink, retryLink, authLink, httpLink]);
+  // Combine all links - no authLink needed, cookies are sent automatically
+  const link = from([errorLink, retryLink, httpLink]);
 
   // Create and return the Apollo Client
   return new ApolloClient({

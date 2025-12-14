@@ -3,20 +3,30 @@
 import { 
   createContext, 
   useContext, 
-  useEffect, 
   useState, 
-  ReactNode 
+  ReactNode,
+  useCallback
 } from 'react';
 import { useRouter } from 'next/navigation';
-import { gql, useMutation, ApolloError, isApolloError } from '@apollo/client';
-import Cookies from 'js-cookie';
+import { gql, useMutation, useQuery, ApolloError } from '@apollo/client';
 import { UserRole } from '../graphql/types/user.types';
+
+// GraphQL Queries
+const ME_QUERY = gql`
+  query Me {
+    me {
+      id
+      email
+      name
+      role
+    }
+  }
+`;
 
 // GraphQL Mutations  
 const LOGIN_MUTATION = gql`
   mutation Login($input: LoginInput!) {
     login(input: $input) {
-      token
       user {
         id
         email
@@ -30,7 +40,6 @@ const LOGIN_MUTATION = gql`
 const REGISTER_MUTATION = gql`
   mutation Register($input: RegisterInput!) {
     register(input: $input) {
-      token
       user {
         id
         email
@@ -38,6 +47,12 @@ const REGISTER_MUTATION = gql`
         role
       }
     }
+  }
+`;
+
+const LOGOUT_MUTATION = gql`
+  mutation Logout {
+    logout
   }
 `;
 
@@ -51,13 +66,13 @@ export interface User {
 
 interface AuthContextType {
   user: User | null;
-  token: string | null;
   loading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (credentials: { name: string, email: string, password: string }) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   isAuthenticated: boolean;
+  refetchUser: () => void;
 }
 
 interface AuthProviderProps {
@@ -95,112 +110,67 @@ const formatError = (err: any): string => {
 // Create context with default values
 const AuthContext = createContext<AuthContextType>({
   user: null,
-  token: null,
   loading: false,
   error: null,
   login: async () => {},
   register: async () => {},
-  logout: () => {},
+  logout: async () => {},
   isAuthenticated: false,
+  refetchUser: () => {},
 });
-
-// Cookie options for security
-const cookieOptions = {
-  expires: 7, // 7 days
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'strict' as const,
-  path: '/'
-};
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
+  // Query current user on mount - cookie is sent automatically
+  const { loading, refetch: refetchUser } = useQuery(ME_QUERY, {
+    fetchPolicy: 'network-only',
+    onCompleted: (data) => {
+      if (data?.me) {
+        setUser(data.me);
+      }
+    },
+    onError: () => {
+      // Not authenticated or token expired - this is expected
+      setUser(null);
+    },
+  });
+
   const [loginMutation] = useMutation(LOGIN_MUTATION);
   const [registerMutation] = useMutation(REGISTER_MUTATION);
+  const [logoutMutation] = useMutation(LOGOUT_MUTATION);
 
-  // Check for existing token on startup
-  useEffect(() => {
-    const loadUserFromLocalStorage = () => {
-      try {
-        // First try to get from cookies (for SSR compatibility)
-        let storedToken: string | undefined = Cookies.get('token');
-        let storedUser: string | null = null;
-        
-        // If not in cookies, fall back to localStorage
-        if (!storedToken) {
-          storedToken = localStorage.getItem('token') ?? undefined;
-          storedUser = localStorage.getItem('user');
-        } else {
-          storedUser = localStorage.getItem('user');
-        }
-        
-        // If we have data, set the state
-        if (storedToken && storedUser) {
-          setToken(storedToken);
-          setUser(JSON.parse(storedUser));
-          
-          // Ensure token is stored in both places
-          Cookies.set('token', storedToken, cookieOptions);
-          localStorage.setItem('token', storedToken);
-        }
-      } catch (err) {
-        console.error('Failed to load user data from storage', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    loadUserFromLocalStorage();
-  }, []);
-
-  const login = async (email: string, password: string) => {
-    setLoading(true);
+  const login = useCallback(async (email: string, password: string) => {
     setError(null);
   
     try {
-      console.log('Login attempt with:', { email });
       const { data, errors } = await loginMutation({
         variables: {
           input: { email, password }
         },
-        errorPolicy: 'all'  // 
+        errorPolicy: 'all'
       });
   
-      // 
       if (data?.login) {
+        // Backend sets httpOnly cookie automatically
+        // Just update local state with user data
         setUser(data.login.user);
-        setToken(data.login.token);
-  
-        // Store in both localStorage and cookies
-        localStorage.setItem('token', data.login.token);
-        localStorage.setItem('user', JSON.stringify(data.login.user));
-        Cookies.set('token', data.login.token, cookieOptions);
-  
         router.push('/');
       } else {
-        // 
         const errorMessage =
           errors?.[0]?.message || 'Login failed. Please try again.';
         setError(errorMessage);
-        console.warn('[Login Error]', errorMessage);
       }
     } catch (err) {
-      // 
       const formatted = formatError(err);
       setError(formatted);
-      console.error('[Login Exception]', formatted);
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [loginMutation, router]);
 
-  const register = async (credentials: { name: string; email: string; password: string }) => {
+  const register = useCallback(async (credentials: { name: string; email: string; password: string }) => {
     const { name, email, password } = credentials;
-    setLoading(true);
     setError(null);
     
     try {
@@ -211,20 +181,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }); 
       
       if (data?.register) {
+        // Backend sets httpOnly cookie automatically
+        // Just update local state with user data
         setUser(data.register.user);
-        setToken(data.register.token);
-        
-        // Store in both localStorage and cookies
-        localStorage.setItem('token', data.register.token);
-        localStorage.setItem('user', JSON.stringify(data.register.user));
-        Cookies.set('token', data.register.token, cookieOptions);
-        
         router.push('/');
       }
     } catch (err: unknown) {
-      console.error('Registration error:', err);
-      
-      // Safely narrow the error type
       if (err instanceof ApolloError) {
         if (err.graphQLErrors && err.graphQLErrors.length > 0) {
           setError(err.graphQLErrors[0].message);
@@ -234,34 +196,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setError(err.message);
         }
       }
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [registerMutation, router]);
 
-  const logout = () => {
-    setUser(null);
-    setToken(null);
-    
-    // Clear from both localStorage and cookies
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    Cookies.remove('token');
-    
-    router.push('/login');
-  };
+  const logout = useCallback(async () => {
+    try {
+      // Call backend to clear httpOnly cookie
+      await logoutMutation();
+    } catch (err) {
+      // Even if mutation fails, clear local state
+      console.error('Logout error:', err);
+    } finally {
+      setUser(null);
+      router.push('/login');
+    }
+  }, [logoutMutation, router]);
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        token,
         loading,
         error,
         login,
         register,
         logout,
-        isAuthenticated: !!token,
+        isAuthenticated: !!user,
+        refetchUser,
       }}
     >
       {children}

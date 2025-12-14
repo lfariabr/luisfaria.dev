@@ -1,38 +1,22 @@
-import { jwtDecode } from 'jwt-decode';
+'use client';
 
-interface DecodedToken {
-  id: string;
-  email: string;
-  role: string;
-  iat: number;
-  exp: number;
+import { useAuth } from './AuthContext';
+
+/**
+ * Hook to check if the current user has admin role.
+ * Uses AuthContext which gets user data from server via httpOnly cookie.
+ * @returns Boolean indicating if user is admin
+ */
+export function useIsAdmin(): boolean {
+  const { user } = useAuth();
+  return user?.role === 'ADMIN';
 }
 
 /**
- * Utility function to check if the current user has admin role
- * @returns Boolean indicating if user is admin
+ * Hook to check if the current user has editor or admin role.
+ * @returns Boolean indicating if user is editor or admin
  */
-export function isAdmin(): boolean {
-  try {
-    // Check for token in localStorage
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    
-    if (!token) return false;
-    
-    // Decode the token
-    const decoded = jwtDecode<DecodedToken>(token);
-    
-    // Check if token is expired
-    const currentTime = Math.floor(Date.now() / 1000);
-    if (decoded.exp < currentTime) {
-      console.log('Token expired');
-      return false;
-    }
-    
-    // Check if user has admin role
-    return decoded.role === 'ADMIN';
-  } catch (error) {
-    console.error('Error verifying admin status:', error);
-    return false;
-  }
+export function useIsEditorOrAdmin(): boolean {
+  const { user } = useAuth();
+  return user?.role === 'ADMIN' || user?.role === 'EDITOR';
 }
