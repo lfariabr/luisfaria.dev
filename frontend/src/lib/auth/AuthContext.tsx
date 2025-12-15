@@ -8,53 +8,10 @@ import {
   useCallback
 } from 'react';
 import { useRouter } from 'next/navigation';
-import { gql, useMutation, useQuery, ApolloError } from '@apollo/client';
+import { useMutation, useQuery, ApolloError } from '@apollo/client';
 import { UserRole } from '../graphql/types/user.types';
-
-// GraphQL Queries
-const ME_QUERY = gql`
-  query Me {
-    me {
-      id
-      email
-      name
-      role
-    }
-  }
-`;
-
-// GraphQL Mutations  
-const LOGIN_MUTATION = gql`
-  mutation Login($input: LoginInput!) {
-    login(input: $input) {
-      user {
-        id
-        email
-        name
-        role
-      }
-    }
-  }
-`;
-
-const REGISTER_MUTATION = gql`
-  mutation Register($input: RegisterInput!) {
-    register(input: $input) {
-      user {
-        id
-        email
-        name
-        role
-      }
-    }
-  }
-`;
-
-const LOGOUT_MUTATION = gql`
-  mutation Logout {
-    logout
-  }
-`;
+import { ME_QUERY } from '../graphql/queries/auth.queries';
+import { LOGIN_MUTATION, REGISTER_MUTATION, LOGOUT_MUTATION } from '../graphql/mutations/auth.mutations';
 
 // Types
 export interface User {
