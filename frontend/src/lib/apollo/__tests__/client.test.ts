@@ -10,10 +10,6 @@ describe('Apollo Client Configuration', () => {
   });
 
   it('does not include authLink that injects Authorization header', async () => {
-    // Spy on localStorage BEFORE creating client to capture any reads during construction
-    const getItemSpy = jest.spyOn(Storage.prototype, 'getItem');
-
-    // Create mock fetch BEFORE creating client
     const mockFetch = jest.fn<Promise<Response>, [RequestInfo | URL, RequestInit?]>(() =>
       Promise.resolve({
         ok: true,
@@ -23,20 +19,14 @@ describe('Apollo Client Configuration', () => {
     );
     global.fetch = mockFetch;
 
-    try {
-      const client = createApolloClient();
+    const client = createApolloClient();
 
-      // Execute a query and await it
-      await client.query({ query: gql`query { __typename }` });
+    await client.query({ query: gql`query { __typename }` });
 
-      // Verify no Authorization header was set from localStorage
-      expect(mockFetch).toHaveBeenCalled();
-      const fetchOptions = mockFetch.mock.calls[0]?.[1];
-      const headers = fetchOptions?.headers as Record<string, string> | undefined;
-      expect(headers?.['Authorization']).toBeUndefined();
-    } finally {
-      getItemSpy.mockRestore();
-    }
+    expect(mockFetch).toHaveBeenCalled();
+    const fetchOptions = mockFetch.mock.calls[0]?.[1];
+    const headers = fetchOptions?.headers as Record<string, string> | undefined;
+    expect(headers?.['Authorization']).toBeUndefined();
   });
 
   it('sends requests with credentials include for cookie auth', async () => {
