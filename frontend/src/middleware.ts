@@ -10,10 +10,8 @@ interface DecodedToken {
 }
 
 export function middleware(request: NextRequest) {
-  // Get token from authorization header or cookie
-  const authHeader = request.headers.get('authorization');
-  const token = request.cookies.get('token')?.value || 
-                (authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null);
+  // Get token from httpOnly cookie only (no more Authorization header)
+  const token = request.cookies.get('token')?.value;
   
   // Check if the path is an admin route
   const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
