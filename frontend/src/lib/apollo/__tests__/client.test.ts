@@ -2,61 +2,90 @@ import { createApolloClient } from '../client';
 import { gql } from '@apollo/client';
 
 describe('Apollo Client Configuration', () => {
-  it('does not include authLink that injects Authorization header', () => {
-    const client = createApolloClient();
-    
-    // Spy on localStorage to ensure no Authorization header is constructed from it
+  const originalFetch = global.fetch;
+
+  afterEach(() => {
+    // Restore global.fetch after each test
+    global.fetch = originalFetch;
+  });
+
+  it('does not include authLink that injects Authorization header', async () => {
+    // Spy on localStorage BEFORE creating client to capture any reads during construction
     const getItemSpy = jest.spyOn(Storage.prototype, 'getItem');
-    
-    // Create a mock fetch to intercept requests
-    const mockFetch = jest.fn(() =>
+
+    // Create mock fetch BEFORE creating client
+    const mockFetch = jest.fn<Promise<Response>, [RequestInfo | URL, RequestInit?]>(() =>
       Promise.resolve({
         ok: true,
-        json: () => Promise.resolve({ data: {} }),
+        json: () => Promise.resolve({ data: { __typename: 'Query' } }),
+        text: () => Promise.resolve(JSON.stringify({ data: { __typename: 'Query' } })),
       } as Response)
     );
     global.fetch = mockFetch;
 
-    // Execute a query to trigger the link chain
-    client.query({ query: gql`query { __typename }` }).catch(() => {});
+    try {
+      const client = createApolloClient();
 
-    // Verify no Authorization header was set from localStorage
-    expect(mockFetch).toHaveBeenCalled();
-    const fetchCallHeaders = mockFetch.mock.calls[0]?.[1]?.headers as Record<string, string>;
-    expect(fetchCallHeaders?.['Authorization']).toBeUndefined();
-    
-    getItemSpy.mockRestore();
+      // Execute a query and await it
+      await client.query({ query: gql`query { __typename }` });
+
+      // Verify no Authorization header was set from localStorage
+      expect(mockFetch).toHaveBeenCalled();
+      const fetchOptions = mockFetch.mock.calls[0]?.[1];
+      const headers = fetchOptions?.headers as Record<string, string> | undefined;
+      expect(headers?.['Authorization']).toBeUndefined();
+    } finally {
+      getItemSpy.mockRestore();
+    }
   });
 
-  it('configures httpLink with credentials include for cookie auth', () => {
+  it('sends requests with credentials include for cookie auth', async () => {
+    // Create mock fetch to intercept and verify credentials
+    const mockFetch = jest.fn<Promise<Response>, [RequestInfo | URL, RequestInit?]>(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ data: { __typename: 'Query' } }),
+        text: () => Promise.resolve(JSON.stringify({ data: { __typename: 'Query' } })),
+      } as Response)
+    );
+    global.fetch = mockFetch;
+
     const client = createApolloClient();
-    
-    // Verify the client is configured (httpLink with credentials: 'include')
-    // The actual credentials setting is in the HttpLink constructor
-    // We can verify the client works without Authorization header
+
+    // Execute a query to trigger fetch
+    await client.query({ query: gql`query { __typename }` });
+
+    // Verify fetch was called with credentials: 'include'
+    expect(mockFetch).toHaveBeenCalled();
+    const fetchOptions = mockFetch.mock.calls[0]?.[1];
+    expect(fetchOptions?.credentials).toBe('include');
+  });
+
+  it('sets default fetch policies correctly', () => {
+    const client = createApolloClient();
+
     expect(client).toBeDefined();
-    
-    // Default options should be set
     expect(client.defaultOptions.query?.fetchPolicy).toBe('network-only');
     expect(client.defaultOptions.watchQuery?.fetchPolicy).toBe('cache-and-network');
   });
 
-  it('does not read from localStorage for authentication', () => {
-    // Mock localStorage to verify it's not being accessed for auth
+  it('does not read from localStorage for authentication during client creation', () => {
+    // Spy on localStorage BEFORE creating client
     const getItemSpy = jest.spyOn(Storage.prototype, 'getItem');
-    
-    // Create a new client
-    const client = createApolloClient();
-    
-   // Verify localStorage.getItem was not called for any auth-related keys
-   const authRelatedKeys = ['token', 'authToken', 'auth_token', 'jwt', 'accessToken', 'bearerToken', 'id_token'];
-   const authCalls = getItemSpy.mock.calls.filter(call => 
-     authRelatedKeys.some(key => call[0]?.toLowerCase().includes(key.toLowerCase()))
-   );
-   expect(authCalls.length).toBe(0);
 
-    getItemSpy.mockRestore();
-    
-    expect(client).toBeDefined();
+    try {
+      const client = createApolloClient();
+
+      // Verify localStorage.getItem was not called for any auth-related keys
+      const authRelatedKeys = ['token', 'authToken', 'auth_token', 'jwt', 'accessToken', 'bearerToken', 'id_token'];
+      const authCalls = getItemSpy.mock.calls.filter(call =>
+        authRelatedKeys.some(key => call[0]?.toLowerCase().includes(key.toLowerCase()))
+      );
+      expect(authCalls.length).toBe(0);
+
+      expect(client).toBeDefined();
+    } finally {
+      getItemSpy.mockRestore();
+    }
   });
 });
