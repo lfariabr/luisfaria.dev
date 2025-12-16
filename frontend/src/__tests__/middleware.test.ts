@@ -156,7 +156,7 @@ describe('Middleware - Admin Route Protection', () => {
   });
 
   describe('Expired/invalid token scenarios', () => {
-    it('redirects to /login when token is expired', () => {
+    it('redirects to /login with redirect param when token is expired', () => {
       const token = createMockToken({
         id: '1',
         email: 'admin@test.com',
@@ -168,22 +168,25 @@ describe('Middleware - Admin Route Protection', () => {
 
       expect(response.status).toBe(307);
       expect(response.headers.get('location')).toContain('/login');
+      expect(response.headers.get('location')).toContain('redirect=%2Fadmin');
     });
 
-    it('redirects to /login when token is malformed', () => {
-      const request = createMockRequest('/admin', 'invalid.token.here');
+    it('redirects to /login with redirect param when token is malformed', () => {
+      const request = createMockRequest('/admin/users', 'invalid.token.here');
       const response = middleware(request);
 
       expect(response.status).toBe(307);
       expect(response.headers.get('location')).toContain('/login');
+      expect(response.headers.get('location')).toContain('redirect=%2Fadmin%2Fusers');
     });
 
-    it('redirects to /login when token is empty string', () => {
-      const request = createMockRequest('/admin', '');
+    it('redirects to /login with redirect param when token is empty string', () => {
+      const request = createMockRequest('/admin/settings', '');
       const response = middleware(request);
 
       expect(response.status).toBe(307);
       expect(response.headers.get('location')).toContain('/login');
+      expect(response.headers.get('location')).toContain('redirect=%2Fadmin%2Fsettings');
     });
   });
 

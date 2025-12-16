@@ -33,6 +33,7 @@ export function middleware(request: NextRequest) {
       if (decoded.exp < currentTime) {
         console.log('Middleware: Token expired');
         const loginUrl = new URL('/login', request.url);
+        loginUrl.searchParams.set('redirect', request.nextUrl.pathname);
         return NextResponse.redirect(loginUrl);
       }
       
@@ -43,6 +44,7 @@ export function middleware(request: NextRequest) {
       
     } catch (error) {
       const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('redirect', request.nextUrl.pathname);
       return NextResponse.redirect(loginUrl);
     }
   }
