@@ -13,13 +13,11 @@ This repository contains my personal portfolio, built with Next.js, TypeScript, 
 - Publishing long-form technical articles
 - Demonstrating full-stack and AI integration patterns
 - Hosting an authenticated AI assistant with rate limiting
-- Running Goggins Mode, a focused motivational AI mini-product
 
 **If you're reviewing this for hiring or collaboration**, start here:
 
 - Visit the live site: [luisfaria.dev](https://luisfaria.dev)
 - Try the AI chatbot (authenticated users, rate-limited)
-- Explore Goggins Mode
 - Browse the Articles and Projects sections
 - Check out the article: [From Groomzilla to Full-Stack Engineer](https://luisfaria.dev/projects/from-groomzilla-to-full-stack-engineer-building-wedstack)
 
@@ -36,6 +34,7 @@ This repository contains my personal portfolio, built with Next.js, TypeScript, 
 | **v2.0.0** | `feature/goggins-mode` | Goggins Mode feature (rate-limited to 2 questions per 24h per user) |
 | **v2.0.1** | `feature/atomic-rate-limiting` | Atomic rate limiting with Lua scripts |
 | **v2.0.2** | `feature/home` | V2 home page with improved design |
+| **v2.2.0** | `feature/sec-auth` | Security and authentication improvements with QA regression tests and monitoring |
 
 ---
 
@@ -93,8 +92,9 @@ luisfaria/
    - **Chatbot**: AI-powered chat interface with rate limiting
    - **ArticleDetail**: Single article view with comments
    - **ProjectDetail**: Individual project page with detailed information
+   - **GogginsMode**: Motivational AI mini-product interface
    
-   > *These are some of the reusable components that showcase UI architecture and state management.*
+> Note: *These are some of the reusable components that showcase UI architecture and state management.*
 
 ---
 
@@ -172,9 +172,10 @@ npm run test:coverage      # Coverage report
 7. SEO optimization
 8. Goggins Mode integration
 9. Home page redesign
+10. Security Authentication (`feature/secure-authentication`)
 
 **Work In Progress**
-- 10. Security Authentication (`feature/secure-authentication`)
+- tbd
 
 **Planned / Future**
 - ***Who knows?*** Stay tuned!
