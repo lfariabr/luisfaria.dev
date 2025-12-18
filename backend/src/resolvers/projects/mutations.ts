@@ -27,7 +27,15 @@ export const projectMutations = {
     }
     
     const project = new Project(input);
-    await project.save();
+    try {
+      await project.save();
+    } catch (error: any) {
+      // Handle MongoDB duplicate key error (race condition on slug)
+      if (error.code === 11000 || error.name === 'MongoServerError' && error.message?.includes('duplicate key')) {
+        throw new Error(`Slug "${input.slug}" is already in use. Please choose a different slug.`);
+      }
+      throw error;
+    }
     return project;
   },
   

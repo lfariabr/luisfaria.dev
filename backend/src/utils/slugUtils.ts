@@ -12,7 +12,8 @@ export function slugify(text: string): string {
     .trim()
     .replace(/[^a-z0-9\s-]/g, '')
     .replace(/\s+/g, '-')
-    .replace(/-+/g, '-');
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
 }
 
 /**
@@ -22,6 +23,8 @@ export function slugify(text: string): string {
  * @param excludeId - Optional project ID to exclude from collision check (for updates)
  * @returns A unique slug string
  */
+const MAX_SLUG_ATTEMPTS = 1000;
+
 export async function generateUniqueProjectSlug(
   title: string,
   excludeId?: string
@@ -35,7 +38,7 @@ export async function generateUniqueProjectSlug(
   let slug = baseSlug;
   let counter = 1;
 
-  while (true) {
+  for (let attempt = 0; attempt < MAX_SLUG_ATTEMPTS; attempt++) {
     const query: any = { slug };
     if (excludeId) {
       query._id = { $ne: excludeId };
@@ -50,6 +53,10 @@ export async function generateUniqueProjectSlug(
     counter++;
     slug = `${baseSlug}-${counter}`;
   }
+
+  throw new Error(
+    `Unable to generate unique slug after ${MAX_SLUG_ATTEMPTS} attempts. Base slug: "${baseSlug}"`
+  );
 }
 
 /**

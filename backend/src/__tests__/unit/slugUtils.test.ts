@@ -41,6 +41,26 @@ describe('slugUtils', () => {
     it('should handle mixed case and special chars', () => {
       expect(slugify('My AWESOME Project! (2024)')).toBe('my-awesome-project-2024');
     });
+
+    it('should strip leading hyphens', () => {
+      expect(slugify('---hello')).toBe('hello');
+    });
+
+    it('should strip trailing hyphens', () => {
+      expect(slugify('hello---')).toBe('hello');
+    });
+
+    it('should strip both leading and trailing hyphens', () => {
+      expect(slugify('---hello-world---')).toBe('hello-world');
+    });
+
+    it('should handle input that becomes only hyphens', () => {
+      expect(slugify('---')).toBe('');
+    });
+
+    it('should handle special chars that leave leading/trailing hyphens', () => {
+      expect(slugify('!!!hello!!!')).toBe('hello');
+    });
   });
 
   describe('isValidSlug', () => {

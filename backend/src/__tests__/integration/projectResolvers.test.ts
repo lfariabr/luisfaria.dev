@@ -22,7 +22,7 @@ const CREATE_PROJECT_MUTATION = `
 `;
 
 const UPDATE_PROJECT_MUTATION = `
-  mutation UpdateProject($id: ID!, $input: ProjectInput!) {
+  mutation UpdateProject($id: ID!, $input: ProjectUpdateInput!) {
     updateProject(id: $id, input: $input) {
       id
       title
@@ -31,6 +31,47 @@ const UPDATE_PROJECT_MUTATION = `
     }
   }
 `;
+
+/**
+ * Helper to extract single result from GraphQL response with strict assertions
+ */
+function assertSingleResult(response: any): { data: any; errors: any[] | undefined } {
+  expect(response.body.kind).toBe('single');
+  const result = (response.body as any).singleResult;
+  return { data: result.data, errors: result.errors };
+}
+
+/**
+ * Helper to assert successful project creation and return the project
+ */
+function assertProjectCreated(response: any): any {
+  const { data, errors } = assertSingleResult(response);
+  expect(errors).toBeUndefined();
+  expect(data).toBeDefined();
+  expect(data.createProject).toBeDefined();
+  return data.createProject;
+}
+
+/**
+ * Helper to assert successful project update and return the project
+ */
+function assertProjectUpdated(response: any): any {
+  const { data, errors } = assertSingleResult(response);
+  expect(errors).toBeUndefined();
+  expect(data).toBeDefined();
+  expect(data.updateProject).toBeDefined();
+  return data.updateProject;
+}
+
+/**
+ * Helper to assert GraphQL error response
+ */
+function assertGraphQLError(response: any, expectedMessagePart: string): void {
+  const { errors } = assertSingleResult(response);
+  expect(errors).toBeDefined();
+  expect(errors!.length).toBeGreaterThan(0);
+  expect(errors![0].message).toContain(expectedMessagePart);
+}
 
 describe('Project Resolvers - Slug Generation', () => {
   let adminUser: any;
@@ -77,20 +118,13 @@ describe('Project Resolvers - Slug Generation', () => {
       };
 
       const response = await executeOperation(CREATE_PROJECT_MUTATION, variables, adminContext);
-
-      expect(response.body.kind).toBe('single');
-      if (response.body.kind === 'single') {
-        const data = response.body.singleResult.data;
-        if (data?.createProject) {
-          const project = data.createProject as any;
-          expect(project.slug).toBe('my-awesome-project');
-          expect(project.title).toBe('My Awesome Project');
-        }
-      }
+      const project = assertProjectCreated(response);
+      
+      expect(project.slug).toBe('my-awesome-project');
+      expect(project.title).toBe('My Awesome Project');
     });
 
     it('should generate unique slug with incrementing number on collision', async () => {
-      // Create first project with slug
       await Project.create({
         title: 'Test Project',
         slug: 'test-project',
@@ -109,19 +143,12 @@ describe('Project Resolvers - Slug Generation', () => {
       };
 
       const response = await executeOperation(CREATE_PROJECT_MUTATION, variables, adminContext);
-
-      expect(response.body.kind).toBe('single');
-      if (response.body.kind === 'single') {
-        const data = response.body.singleResult.data;
-        if (data?.createProject) {
-          const project = data.createProject as any;
-          expect(project.slug).toBe('test-project-2');
-        }
-      }
+      const project = assertProjectCreated(response);
+      
+      expect(project.slug).toBe('test-project-2');
     });
 
     it('should generate slug with incrementing number for multiple collisions', async () => {
-      // Create projects with existing slugs
       await Project.create({
         title: 'My Project',
         slug: 'my-project',
@@ -147,15 +174,9 @@ describe('Project Resolvers - Slug Generation', () => {
       };
 
       const response = await executeOperation(CREATE_PROJECT_MUTATION, variables, adminContext);
-
-      expect(response.body.kind).toBe('single');
-      if (response.body.kind === 'single') {
-        const data = response.body.singleResult.data;
-        if (data?.createProject) {
-          const project = data.createProject as any;
-          expect(project.slug).toBe('my-project-3');
-        }
-      }
+      const project = assertProjectCreated(response);
+      
+      expect(project.slug).toBe('my-project-3');
     });
 
     it('should use provided slug when explicitly set', async () => {
@@ -170,15 +191,9 @@ describe('Project Resolvers - Slug Generation', () => {
       };
 
       const response = await executeOperation(CREATE_PROJECT_MUTATION, variables, adminContext);
-
-      expect(response.body.kind).toBe('single');
-      if (response.body.kind === 'single') {
-        const data = response.body.singleResult.data;
-        if (data?.createProject) {
-          const project = data.createProject as any;
-          expect(project.slug).toBe('custom-slug');
-        }
-      }
+      const project = assertProjectCreated(response);
+      
+      expect(project.slug).toBe('custom-slug');
     });
 
     it('should normalize provided slug', async () => {
@@ -193,15 +208,9 @@ describe('Project Resolvers - Slug Generation', () => {
       };
 
       const response = await executeOperation(CREATE_PROJECT_MUTATION, variables, adminContext);
-
-      expect(response.body.kind).toBe('single');
-      if (response.body.kind === 'single') {
-        const data = response.body.singleResult.data;
-        if (data?.createProject) {
-          const project = data.createProject as any;
-          expect(project.slug).toBe('custom-slug-with-spaces');
-        }
-      }
+      const project = assertProjectCreated(response);
+      
+      expect(project.slug).toBe('custom-slug-with-spaces');
     });
 
     it('should handle special characters in title for slug generation', async () => {
@@ -215,15 +224,93 @@ describe('Project Resolvers - Slug Generation', () => {
       };
 
       const response = await executeOperation(CREATE_PROJECT_MUTATION, variables, adminContext);
+      const project = assertProjectCreated(response);
+      
+      expect(project.slug).toBe('project-1-the-best-2024');
+    });
 
-      expect(response.body.kind).toBe('single');
-      if (response.body.kind === 'single') {
-        const data = response.body.singleResult.data;
-        if (data?.createProject) {
-          const project = data.createProject as any;
-          expect(project.slug).toBe('project-1-the-best-2024');
+    it('should strip leading/trailing hyphens from slug', async () => {
+      const variables = {
+        input: {
+          title: '---Hello World---',
+          description: 'A project with leading/trailing hyphens in title',
+          technologies: ['React'],
+          imageUrl: 'https://example.com/image.png'
         }
-      }
+      };
+
+      const response = await executeOperation(CREATE_PROJECT_MUTATION, variables, adminContext);
+      const project = assertProjectCreated(response);
+      
+      expect(project.slug).toBe('hello-world');
+    });
+  });
+
+  describe('createProject - Failure Modes', () => {
+    it('should reject duplicate explicit slug', async () => {
+      await Project.create({
+        title: 'First',
+        slug: 'taken-slug',
+        description: 'First project',
+        technologies: ['React'],
+        imageUrl: 'https://example.com/1.png'
+      });
+
+      const variables = {
+        input: {
+          title: 'Second',
+          slug: 'taken-slug',
+          description: 'Should fail',
+          technologies: ['Vue'],
+          imageUrl: 'https://example.com/2.png'
+        }
+      };
+
+      const response = await executeOperation(CREATE_PROJECT_MUTATION, variables, adminContext);
+      assertGraphQLError(response, 'already in use');
+    });
+
+    it('should reject invalid slug format after normalization', async () => {
+      const variables = {
+        input: {
+          title: 'My Project',
+          slug: '!!!@@@###',
+          description: 'Should fail - slug becomes empty after normalization',
+          technologies: ['React'],
+          imageUrl: 'https://example.com/image.png'
+        }
+      };
+
+      const response = await executeOperation(CREATE_PROJECT_MUTATION, variables, adminContext);
+      assertGraphQLError(response, 'Invalid slug format');
+    });
+
+    it('should reject creation without title when slug is not provided', async () => {
+      const variables = {
+        input: {
+          description: 'No title provided',
+          technologies: ['React'],
+          imageUrl: 'https://example.com/image.png'
+        }
+      };
+
+      const response = await executeOperation(CREATE_PROJECT_MUTATION, variables, adminContext);
+      // GraphQL schema enforces title as required, so we get a schema validation error
+      assertGraphQLError(response, 'title');
+    });
+
+    it('should reject title that produces empty slug', async () => {
+      const variables = {
+        input: {
+          title: '!!!@@@###',
+          description: 'Title with only special chars',
+          technologies: ['React'],
+          imageUrl: 'https://example.com/image.png'
+        }
+      };
+
+      const response = await executeOperation(CREATE_PROJECT_MUTATION, variables, adminContext);
+      assertGraphQLError(response, 'Cannot generate slug from empty or invalid title');
     });
   });
 
@@ -249,15 +336,9 @@ describe('Project Resolvers - Slug Generation', () => {
       };
 
       const response = await executeOperation(UPDATE_PROJECT_MUTATION, variables, adminContext);
-
-      expect(response.body.kind).toBe('single');
-      if (response.body.kind === 'single') {
-        const data = response.body.singleResult.data;
-        if (data?.updateProject) {
-          const project = data.updateProject as any;
-          expect(project.slug).toBe('new-unique-slug');
-        }
-      }
+      const project = assertProjectUpdated(response);
+      
+      expect(project.slug).toBe('new-unique-slug');
     });
 
     it('should normalize slug on update', async () => {
@@ -269,15 +350,44 @@ describe('Project Resolvers - Slug Generation', () => {
       };
 
       const response = await executeOperation(UPDATE_PROJECT_MUTATION, variables, adminContext);
+      const project = assertProjectUpdated(response);
+      
+      expect(project.slug).toBe('new-slug-with-spaces');
+    });
 
-      expect(response.body.kind).toBe('single');
-      if (response.body.kind === 'single') {
-        const data = response.body.singleResult.data;
-        if (data?.updateProject) {
-          const project = data.updateProject as any;
-          expect(project.slug).toBe('new-slug-with-spaces');
+    it('should reject update to duplicate slug', async () => {
+      await Project.create({
+        title: 'Another Project',
+        slug: 'another-slug',
+        description: 'Another project',
+        technologies: ['Vue'],
+        imageUrl: 'https://example.com/another.png'
+      });
+
+      const variables = {
+        id: existingProject._id.toString(),
+        input: {
+          slug: 'another-slug'
         }
-      }
+      };
+
+      const response = await executeOperation(UPDATE_PROJECT_MUTATION, variables, adminContext);
+      assertGraphQLError(response, 'already in use');
+    });
+
+    it('should reject update with invalid slug format', async () => {
+      // Use a slug that normalizes to something invalid (empty after stripping special chars)
+      // Note: '!!!invalid!!!' normalizes to 'invalid' which is valid
+      // We need to test with something that stays invalid after normalization
+      const variables = {
+        id: existingProject._id.toString(),
+        input: {
+          slug: '!!!@@@###'
+        }
+      };
+
+      const response = await executeOperation(UPDATE_PROJECT_MUTATION, variables, adminContext);
+      assertGraphQLError(response, 'Invalid slug format');
     });
   });
 });

@@ -2,7 +2,6 @@
 Modern full-stack portfolio powering projects, articles, AI tools, and Goggins Mode.
 
 [![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://luisfaria.dev)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue)](https://www.typescriptlang.org/)
 ![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/lfariabr/luisfaria.dev)
 
