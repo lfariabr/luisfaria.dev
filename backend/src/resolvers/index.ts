@@ -10,16 +10,7 @@ import { chatbotMutations } from './chatbot/mutations';
 import { screamMutations } from './screams/mutations';
 import { sendGogginsEmailMutation } from './resend/mutations';
 import Project from '../models/Project';
-
-function slugify(text: string) {
-  return text
-    .toString()
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-');
-}
+import { slugify } from '../utils/slugUtils';
 
 // Combine all resolvers
 export const resolvers = {
