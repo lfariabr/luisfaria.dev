@@ -43,6 +43,10 @@ export function middleware(request: NextRequest) {
       }
       
     } catch (error) {
+      console.error('Middleware: Token decoding failed', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        path: request.nextUrl.pathname,
+      });
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('redirect', request.nextUrl.pathname);
       return NextResponse.redirect(loginUrl);

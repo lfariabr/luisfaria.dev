@@ -218,4 +218,15 @@ describe('Middleware - Admin Route Protection', () => {
       expect(response.status).toBe(200);
     });
   });
+  
+  describe('Error handling', () => {
+    it('handles token decoding errors gracefully', () => {
+      // This test ensures the middleware doesn't crash on invalid tokens
+      const request = createMockRequest('/admin', 'not.a.valid.token');
+      const response = middleware(request);
+      // Should redirect to login due to invalid token
+      expect(response.status).toBe(307);
+      expect(response.headers.get('location')).toContain('/login');
+    });
+  });
 });
