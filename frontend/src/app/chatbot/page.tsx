@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { MainLayout } from "@/components/layouts/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { MarkdownMessage } from '@/components/chat/MarkdownMessage';
 import { sendDiscordWebhook } from '@/utils/discord';
 import { LockIcon, ClockIcon, AlertCircle } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+const DEFAULT_RATE_LIMIT = 5;
 
 // GraphQL mutation for sending a message to the chatbot
 const ASK_QUESTION_MUTATION = gql`
@@ -41,6 +44,7 @@ interface Message {
 interface RateLimitInfo {
   remaining: number;
   resetTime: string;
+  limit?: number;
 }
 
 export default function ChatbotPage() {
@@ -59,6 +63,7 @@ export default function ChatbotPage() {
   const [rateLimitError, setRateLimitError] = useState<string | null>(null);
   const [rateLimitResetTime, setRateLimitResetTime] = useState<Date | null>(null);
   const [timeUntilReset, setTimeUntilReset] = useState<string>('');
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
 
   // Update countdown timer for rate limit reset
   useEffect(() => {
@@ -91,6 +96,16 @@ export default function ChatbotPage() {
     const interval = setInterval(calculateTimeRemaining, 1000);
     return () => clearInterval(interval);
   }, [rateLimitResetTime]);
+
+  // Scroll to latest message whenever the transcript updates
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior: 'smooth',
+    });
+  }, [messages]);
 
   // Setup GraphQL mutation
   const [askQuestion] = useMutation(ASK_QUESTION_MUTATION, {
@@ -211,208 +226,266 @@ export default function ChatbotPage() {
     }, 100);
   };
 
+  const limit = rateLimitInfo?.limit ?? DEFAULT_RATE_LIMIT;
+  const remaining = rateLimitInfo?.remaining ?? DEFAULT_RATE_LIMIT;
+  const used = Math.max(0, limit - remaining);
+  const usagePercent = Math.min(100, (used / limit) * 100);
+
+  const profileInitials = user?.name
+    ? user.name
+        .split(' ')
+        .map((part) => part.charAt(0))
+        .slice(0, 2)
+        .join('')
+        .toUpperCase()
+    : 'LF';
+
   return (
     <MainLayout>
-      <div className="container py-8 max-w-4xl mx-auto px-4">
-        {/* Hero Section */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600 mb-4">
-            Meet my AI Assistant
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
-            Get instant answers about my experience, projects, and expertise.
-            Trained on my professional background and technical knowledge.
-          </p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-muted/50 p-6 rounded-lg border">
-              <div className="bg-primary/10 w-12 h-12 rounded-full flex items-center justify-center mb-4 mx-auto">
-                <BotIcon className="w-6 h-6 text-primary" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Instant Answers</h3>
-              <p className="text-muted-foreground text-sm">
-                Get quick responses about my background, skills, and experience.
+      <div className="container py-8 px-4 max-w-7xl mx-auto">
+        <div className="grid gap-6 lg:gap-10 lg:grid-cols-[minmax(280px,340px)_1fr] xl:grid-cols-[360px_1fr]">
+          {/* Info Rail */}
+          <aside className="flex flex-col gap-6 lg:sticky lg:top-8 self-start">
+            {/* Profile Block */}
+            <section className="rounded-3xl border bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-white p-6 shadow-lg">
+              <p className="text-[11px] uppercase tracking-[0.3em] text-white/60 mb-3">
+                Luis Faria • AI Command Center
               </p>
-            </div>
-            
-            <div className="bg-muted/50 p-6 rounded-lg border">
-              <div className="bg-primary/10 w-12 h-12 rounded-full flex items-center justify-center mb-4 mx-auto">
-                <LockIcon className="w-6 h-6 text-primary" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Secure & Private</h3>
-              <p className="text-muted-foreground text-sm">
-                Your conversations are private and not stored long-term.
+              <h1 className="text-3xl font-semibold leading-tight">
+                Personal AI Assistant
+              </h1>
+              <p className="mt-3 text-sm text-white/80">
+                Ask anything about my shipping history, architecture decisions, or leadership philosophy. Replies are grounded in my real portfolio.
               </p>
-            </div>
-            
-            <div className="bg-muted/50 p-6 rounded-lg border">
-              <div className="bg-primary/10 w-12 h-12 rounded-full flex items-center justify-center mb-4 mx-auto">
-                <ClockIcon className="w-6 h-6 text-primary" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Rate Limited</h3>
-              <p className="text-muted-foreground text-sm">
-                {isAuthenticated 
-                  ? `You have ${rateLimitInfo?.remaining || 5}/5 messages remaining.`
-                  : '5 messages per hour for authenticated users.'
-                }
-              </p>
-            </div>
-          </div>
-        </div>
+            </section>
 
-        {/* Enhanced Suggested Questions Section */}
-        {messages.length <= 3 && (
-          <div className="mb-8">
-            <h2 className="text-lg font-medium mb-4 text-center">What would you like to know?</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-3xl mx-auto">
-              {[
-                {
-                  question: "What's Luis' experience with React?",
-                  description: "Learn about his React.js expertise and projects"
-                },
-                {
-                  question: "Tell me about Luis' latest projects",
-                  description: "Discover his most recent work and contributions"
-                },
-                {
-                  question: "What technologies is Luis currently working with?",
-                  description: "Find out about his current tech stack and tools"
-                },
-                {
-                  question: "How can I contact Luis?",
-                  description: "Get in touch for opportunities or questions"
-                }
-              ].map((item) => (
-                <div 
-                  key={item.question}
-                  onClick={() => handleSuggestionClick(item.question)}
-                  className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors group"
-                >
-                  <h3 className="font-medium group-hover:text-primary">{item.question}</h3>
-                  <p className="text-sm text-muted-foreground mt-1">{item.description}</p>
+            <section className="border rounded-2xl p-5 bg-card shadow-sm">
+              <div className="flex items-center gap-4">
+                <div className="h-14 w-14 rounded-2xl bg-primary/10 border border-primary/40 flex items-center justify-center text-lg font-semibold text-primary uppercase">
+                  {profileInitials}
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Signed in as
+                  </p>
+                  <p className="text-base font-semibold">
+                    {isAuthenticated ? user?.name ?? user?.email ?? 'Member' : 'Guest Explorer'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {isAuthenticated ? 'Full access unlocked' : 'Log in for 5 authenticated messages/hr'}
+                  </p>
+                </div>
+              </div>
+            </section>
 
-        {/* Authentication Alert */}
-        {!isAuthenticated && (
-          <Alert className="mb-6 border-blue-200 dark:border-blue-800 bg-blue-50/70 dark:bg-blue-900/20">
-            <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-            <div className="ml-3 flex-1">
-              <AlertTitle className="text-blue-800 dark:text-blue-200 font-semibold">
-                Sign in to chat with Luis' AI Assistant
-              </AlertTitle>
-              <AlertDescription className="text-blue-700 dark:text-blue-300">
-                <p className="mb-3">
-                  Please log in or create an account to start a conversation.
+            {/* Rate Limit Module */}
+            <section className="border rounded-2xl p-5 space-y-4 bg-muted/40">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                    Usage Window
+                  </p>
+                  <p className="text-2xl font-semibold">
+                    {isAuthenticated ? `${remaining}/${limit}` : `0/${DEFAULT_RATE_LIMIT}`}
+                  </p>
+                </div>
+                <span className="text-[11px] bg-white/60 dark:bg-slate-900/60 border rounded-full px-3 py-1 text-muted-foreground">
+                  {timeUntilReset ? `Resets in ${timeUntilReset}` : 'Fresh window'}
+                </span>
+              </div>
+              <div className="space-y-2">
+                <div className="h-2 w-full bg-border rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-primary to-blue-500 transition-all duration-300"
+                    style={{ width: `${usagePercent}%` }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {isAuthenticated
+                    ? remaining > 0
+                      ? 'Still clear to keep chatting.'
+                      : 'Limit hit. Breathe for a minute, then try again.'
+                    : 'Authenticate to start using your message window.'}
                 </p>
-                <div className="flex flex-wrap items-center gap-3">
-                  <Button asChild size="sm">
-                    <a href="/login">Log in</a>
-                  </Button>
-                  <Button asChild variant="outline" size="sm">
-                    <a href="/register">Create account</a>
-                  </Button>
-                  <span className="text-xs text-blue-700/80 dark:text-blue-300/80 inline-flex items-center gap-1">
-                    <ClockIcon className="h-3.5 w-3.5" /> 5 messages/hour for authenticated users
-                  </span>
-                </div>
-              </AlertDescription>
-            </div>
-          </Alert>
-        )}
+              </div>
+            </section>
 
-        {/* Rate Limit Warning */}
-        {isAuthenticated && rateLimitInfo?.remaining === 0 && rateLimitResetTime && (
-          <Alert variant="warning" className="mb-6">
-            <AlertTriangle className="h-5 w-5" />
-            <div className="ml-3">
-              <AlertTitle>Rate Limit Reached</AlertTitle>
-              <AlertDescription>
-                You've used all your messages. You can send another message in {timeUntilReset}.
-              </AlertDescription>
-            </div>
-          </Alert>
-        )}
-
-        {/* Chat Interface */}
-        <div className="border rounded-lg overflow-hidden shadow bg-card">
-          <div className="h-[60vh] overflow-y-auto p-4 space-y-4">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${
-                  message.sender === 'user' ? 'justify-end' : 'justify-start'
-                }`}
-              >
-                <div
-                  className={`flex gap-3 max-w-[80%] ${
-                    message.sender === 'user'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted'
-                  } p-4 rounded-lg`}
-                >
-                  {message.sender === 'bot' && (
-                    <div className="flex-shrink-0">
-                      <BotIcon className="h-5 w-5 mt-0.5" />
+            {!isAuthenticated && (
+              <section className="border rounded-2xl p-5 bg-blue-50/70 dark:bg-blue-900/20">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-full p-2 bg-white/70 dark:bg-blue-900/40">
+                    <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <h3 className="font-semibold text-blue-900 dark:text-blue-100">
+                        Sign in to chat with Luis' AI Assistant
+                      </h3>
+                      <p className="text-sm text-blue-800/80 dark:text-blue-200/80">
+                        Create an account to unlock full conversations (5 messages/hour).
+                      </p>
                     </div>
-                  )}
-                  <div className="overflow-x-auto w-full">
-                    <MarkdownMessage 
-                      content={message.content} 
-                      className={message.sender === 'user' ? 'text-primary-foreground' : ''}
-                    />
-                    <p className="text-xs opacity-70 mt-2">
-                      {message.timestamp.toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+                    <div className="flex flex-wrap gap-3">
+                      <Button asChild size="sm">
+                        <a href="/login">Log in</a>
+                      </Button>
+                      <Button asChild variant="outline" size="sm">
+                        <a href="/register">Create account</a>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {isAuthenticated && rateLimitInfo?.remaining === 0 && rateLimitResetTime && (
+              <section className="border rounded-2xl p-4 bg-amber-50 dark:bg-amber-900/30">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="h-5 w-5 text-amber-600" />
+                  <div>
+                    <p className="font-semibold text-amber-900 dark:text-amber-100">
+                      Rate limit reached
+                    </p>
+                    <p className="text-sm text-amber-900/80 dark:text-amber-200/80">
+                      Next message available in {timeUntilReset}.
                     </p>
                   </div>
-                  {message.sender === 'user' && (
-                    <div className="flex-shrink-0">
-                      <UserIcon className="h-5 w-5 mt-0.5" />
-                    </div>
-                  )}
                 </div>
-              </div>
-            ))}
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="bg-muted p-3 rounded-lg">
-                  <div className="flex gap-1">
-                    <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                    <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                    <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '600ms' }}></div>
-                  </div>
-                </div>
-              </div>
+              </section>
             )}
-          </div>
-          
-          <form onSubmit={handleSendMessage} className="border-t p-4 flex gap-2">
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Type your message..."
-              disabled={isLoading}
-              className="flex-1"
-            />
-            <Button type="submit" size="icon" disabled={isLoading || !input.trim()} onClick={handleButtonClick}>
-              <SendIcon className="h-4 w-4" />
-            </Button>
-          </form>
-        </div>
-        
-        <div className="mt-6 text-sm text-muted-foreground text-center">
-          <p>This AI assistant is powered by a custom model trained on Luis' technical expertise and preferences.</p>
-          <p>All conversations are private and not stored longer than needed to provide the service.</p>
-          
-          {rateLimitResetTime && (
-            <p className="mt-2 text-amber-500">Rate limit reached. Next message available in {timeUntilReset}.</p>
-          )}
+          </aside>
+
+          {/* Conversation Column */}
+          <section className="space-y-6">
+            <div className="rounded-3xl border bg-card shadow-sm p-6 space-y-5">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                  <span className="inline-flex items-center gap-1 rounded-full border px-3 py-1">
+                    <BotIcon className="h-3.5 w-3.5" /> AI-grounded
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full border px-3 py-1">
+                    <LockIcon className="h-3.5 w-3.5" /> Private
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full border px-3 py-1">
+                    <ClockIcon className="h-3.5 w-3.5" /> {limit} msgs/hr
+                  </span>
+                </div>
+              </div>
+
+              <div className="border rounded-2xl bg-background">
+                <div className="flex flex-col h-[70vh]">
+                  <div
+                    ref={messagesContainerRef}
+                    className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin"
+                  >
+                    {messages.map((message, index) => {
+                      const isUser = message.sender === 'user';
+                      const previous = messages[index - 1];
+                      const showAvatar = !previous || previous.sender !== message.sender;
+                      return (
+                        <div
+                          key={message.id}
+                          className={cn(
+                            'flex gap-3',
+                            isUser ? 'justify-end text-right' : 'justify-start text-left'
+                          )}
+                        >
+                          {!isUser && showAvatar && (
+                            <div className="h-9 w-9 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                              <BotIcon className="h-4 w-4" />
+                            </div>
+                          )}
+                          <div
+                            className={cn(
+                              'max-w-[80%] rounded-2xl px-4 py-3 shadow-sm border',
+                              isUser
+                                ? 'bg-gradient-to-r from-primary to-blue-500 text-primary-foreground border-primary/40'
+                                : 'bg-muted text-foreground border-transparent'
+                            )}
+                          >
+                            <MarkdownMessage
+                              content={message.content}
+                              className={isUser ? 'text-primary-foreground' : ''}
+                            />
+                            <p className={cn('text-[11px] mt-2', isUser ? 'text-white/70' : 'text-muted-foreground')}>
+                              {message.timestamp.toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </p>
+                          </div>
+                          {isUser && showAvatar && (
+                            <div className="h-9 w-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold uppercase">
+                              {profileInitials.slice(0, 2)}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                    {isLoading && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <div className="h-2 w-2 bg-primary rounded-full animate-bounce" />
+                        <div className="h-2 w-2 bg-primary rounded-full animate-bounce [animation-delay:150ms]" />
+                        <div className="h-2 w-2 bg-primary rounded-full animate-bounce [animation-delay:300ms]" />
+                        <span>Assistant composing...</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Suggestions */}
+                  <div className="border-t bg-muted/30 px-4 py-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+                        Quick prompts
+                      </p>
+                    </div>
+                    <div className="flex gap-2 overflow-x-auto pb-1">
+                      {[
+                        "What's Luis shipping right now?",
+                        'Summarize his AI roadmap',
+                        'What is Luis background?',
+                        'How does Luis scale React apps?',
+                      ].map((question) => (
+                        <button
+                          key={question}
+                          type="button"
+                          onClick={() => handleSuggestionClick(question)}
+                          className="text-sm border rounded-full px-4 py-2 hover:border-primary transition-colors"
+                        >
+                          {question}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <form onSubmit={handleSendMessage} className="border-t p-4 flex gap-3">
+                    <Input
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      disabled={isLoading}
+                      className="flex-1"
+                    />
+                    <Button
+                      type="submit"
+                      size="icon"
+                      disabled={isLoading || !input.trim()}
+                      onClick={handleButtonClick}
+                      className="rounded-full h-12 w-12"
+                    >
+                      <SendIcon className="h-4 w-4" />
+                    </Button>
+                  </form>
+                </div>
+              </div>
+            </div>
+            <div className="text-sm text-muted-foreground text-center space-y-2">
+              <p>This AI assistant is powered by a custom model trained on Luis' technical expertise and preferences.</p>
+              <p>All conversations are private and not stored longer than needed to provide the service.</p>
+              {rateLimitResetTime && (
+                <p className="text-amber-500">Rate limit reached. Next message available in {timeUntilReset}.</p>
+              )}
+            </div>
+          </section>
         </div>
       </div>
     </MainLayout>
