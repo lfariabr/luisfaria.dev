@@ -1,17 +1,16 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { MainLayout } from "@/components/layouts/MainLayout";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { SendIcon, BotIcon, UserIcon, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { gql, useMutation } from '@apollo/client';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { MarkdownMessage } from '@/components/chat/MarkdownMessage';
 import { sendDiscordWebhook } from '@/utils/discord';
-import { LockIcon, ClockIcon, AlertCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { InfoRail } from '@/components/chat/InfoRail';
+import { ChatTranscript } from '@/components/chat/ChatTranscript';
+import { ChatSuggestions } from '@/components/chat/ChatSuggestions';
+import { ChatComposer } from '@/components/chat/ChatComposer';
+import { ChatHeader } from '@/components/chat/ChatHeader';
+import type { ChatMessage, ChatRateLimitInfo } from '@/components/chat/types';
 
 const DEFAULT_RATE_LIMIT = 5;
 
@@ -34,22 +33,9 @@ const ASK_QUESTION_MUTATION = gql`
   }
 `;
 
-interface Message {
-  id: string;
-  content: string;
-  sender: 'user' | 'bot';
-  timestamp: Date;
-}
-
-interface RateLimitInfo {
-  remaining: number;
-  resetTime: string;
-  limit?: number;
-}
-
 export default function ChatbotPage() {
   const { isAuthenticated, user } = useAuth();
-  const [messages, setMessages] = useState<Message[]>([
+  const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
       content: 'Hello! I\'m Luis\'s AI assistant. How can I help you today?',
@@ -59,11 +45,11 @@ export default function ChatbotPage() {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [rateLimitInfo, setRateLimitInfo] = useState<RateLimitInfo | null>(null);
-  const [rateLimitError, setRateLimitError] = useState<string | null>(null);
+  const [rateLimitInfo, setRateLimitInfo] = useState<ChatRateLimitInfo | null>(null);
   const [rateLimitResetTime, setRateLimitResetTime] = useState<Date | null>(null);
   const [timeUntilReset, setTimeUntilReset] = useState<string>('');
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+  const formRef = useRef<HTMLFormElement | null>(null);
 
   // Update countdown timer for rate limit reset
   useEffect(() => {
@@ -75,7 +61,6 @@ export default function ChatbotPage() {
       const diffMs = resetTime.getTime() - now.getTime();
       
       if (diffMs <= 0) {
-        setRateLimitError(null);
         setRateLimitResetTime(null);
         setTimeUntilReset('');
         return;
@@ -117,7 +102,7 @@ export default function ChatbotPage() {
         }
         
         // Add bot response
-        const botResponse: Message = {
+        const botResponse: ChatMessage = {
           id: `bot-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           content: data.askQuestion.message?.answer || "Sorry, I couldn't process your request.",
           sender: 'bot',
@@ -145,16 +130,15 @@ export default function ChatbotPage() {
             resetTimeString = extReset;
             setRateLimitResetTime(new Date(resetTimeString));
           }
-          errorMessage = 'You have reached your 5 messages/hour limit.';
-          setRateLimitError(errorMessage);
+          errorMessage = `You have reached your ${DEFAULT_RATE_LIMIT} messages/hour limit.`;
         }
       }
       
       // Add error message from the bot
-      const botErrorMessage: Message = {
+      const botErrorMessage: ChatMessage = {
         id: `error-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         content: errorMessage === 'Rate limit exceeded' 
-          ? `You have reached your 5 messages/hour limit. Please try again later.` 
+          ? `You have reached your ${DEFAULT_RATE_LIMIT} messages/hour limit. Please try again later.` 
           : `Oops! ${errorMessage}`,
         sender: 'bot',
         timestamp: new Date(),
@@ -175,7 +159,7 @@ export default function ChatbotPage() {
     if (!input.trim()) return;
     
     // Add user message
-    const userMessage: Message = {
+    const userMessage: ChatMessage = {
       id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       content: input,
       sender: 'user',
@@ -199,7 +183,7 @@ export default function ChatbotPage() {
     } else {
       // Simulate API response delay for non-authenticated users
       setTimeout(() => {
-        const botResponse: Message = {
+        const botResponse: ChatMessage = {
           id: `bot-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           content: `You need to be logged in to use this feature. Authenticated users can send up to 5 messages per hour. Please log in to continue.`,
           sender: 'bot',
@@ -218,263 +202,74 @@ export default function ChatbotPage() {
     
     // Auto-submit after a short delay (like ChatGPT)
     setTimeout(() => {
-      const form = document.querySelector('form');
-      if (form) {
-        const submitEvent = new Event('submit', { cancelable: true, bubbles: true });
-        form.dispatchEvent(submitEvent);
-      }
+      formRef.current?.requestSubmit();
     }, 100);
   };
 
   const limit = rateLimitInfo?.limit ?? DEFAULT_RATE_LIMIT;
   const remaining = rateLimitInfo?.remaining ?? DEFAULT_RATE_LIMIT;
   const used = Math.max(0, limit - remaining);
-  const usagePercent = Math.min(100, (used / limit) * 100);
+  const usagePercent = limit > 0 ? Math.min(100, (used / limit) * 100) : 0;
 
-  const profileInitials = user?.name
-    ? user.name
+  const profileInitials = useMemo(() => {
+    if (user?.name) {
+      return user.name
         .split(' ')
         .map((part) => part.charAt(0))
         .slice(0, 2)
         .join('')
-        .toUpperCase()
-    : 'LF';
+        .toUpperCase();
+    }
+    return 'LF';
+  }, [user]);
+
+  const displayName = isAuthenticated ? user?.name ?? user?.email ?? 'Member' : 'Guest Explorer';
+  const suggestions = useMemo(
+    () => [
+      "What's Luis shipping right now?",
+      'Summarize his AI roadmap',
+      'What is Luis background?',
+      'How does Luis scale React apps?',
+    ],
+    []
+  );
 
   return (
     <MainLayout>
       <div className="container py-8 px-4 max-w-7xl mx-auto">
         <div className="grid gap-6 lg:gap-10 lg:grid-cols-[minmax(280px,340px)_1fr] xl:grid-cols-[360px_1fr]">
-          {/* Info Rail */}
-          <aside className="flex flex-col gap-6 lg:sticky lg:top-8 self-start">
-            {/* Profile Block */}
-            <section className="rounded-3xl border bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-white p-6 shadow-lg">
-              <p className="text-[11px] uppercase tracking-[0.3em] text-white/60 mb-3">
-                Luis Faria • AI Command Center
-              </p>
-              <h1 className="text-3xl font-semibold leading-tight">
-                Personal AI Assistant
-              </h1>
-              <p className="mt-3 text-sm text-white/80">
-                Ask anything about my shipping history, architecture decisions, or leadership philosophy. Replies are grounded in my real portfolio.
-              </p>
-            </section>
+          <InfoRail
+            profileInitials={profileInitials}
+            displayName={displayName}
+            isAuthenticated={isAuthenticated}
+            remaining={remaining}
+            limit={limit}
+            usagePercent={usagePercent}
+            timeUntilReset={timeUntilReset}
+            rateLimitResetTime={rateLimitResetTime}
+            defaultLimit={DEFAULT_RATE_LIMIT}
+          />
 
-            <section className="border rounded-2xl p-5 bg-card shadow-sm">
-              <div className="flex items-center gap-4">
-                <div className="h-14 w-14 rounded-2xl bg-primary/10 border border-primary/40 flex items-center justify-center text-lg font-semibold text-primary uppercase">
-                  {profileInitials}
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">
-                    Signed in as
-                  </p>
-                  <p className="text-base font-semibold">
-                    {isAuthenticated ? user?.name ?? user?.email ?? 'Member' : 'Guest Explorer'}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {isAuthenticated ? 'Full access unlocked' : 'Log in for 5 authenticated messages/hr'}
-                  </p>
-                </div>
-              </div>
-            </section>
-
-            {/* Rate Limit Module */}
-            <section className="border rounded-2xl p-5 space-y-4 bg-muted/40">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs uppercase tracking-widest text-muted-foreground">
-                    Usage Window
-                  </p>
-                  <p className="text-2xl font-semibold">
-                    {isAuthenticated ? `${remaining}/${limit}` : `0/${DEFAULT_RATE_LIMIT}`}
-                  </p>
-                </div>
-                <span className="text-[11px] bg-white/60 dark:bg-slate-900/60 border rounded-full px-3 py-1 text-muted-foreground">
-                  {timeUntilReset ? `Resets in ${timeUntilReset}` : 'Fresh window'}
-                </span>
-              </div>
-              <div className="space-y-2">
-                <div className="h-2 w-full bg-border rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-primary to-blue-500 transition-all duration-300"
-                    style={{ width: `${usagePercent}%` }}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {isAuthenticated
-                    ? remaining > 0
-                      ? 'Still clear to keep chatting.'
-                      : 'Limit hit. Breathe for a minute, then try again.'
-                    : 'Authenticate to start using your message window.'}
-                </p>
-              </div>
-            </section>
-
-            {!isAuthenticated && (
-              <section className="border rounded-2xl p-5 bg-blue-50/70 dark:bg-blue-900/20">
-                <div className="flex items-start gap-3">
-                  <div className="rounded-full p-2 bg-white/70 dark:bg-blue-900/40">
-                    <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div className="space-y-3">
-                    <div>
-                      <h3 className="font-semibold text-blue-900 dark:text-blue-100">
-                        Sign in to chat with Luis' AI Assistant
-                      </h3>
-                      <p className="text-sm text-blue-800/80 dark:text-blue-200/80">
-                        Create an account to unlock full conversations (5 messages/hour).
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-3">
-                      <Button asChild size="sm">
-                        <a href="/login">Log in</a>
-                      </Button>
-                      <Button asChild variant="outline" size="sm">
-                        <a href="/register">Create account</a>
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </section>
-            )}
-
-            {isAuthenticated && rateLimitInfo?.remaining === 0 && rateLimitResetTime && (
-              <section className="border rounded-2xl p-4 bg-amber-50 dark:bg-amber-900/30">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="h-5 w-5 text-amber-600" />
-                  <div>
-                    <p className="font-semibold text-amber-900 dark:text-amber-100">
-                      Rate limit reached
-                    </p>
-                    <p className="text-sm text-amber-900/80 dark:text-amber-200/80">
-                      Next message available in {timeUntilReset}.
-                    </p>
-                  </div>
-                </div>
-              </section>
-            )}
-          </aside>
-
-          {/* Conversation Column */}
           <section className="space-y-6">
             <div className="rounded-3xl border bg-card shadow-sm p-6 space-y-5">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                  <span className="inline-flex items-center gap-1 rounded-full border px-3 py-1">
-                    <BotIcon className="h-3.5 w-3.5" /> AI-grounded
-                  </span>
-                  <span className="inline-flex items-center gap-1 rounded-full border px-3 py-1">
-                    <LockIcon className="h-3.5 w-3.5" /> Private
-                  </span>
-                  <span className="inline-flex items-center gap-1 rounded-full border px-3 py-1">
-                    <ClockIcon className="h-3.5 w-3.5" /> {limit} msgs/hr
-                  </span>
-                </div>
-              </div>
-
+              <ChatHeader limit={limit} />
               <div className="border rounded-2xl bg-background">
                 <div className="flex flex-col h-[70vh]">
-                  <div
+                  <ChatTranscript
                     ref={messagesContainerRef}
-                    className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin"
-                  >
-                    {messages.map((message, index) => {
-                      const isUser = message.sender === 'user';
-                      const previous = messages[index - 1];
-                      const showAvatar = !previous || previous.sender !== message.sender;
-                      return (
-                        <div
-                          key={message.id}
-                          className={cn(
-                            'flex gap-3',
-                            isUser ? 'justify-end text-right' : 'justify-start text-left'
-                          )}
-                        >
-                          {!isUser && showAvatar && (
-                            <div className="h-9 w-9 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-                              <BotIcon className="h-4 w-4" />
-                            </div>
-                          )}
-                          <div
-                            className={cn(
-                              'max-w-[80%] rounded-2xl px-4 py-3 shadow-sm border',
-                              isUser
-                                ? 'bg-gradient-to-r from-primary to-blue-500 text-primary-foreground border-primary/40'
-                                : 'bg-muted text-foreground border-transparent'
-                            )}
-                          >
-                            <MarkdownMessage
-                              content={message.content}
-                              className={isUser ? 'text-primary-foreground' : ''}
-                            />
-                            <p className={cn('text-[11px] mt-2', isUser ? 'text-white/70' : 'text-muted-foreground')}>
-                              {message.timestamp.toLocaleTimeString([], {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </p>
-                          </div>
-                          {isUser && showAvatar && (
-                            <div className="h-9 w-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold uppercase">
-                              {profileInitials.slice(0, 2)}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                    {isLoading && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <div className="h-2 w-2 bg-primary rounded-full animate-bounce" />
-                        <div className="h-2 w-2 bg-primary rounded-full animate-bounce [animation-delay:150ms]" />
-                        <div className="h-2 w-2 bg-primary rounded-full animate-bounce [animation-delay:300ms]" />
-                        <span>Assistant composing...</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Suggestions */}
-                  <div className="border-t bg-muted/30 px-4 py-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
-                        Quick prompts
-                      </p>
-                    </div>
-                    <div className="flex gap-2 overflow-x-auto pb-1">
-                      {[
-                        "What's Luis shipping right now?",
-                        'Summarize his AI roadmap',
-                        'What is Luis background?',
-                        'How does Luis scale React apps?',
-                      ].map((question) => (
-                        <button
-                          key={question}
-                          type="button"
-                          onClick={() => handleSuggestionClick(question)}
-                          className="text-sm border rounded-full px-4 py-2 hover:border-primary transition-colors"
-                        >
-                          {question}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <form onSubmit={handleSendMessage} className="border-t p-4 flex gap-3">
-                    <Input
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
-                      disabled={isLoading}
-                      className="flex-1"
-                    />
-                    <Button
-                      type="submit"
-                      size="icon"
-                      disabled={isLoading || !input.trim()}
-                      onClick={handleButtonClick}
-                      className="rounded-full h-12 w-12"
-                    >
-                      <SendIcon className="h-4 w-4" />
-                    </Button>
-                  </form>
+                    messages={messages}
+                    isLoading={isLoading}
+                    profileInitials={profileInitials}
+                  />
+                  <ChatSuggestions suggestions={suggestions} onSuggestionClick={handleSuggestionClick} />
+                  <ChatComposer
+                    ref={formRef}
+                    input={input}
+                    isLoading={isLoading}
+                    onInputChange={setInput}
+                    onSubmit={handleSendMessage}
+                    onSendClick={handleButtonClick}
+                  />
                 </div>
               </div>
             </div>
