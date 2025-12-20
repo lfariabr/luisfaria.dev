@@ -1,16 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { MainLayout } from "@/components/layouts/MainLayout";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { SendIcon, BotIcon, UserIcon, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { gql, useMutation } from '@apollo/client';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { MarkdownMessage } from '@/components/chat/MarkdownMessage';
 import { sendDiscordWebhook } from '@/utils/discord';
-import { LockIcon, ClockIcon, AlertCircle } from 'lucide-react';
+import { InfoRail } from '@/components/chat/InfoRail';
+import { ChatTranscript } from '@/components/chat/ChatTranscript';
+import { ChatSuggestions } from '@/components/chat/ChatSuggestions';
+import { ChatComposer } from '@/components/chat/ChatComposer';
+import { ChatHeader } from '@/components/chat/ChatHeader';
+import type { ChatMessage, ChatRateLimitInfo } from '@/components/chat/types';
+
+const DEFAULT_RATE_LIMIT = 5;
 
 // GraphQL mutation for sending a message to the chatbot
 const ASK_QUESTION_MUTATION = gql`
@@ -31,21 +33,9 @@ const ASK_QUESTION_MUTATION = gql`
   }
 `;
 
-interface Message {
-  id: string;
-  content: string;
-  sender: 'user' | 'bot';
-  timestamp: Date;
-}
-
-interface RateLimitInfo {
-  remaining: number;
-  resetTime: string;
-}
-
 export default function ChatbotPage() {
   const { isAuthenticated, user } = useAuth();
-  const [messages, setMessages] = useState<Message[]>([
+  const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
       content: 'Hello! I\'m Luis\'s AI assistant. How can I help you today?',
@@ -55,42 +45,44 @@ export default function ChatbotPage() {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [rateLimitInfo, setRateLimitInfo] = useState<RateLimitInfo | null>(null);
-  const [rateLimitError, setRateLimitError] = useState<string | null>(null);
-  const [rateLimitResetTime, setRateLimitResetTime] = useState<Date | null>(null);
+  const [rateLimitInfo, setRateLimitInfo] = useState<ChatRateLimitInfo | null>(null);
   const [timeUntilReset, setTimeUntilReset] = useState<string>('');
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+  const formRef = useRef<HTMLFormElement | null>(null);
 
   // Update countdown timer for rate limit reset
   useEffect(() => {
-    if (!rateLimitResetTime) return;
+    const resetTime = rateLimitInfo?.resetTime;
+    if (!resetTime) {
+      setTimeUntilReset('');
+      return;
+    }
     
     const calculateTimeRemaining = () => {
-      const now = new Date();
-      const resetTime = new Date(rateLimitResetTime);
-      const diffMs = resetTime.getTime() - now.getTime();
-      
+      const diffMs = resetTime.getTime() - Date.now();
       if (diffMs <= 0) {
-        setRateLimitError(null);
-        setRateLimitResetTime(null);
         setTimeUntilReset('');
         return;
       }
-      
-      // Calculate minutes and seconds
       const diffMinutes = Math.floor(diffMs / 60000);
       const diffSeconds = Math.floor((diffMs % 60000) / 1000);
-      
-      // Format as MM:SS
       setTimeUntilReset(`${diffMinutes.toString().padStart(2, '0')}:${diffSeconds.toString().padStart(2, '0')}`);
     };
     
-    // Initial calculation
     calculateTimeRemaining();
-    
-    // Update every second
     const interval = setInterval(calculateTimeRemaining, 1000);
     return () => clearInterval(interval);
-  }, [rateLimitResetTime]);
+  }, [rateLimitInfo?.resetTime]);
+
+  // Scroll to latest message whenever the transcript updates
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior: 'smooth',
+    });
+  }, [messages]);
 
   // Setup GraphQL mutation
   const [askQuestion] = useMutation(ASK_QUESTION_MUTATION, {
@@ -98,11 +90,16 @@ export default function ChatbotPage() {
       if (data?.askQuestion) {
         // Update rate limit info
         if (data.askQuestion.rateLimitInfo) {
-          setRateLimitInfo(data.askQuestion.rateLimitInfo);
+          const info = data.askQuestion.rateLimitInfo;
+          setRateLimitInfo({
+            remaining: typeof info.remaining === 'number' ? info.remaining : 0,
+            limit: typeof info.limit === 'number' ? info.limit : DEFAULT_RATE_LIMIT,
+            resetTime: info.resetTime ? new Date(info.resetTime) : undefined,
+          });
         }
         
         // Add bot response
-        const botResponse: Message = {
+        const botResponse: ChatMessage = {
           id: `bot-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           content: data.askQuestion.message?.answer || "Sorry, I couldn't process your request.",
           sender: 'bot',
@@ -128,18 +125,23 @@ export default function ChatbotPage() {
           const extReset = ext?.resetTime;
           if (typeof extReset === 'string') {
             resetTimeString = extReset;
-            setRateLimitResetTime(new Date(resetTimeString));
           }
-          errorMessage = 'You have reached your 5 messages/hour limit.';
-          setRateLimitError(errorMessage);
+          const limitFromError = typeof ext?.limit === 'number' ? ext.limit : DEFAULT_RATE_LIMIT;
+          const remainingFromError = typeof ext?.remaining === 'number' ? ext.remaining : 0;
+          setRateLimitInfo({
+            remaining: remainingFromError,
+            limit: limitFromError,
+            resetTime: resetTimeString ? new Date(resetTimeString) : undefined,
+          });
+          errorMessage = `You have reached your ${DEFAULT_RATE_LIMIT} messages/hour limit.`;
         }
       }
       
       // Add error message from the bot
-      const botErrorMessage: Message = {
+      const botErrorMessage: ChatMessage = {
         id: `error-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         content: errorMessage === 'Rate limit exceeded' 
-          ? `You have reached your 5 messages/hour limit. Please try again later.` 
+          ? `You have reached your ${DEFAULT_RATE_LIMIT} messages/hour limit. Please try again later.` 
           : `Oops! ${errorMessage}`,
         sender: 'bot',
         timestamp: new Date(),
@@ -150,19 +152,17 @@ export default function ChatbotPage() {
     }
   });
 
-  const handleButtonClick = async () => {
-    await sendDiscordWebhook('Chatbot button was clicked');
-  };
-
-  const handleSendMessage = async (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    if (!input.trim()) return;
+    if (isLoading) return;
+    const trimmedInput = input.trim();
+    if (!trimmedInput) return;
     
     // Add user message
-    const userMessage: Message = {
+    const userMessage: ChatMessage = {
       id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      content: input,
+      content: trimmedInput,
       sender: 'user',
       timestamp: new Date(),
     };
@@ -170,12 +170,16 @@ export default function ChatbotPage() {
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
+
+    void sendDiscordWebhook('Chatbot message submitted').catch((err) => {
+      console.error('sendDiscordWebhook failed:', err);
+    });
     
     if (isAuthenticated) {
       try {
         // Send message to API if user is authenticated
         await askQuestion({
-          variables: { question: input.trim() }
+          variables: { question: trimmedInput }
         });
       } catch (error) {
         // Error is handled by onError in the mutation setup
@@ -184,7 +188,7 @@ export default function ChatbotPage() {
     } else {
       // Simulate API response delay for non-authenticated users
       setTimeout(() => {
-        const botResponse: Message = {
+        const botResponse: ChatMessage = {
           id: `bot-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           content: `You need to be logged in to use this feature. Authenticated users can send up to 5 messages per hour. Please log in to continue.`,
           sender: 'bot',
@@ -203,216 +207,84 @@ export default function ChatbotPage() {
     
     // Auto-submit after a short delay (like ChatGPT)
     setTimeout(() => {
-      const form = document.querySelector('form');
-      if (form) {
-        const submitEvent = new Event('submit', { cancelable: true, bubbles: true });
-        form.dispatchEvent(submitEvent);
-      }
+      formRef.current?.requestSubmit();
     }, 100);
   };
 
+  const limit = rateLimitInfo?.limit ?? DEFAULT_RATE_LIMIT;
+  const remaining = rateLimitInfo ? rateLimitInfo.remaining : 0;
+  const used = Math.max(0, limit - remaining);
+  const usagePercent = limit > 0 ? Math.min(100, (used / limit) * 100) : 0;
+
+  const profileInitials = useMemo(() => {
+    if (user?.name) {
+      return user.name
+        .split(' ')
+        .map((part) => part.charAt(0))
+        .slice(0, 2)
+        .join('')
+        .toUpperCase();
+    }
+    return 'LF';
+  }, [user]);
+
+  const displayName = isAuthenticated ? user?.name ?? user?.email ?? 'Member' : 'Guest Explorer';
+  const suggestions = useMemo(
+    () => [
+      "What's Luis shipping right now?",
+      'Summarize his AI roadmap',
+      'What is Luis background?',
+      'How does Luis scale React apps?',
+    ],
+    []
+  );
+
   return (
     <MainLayout>
-      <div className="container py-8 max-w-4xl mx-auto px-4">
-        {/* Hero Section */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600 mb-4">
-            Meet my AI Assistant
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
-            Get instant answers about my experience, projects, and expertise.
-            Trained on my professional background and technical knowledge.
-          </p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-muted/50 p-6 rounded-lg border">
-              <div className="bg-primary/10 w-12 h-12 rounded-full flex items-center justify-center mb-4 mx-auto">
-                <BotIcon className="w-6 h-6 text-primary" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Instant Answers</h3>
-              <p className="text-muted-foreground text-sm">
-                Get quick responses about my background, skills, and experience.
-              </p>
-            </div>
-            
-            <div className="bg-muted/50 p-6 rounded-lg border">
-              <div className="bg-primary/10 w-12 h-12 rounded-full flex items-center justify-center mb-4 mx-auto">
-                <LockIcon className="w-6 h-6 text-primary" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Secure & Private</h3>
-              <p className="text-muted-foreground text-sm">
-                Your conversations are private and not stored long-term.
-              </p>
-            </div>
-            
-            <div className="bg-muted/50 p-6 rounded-lg border">
-              <div className="bg-primary/10 w-12 h-12 rounded-full flex items-center justify-center mb-4 mx-auto">
-                <ClockIcon className="w-6 h-6 text-primary" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Rate Limited</h3>
-              <p className="text-muted-foreground text-sm">
-                {isAuthenticated 
-                  ? `You have ${rateLimitInfo?.remaining || 5}/5 messages remaining.`
-                  : '5 messages per hour for authenticated users.'
-                }
-              </p>
-            </div>
-          </div>
-        </div>
+      <div className="container py-8 px-4 max-w-7xl mx-auto">
+        <div className="grid gap-6 lg:gap-10 lg:grid-cols-[minmax(280px,340px)_1fr] xl:grid-cols-[360px_1fr]">
+          <InfoRail
+            profileInitials={profileInitials}
+            displayName={displayName}
+            isAuthenticated={isAuthenticated}
+            remaining={remaining}
+            limit={limit}
+            usagePercent={usagePercent}
+            timeUntilReset={timeUntilReset}
+            rateLimitResetTime={rateLimitInfo?.resetTime ?? null}
+            defaultLimit={DEFAULT_RATE_LIMIT}
+          />
 
-        {/* Enhanced Suggested Questions Section */}
-        {messages.length <= 3 && (
-          <div className="mb-8">
-            <h2 className="text-lg font-medium mb-4 text-center">What would you like to know?</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-3xl mx-auto">
-              {[
-                {
-                  question: "What's Luis' experience with React?",
-                  description: "Learn about his React.js expertise and projects"
-                },
-                {
-                  question: "Tell me about Luis' latest projects",
-                  description: "Discover his most recent work and contributions"
-                },
-                {
-                  question: "What technologies is Luis currently working with?",
-                  description: "Find out about his current tech stack and tools"
-                },
-                {
-                  question: "How can I contact Luis?",
-                  description: "Get in touch for opportunities or questions"
-                }
-              ].map((item) => (
-                <div 
-                  key={item.question}
-                  onClick={() => handleSuggestionClick(item.question)}
-                  className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors group"
-                >
-                  <h3 className="font-medium group-hover:text-primary">{item.question}</h3>
-                  <p className="text-sm text-muted-foreground mt-1">{item.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Authentication Alert */}
-        {!isAuthenticated && (
-          <Alert className="mb-6 border-blue-200 dark:border-blue-800 bg-blue-50/70 dark:bg-blue-900/20">
-            <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-            <div className="ml-3 flex-1">
-              <AlertTitle className="text-blue-800 dark:text-blue-200 font-semibold">
-                Sign in to chat with Luis' AI Assistant
-              </AlertTitle>
-              <AlertDescription className="text-blue-700 dark:text-blue-300">
-                <p className="mb-3">
-                  Please log in or create an account to start a conversation.
-                </p>
-                <div className="flex flex-wrap items-center gap-3">
-                  <Button asChild size="sm">
-                    <a href="/login">Log in</a>
-                  </Button>
-                  <Button asChild variant="outline" size="sm">
-                    <a href="/register">Create account</a>
-                  </Button>
-                  <span className="text-xs text-blue-700/80 dark:text-blue-300/80 inline-flex items-center gap-1">
-                    <ClockIcon className="h-3.5 w-3.5" /> 5 messages/hour for authenticated users
-                  </span>
-                </div>
-              </AlertDescription>
-            </div>
-          </Alert>
-        )}
-
-        {/* Rate Limit Warning */}
-        {isAuthenticated && rateLimitInfo?.remaining === 0 && rateLimitResetTime && (
-          <Alert variant="warning" className="mb-6">
-            <AlertTriangle className="h-5 w-5" />
-            <div className="ml-3">
-              <AlertTitle>Rate Limit Reached</AlertTitle>
-              <AlertDescription>
-                You've used all your messages. You can send another message in {timeUntilReset}.
-              </AlertDescription>
-            </div>
-          </Alert>
-        )}
-
-        {/* Chat Interface */}
-        <div className="border rounded-lg overflow-hidden shadow bg-card">
-          <div className="h-[60vh] overflow-y-auto p-4 space-y-4">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${
-                  message.sender === 'user' ? 'justify-end' : 'justify-start'
-                }`}
-              >
-                <div
-                  className={`flex gap-3 max-w-[80%] ${
-                    message.sender === 'user'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted'
-                  } p-4 rounded-lg`}
-                >
-                  {message.sender === 'bot' && (
-                    <div className="flex-shrink-0">
-                      <BotIcon className="h-5 w-5 mt-0.5" />
-                    </div>
-                  )}
-                  <div className="overflow-x-auto w-full">
-                    <MarkdownMessage 
-                      content={message.content} 
-                      className={message.sender === 'user' ? 'text-primary-foreground' : ''}
-                    />
-                    <p className="text-xs opacity-70 mt-2">
-                      {message.timestamp.toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </p>
-                  </div>
-                  {message.sender === 'user' && (
-                    <div className="flex-shrink-0">
-                      <UserIcon className="h-5 w-5 mt-0.5" />
-                    </div>
-                  )}
+          <section className="space-y-6">
+            <div className="rounded-3xl border bg-card shadow-sm p-6 space-y-5">
+              <ChatHeader limit={limit} />
+              <div className="border rounded-2xl bg-background">
+                <div className="flex flex-col h-[70vh]">
+                  <ChatTranscript
+                    ref={messagesContainerRef}
+                    messages={messages}
+                    isLoading={isLoading}
+                    profileInitials={profileInitials}
+                  />
+                  <ChatSuggestions suggestions={suggestions} onSuggestionClick={handleSuggestionClick} />
+                  <ChatComposer
+                    ref={formRef}
+                    input={input}
+                    isLoading={isLoading}
+                    onInputChange={setInput}
+                    onSubmit={handleSendMessage}
+                  />
                 </div>
               </div>
-            ))}
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="bg-muted p-3 rounded-lg">
-                  <div className="flex gap-1">
-                    <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                    <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                    <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '600ms' }}></div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-          
-          <form onSubmit={handleSendMessage} className="border-t p-4 flex gap-2">
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Type your message..."
-              disabled={isLoading}
-              className="flex-1"
-            />
-            <Button type="submit" size="icon" disabled={isLoading || !input.trim()} onClick={handleButtonClick}>
-              <SendIcon className="h-4 w-4" />
-            </Button>
-          </form>
-        </div>
-        
-        <div className="mt-6 text-sm text-muted-foreground text-center">
-          <p>This AI assistant is powered by a custom model trained on Luis' technical expertise and preferences.</p>
-          <p>All conversations are private and not stored longer than needed to provide the service.</p>
-          
-          {rateLimitResetTime && (
-            <p className="mt-2 text-amber-500">Rate limit reached. Next message available in {timeUntilReset}.</p>
-          )}
+            </div>
+            <div className="text-sm text-muted-foreground text-center space-y-2">
+              <p>This AI assistant is powered by a custom model trained on Luis' technical expertise and preferences.</p>
+              <p>All conversations are private and not stored longer than needed to provide the service.</p>
+              {rateLimitInfo?.resetTime && (
+                <p className="text-amber-500">Rate limit reached. Next message available in {timeUntilReset}.</p>
+              )}
+            </div>
+          </section>
         </div>
       </div>
     </MainLayout>
