@@ -7,7 +7,10 @@
 
 ![Running](https://media.istockphoto.com/id/904171918/photo/taking-my-fitness-outdoors.jpg?s=612x612&w=0&k=20&c=02oxKdpbN8J5HnP3NwYpln7L_7Dkxm4H2UYy72XRZAI=)
 
-- TBD
+### v2.3.0 🔥 | `feature/ai-assistant-ui`
+
+I decided to refactor my /chatbot page into reusable components to improve maintainability and code organization. 
+For more details, check the [Feature AI Assistant UI documentation](https://github.com/lfariabr/luisfaria.dev/blob/master/_docs/featureBreakdown/v2.3-assistant-ux.md)
 
 ---
 
