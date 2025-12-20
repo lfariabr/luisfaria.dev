@@ -61,6 +61,15 @@ export default function ChatbotPage() {
     const calculateTimeRemaining = () => {
       const diffMs = resetTime.getTime() - Date.now();
       if (diffMs <= 0) {
+        setRateLimitInfo((prev) => {
+          if (!prev) return null;
+          const nextLimit = prev.limit ?? DEFAULT_RATE_LIMIT;
+          return {
+            ...prev,
+            remaining: nextLimit,
+            resetTime: undefined,
+          };
+        });
         setTimeUntilReset('');
         return;
       }
