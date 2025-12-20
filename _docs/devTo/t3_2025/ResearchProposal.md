@@ -1,4 +1,4 @@
-# **Does NPS Really Predict Revenue in Healthcare Clinics? I Spent 12 Weeks Finding Out.**
+# Does NPS Really Predict Revenue in Healthcare Clinics? I Spent 12 Weeks Finding Out.
 
 **Tags:** #dataanalytics #python #healthcare #machinelearning #research
 
