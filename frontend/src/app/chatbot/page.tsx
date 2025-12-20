@@ -46,41 +46,33 @@ export default function ChatbotPage() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [rateLimitInfo, setRateLimitInfo] = useState<ChatRateLimitInfo | null>(null);
-  const [rateLimitResetTime, setRateLimitResetTime] = useState<Date | null>(null);
   const [timeUntilReset, setTimeUntilReset] = useState<string>('');
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
 
   // Update countdown timer for rate limit reset
   useEffect(() => {
-    if (!rateLimitResetTime) return;
+    const resetTime = rateLimitInfo?.resetTime;
+    if (!resetTime) {
+      setTimeUntilReset('');
+      return;
+    }
     
     const calculateTimeRemaining = () => {
-      const now = new Date();
-      const resetTime = new Date(rateLimitResetTime);
-      const diffMs = resetTime.getTime() - now.getTime();
-      
+      const diffMs = resetTime.getTime() - Date.now();
       if (diffMs <= 0) {
-        setRateLimitResetTime(null);
         setTimeUntilReset('');
         return;
       }
-      
-      // Calculate minutes and seconds
       const diffMinutes = Math.floor(diffMs / 60000);
       const diffSeconds = Math.floor((diffMs % 60000) / 1000);
-      
-      // Format as MM:SS
       setTimeUntilReset(`${diffMinutes.toString().padStart(2, '0')}:${diffSeconds.toString().padStart(2, '0')}`);
     };
     
-    // Initial calculation
     calculateTimeRemaining();
-    
-    // Update every second
     const interval = setInterval(calculateTimeRemaining, 1000);
     return () => clearInterval(interval);
-  }, [rateLimitResetTime]);
+  }, [rateLimitInfo?.resetTime]);
 
   // Scroll to latest message whenever the transcript updates
   useEffect(() => {
@@ -98,7 +90,12 @@ export default function ChatbotPage() {
       if (data?.askQuestion) {
         // Update rate limit info
         if (data.askQuestion.rateLimitInfo) {
-          setRateLimitInfo(data.askQuestion.rateLimitInfo);
+          const info = data.askQuestion.rateLimitInfo;
+          setRateLimitInfo({
+            remaining: typeof info.remaining === 'number' ? info.remaining : 0,
+            limit: typeof info.limit === 'number' ? info.limit : DEFAULT_RATE_LIMIT,
+            resetTime: info.resetTime ? new Date(info.resetTime) : undefined,
+          });
         }
         
         // Add bot response
@@ -128,8 +125,14 @@ export default function ChatbotPage() {
           const extReset = ext?.resetTime;
           if (typeof extReset === 'string') {
             resetTimeString = extReset;
-            setRateLimitResetTime(new Date(resetTimeString));
           }
+          const limitFromError = typeof ext?.limit === 'number' ? ext.limit : DEFAULT_RATE_LIMIT;
+          const remainingFromError = typeof ext?.remaining === 'number' ? ext.remaining : 0;
+          setRateLimitInfo({
+            remaining: remainingFromError,
+            limit: limitFromError,
+            resetTime: resetTimeString ? new Date(resetTimeString) : undefined,
+          });
           errorMessage = `You have reached your ${DEFAULT_RATE_LIMIT} messages/hour limit.`;
         }
       }
@@ -149,19 +152,17 @@ export default function ChatbotPage() {
     }
   });
 
-  const handleButtonClick = async () => {
-    await sendDiscordWebhook('Chatbot button was clicked');
-  };
-
-  const handleSendMessage = async (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    if (!input.trim()) return;
+    if (isLoading) return;
+    const trimmedInput = input.trim();
+    if (!trimmedInput) return;
     
     // Add user message
     const userMessage: ChatMessage = {
       id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      content: input,
+      content: trimmedInput,
       sender: 'user',
       timestamp: new Date(),
     };
@@ -169,12 +170,16 @@ export default function ChatbotPage() {
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
+
+    void sendDiscordWebhook('Chatbot message submitted').catch((err) => {
+      console.error('sendDiscordWebhook failed:', err);
+    });
     
     if (isAuthenticated) {
       try {
         // Send message to API if user is authenticated
         await askQuestion({
-          variables: { question: input.trim() }
+          variables: { question: trimmedInput }
         });
       } catch (error) {
         // Error is handled by onError in the mutation setup
@@ -207,7 +212,7 @@ export default function ChatbotPage() {
   };
 
   const limit = rateLimitInfo?.limit ?? DEFAULT_RATE_LIMIT;
-  const remaining = rateLimitInfo?.remaining ?? DEFAULT_RATE_LIMIT;
+  const remaining = rateLimitInfo ? rateLimitInfo.remaining : 0;
   const used = Math.max(0, limit - remaining);
   const usagePercent = limit > 0 ? Math.min(100, (used / limit) * 100) : 0;
 
@@ -246,7 +251,7 @@ export default function ChatbotPage() {
             limit={limit}
             usagePercent={usagePercent}
             timeUntilReset={timeUntilReset}
-            rateLimitResetTime={rateLimitResetTime}
+            rateLimitResetTime={rateLimitInfo?.resetTime ?? null}
             defaultLimit={DEFAULT_RATE_LIMIT}
           />
 
@@ -268,7 +273,6 @@ export default function ChatbotPage() {
                     isLoading={isLoading}
                     onInputChange={setInput}
                     onSubmit={handleSendMessage}
-                    onSendClick={handleButtonClick}
                   />
                 </div>
               </div>
@@ -276,7 +280,7 @@ export default function ChatbotPage() {
             <div className="text-sm text-muted-foreground text-center space-y-2">
               <p>This AI assistant is powered by a custom model trained on Luis' technical expertise and preferences.</p>
               <p>All conversations are private and not stored longer than needed to provide the service.</p>
-              {rateLimitResetTime && (
+              {rateLimitInfo?.resetTime && (
                 <p className="text-amber-500">Rate limit reached. Next message available in {timeUntilReset}.</p>
               )}
             </div>

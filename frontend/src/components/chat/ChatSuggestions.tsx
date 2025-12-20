@@ -16,11 +16,12 @@ export function ChatSuggestions({ suggestions, onSuggestionClick }: ChatSuggesti
         </p>
       </div>
       <div className="flex gap-2 overflow-x-auto pb-1">
-        {suggestions.map((question) => (
+        {suggestions.map((question, index) => (
           <button
-            key={question}
+            key={`${index}-${question}`}
             type="button"
             onClick={() => onSuggestionClick(question)}
+            aria-label={`Suggestion: ${question}`}
             className="text-sm border rounded-full px-4 py-2 hover:border-primary transition-colors"
           >
             {question}

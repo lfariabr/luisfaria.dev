@@ -14,6 +14,27 @@ interface ChatTranscriptProps {
 
 export const ChatTranscript = forwardRef<HTMLDivElement, ChatTranscriptProps>(
   ({ messages, isLoading, profileInitials }, ref) => {
+    const getAvatarLabel = (source?: string): string => {
+      const trimmed = source?.trim();
+      if (!trimmed) return '?';
+      if (typeof Intl !== 'undefined' && 'Segmenter' in Intl) {
+        const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+        const segments: string[] = [];
+        for (const { segment } of segmenter.segment(trimmed)) {
+          const clean = segment.trim();
+          if (!clean) continue;
+          segments.push(clean);
+          if (segments.length === 2) break;
+        }
+        return segments.join('') || '?';
+      }
+      const chars = Array.from(trimmed).filter((ch) => ch.trim());
+      if (!chars.length) return '?';
+      return (chars[0] ?? '') + (chars[1] ?? '');
+    };
+
+    const userInitials = getAvatarLabel(profileInitials);
+
     return (
       <div
         ref={ref}
@@ -58,7 +79,7 @@ export const ChatTranscript = forwardRef<HTMLDivElement, ChatTranscriptProps>(
               </div>
               {isUser && showAvatar && (
                 <div className="h-9 w-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold uppercase">
-                  {profileInitials.slice(0, 2)}
+                  {userInitials}
                 </div>
               )}
             </div>

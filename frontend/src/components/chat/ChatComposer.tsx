@@ -10,11 +10,10 @@ interface ChatComposerProps {
   isLoading: boolean;
   onInputChange: (value: string) => void;
   onSubmit: (e: FormEvent<HTMLFormElement>) => void;
-  onSendClick: () => void;
 }
 
 export const ChatComposer = forwardRef<HTMLFormElement, ChatComposerProps>(
-  ({ input, isLoading, onInputChange, onSubmit, onSendClick }, ref) => (
+  ({ input, isLoading, onInputChange, onSubmit }, ref) => (
     <form ref={ref} onSubmit={onSubmit} className="border-t p-4 flex gap-3">
       <Input
         value={input}
@@ -26,7 +25,6 @@ export const ChatComposer = forwardRef<HTMLFormElement, ChatComposerProps>(
         type="submit"
         size="icon"
         disabled={isLoading || !input.trim()}
-        onClick={onSendClick}
         className="rounded-full h-12 w-12"
       >
         <SendIcon className="h-4 w-4" />

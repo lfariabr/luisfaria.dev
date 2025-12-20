@@ -27,6 +27,24 @@ export function InfoRail({
   defaultLimit,
 }: InfoRailProps) {
   const showLimitBanner = isAuthenticated && remaining === 0 && rateLimitResetTime;
+  
+  const fallbackInitials = (() => {
+    const base = profileInitials?.trim() || displayName?.trim() || 'LF';
+    if (typeof Intl !== 'undefined' && 'Segmenter' in Intl) {
+      const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+      const segments: string[] = [];
+      for (const { segment } of segmenter.segment(base)) {
+        const clean = segment.trim();
+        if (!clean) continue;
+        segments.push(clean);
+        if (segments.length === 2) break;
+      }
+      return segments.join('') || 'LF';
+    }
+    const chars = Array.from(base).filter((ch) => ch.trim());
+    if (!chars.length) return 'LF';
+    return (chars[0] ?? '') + (chars[1] ?? '');
+  })();
 
   return (
     <aside className="flex flex-col gap-6 lg:sticky lg:top-8 self-start">
@@ -47,7 +65,7 @@ export function InfoRail({
       <section className="border rounded-2xl p-5 bg-card shadow-sm">
         <div className="flex items-center gap-4">
           <div className="h-14 w-14 rounded-2xl bg-primary/10 border border-primary/40 flex items-center justify-center text-lg font-semibold text-primary uppercase">
-            {profileInitials}
+            {fallbackInitials}
           </div>
           <div>
             <p className="text-sm text-muted-foreground">

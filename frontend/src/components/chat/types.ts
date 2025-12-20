@@ -9,6 +9,6 @@ export interface ChatMessage {
 
 export interface ChatRateLimitInfo {
   remaining: number;
-  resetTime: string;
+  resetTime?: Date;
   limit?: number;
 }
