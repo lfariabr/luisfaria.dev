@@ -12,3 +12,17 @@ export interface ChatRateLimitInfo {
   resetTime?: Date;
   limit?: number;
 }
+
+export type RateStatus = 'ok' | 'warning' | 'blocked' | 'guest';
+
+export interface UsageHistoryEntry {
+  id: string;
+  description: string;
+  timestamp: Date;
+}
+
+export interface RateNotice {
+  id: string;
+  tone: 'info' | 'warning' | 'success';
+  message: string;
+}

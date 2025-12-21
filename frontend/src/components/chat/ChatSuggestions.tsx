@@ -22,7 +22,9 @@ export function ChatSuggestions({ suggestions, onSuggestionClick }: ChatSuggesti
             type="button"
             onClick={() => onSuggestionClick(question)}
             aria-label={`Suggestion: ${question}`}
-            className="text-sm border rounded-full px-4 py-2 hover:border-primary transition-colors"
+            className={`text-sm border rounded-full px-4 py-2 hover:border-primary transition-colors whitespace-nowrap ${
+              index >= 2 ? 'hidden md:inline-flex' : ''
+            }`}
           >
             {question}
           </button>

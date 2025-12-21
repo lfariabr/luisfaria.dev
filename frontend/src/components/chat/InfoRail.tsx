@@ -2,6 +2,8 @@
 
 import { Button } from '@/components/ui/button';
 import { AlertCircle, AlertTriangle } from 'lucide-react';
+import { UsageMeter } from './UsageMeter';
+import type { RateStatus, UsageHistoryEntry } from './types';
 
 interface InfoRailProps {
   profileInitials: string;
@@ -9,10 +11,12 @@ interface InfoRailProps {
   isAuthenticated: boolean;
   remaining: number;
   limit: number;
-  usagePercent: number;
   timeUntilReset: string;
   rateLimitResetTime: Date | null;
   defaultLimit: number;
+  status: RateStatus;
+  usageHistory: UsageHistoryEntry[];
+  hasRateLimitData: boolean;
 }
 
 export function InfoRail({
@@ -21,12 +25,14 @@ export function InfoRail({
   isAuthenticated,
   remaining,
   limit,
-  usagePercent,
   timeUntilReset,
   rateLimitResetTime,
   defaultLimit,
+  status,
+  usageHistory,
+  hasRateLimitData,
 }: InfoRailProps) {
-  const showLimitBanner = isAuthenticated && remaining === 0 && rateLimitResetTime;
+  const showLimitBanner = isAuthenticated && hasRateLimitData && remaining === 0 && rateLimitResetTime;
   
   const fallbackInitials = (() => {
     const base = profileInitials?.trim() || displayName?.trim() || 'LF';
@@ -47,9 +53,9 @@ export function InfoRail({
   })();
 
   return (
-    <aside className="flex flex-col gap-6 lg:sticky lg:top-8 self-start">
-      {/* Profile Block */}
-      <section className="rounded-3xl border bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-white p-6 shadow-lg">
+    <aside className="flex flex-col gap-4 lg:gap-6 lg:sticky lg:top-8 w-full lg:self-start">
+      {/* Profile Block - hidden on mobile */}
+      <section className="hidden lg:block rounded-3xl border bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-white p-6 shadow-lg">
         <p className="text-[11px] uppercase tracking-[0.3em] text-white/60 mb-3">
           Luis Faria • AI Command Center
         </p>
@@ -62,7 +68,8 @@ export function InfoRail({
         </p>
       </section>
 
-      <section className="border rounded-2xl p-5 bg-card shadow-sm">
+      {/* Signed-in block - hidden on mobile */}
+      <section className="hidden lg:block border rounded-2xl p-5 bg-card shadow-sm">
         <div className="flex items-center gap-4">
           <div className="h-14 w-14 rounded-2xl bg-primary/10 border border-primary/40 flex items-center justify-center text-lg font-semibold text-primary uppercase">
             {fallbackInitials}
@@ -81,37 +88,13 @@ export function InfoRail({
         </div>
       </section>
 
-      {/* Rate Limit Module */}
-      <section className="border rounded-2xl p-5 space-y-4 bg-muted/40">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-widest text-muted-foreground">
-              Usage Window
-            </p>
-            <p className="text-2xl font-semibold">
-              {isAuthenticated ? `${remaining}/${limit}` : `0/${defaultLimit}`}
-            </p>
-          </div>
-          <span className="text-[11px] bg-white/60 dark:bg-slate-900/60 border rounded-full px-3 py-1 text-muted-foreground">
-            {timeUntilReset ? `Resets in ${timeUntilReset}` : 'Fresh window'}
-          </span>
-        </div>
-        <div className="space-y-2">
-          <div className="h-2 w-full bg-border rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-primary to-blue-500 transition-all duration-300"
-              style={{ width: `${usagePercent}%` }}
-            />
-          </div>
-          <p className="text-xs text-muted-foreground">
-            {isAuthenticated
-              ? remaining > 0
-                ? 'Still clear to keep chatting.'
-                : 'Limit hit. Breathe for a minute, then try again.'
-              : 'Authenticate to start using your message window.'}
-          </p>
-        </div>
-      </section>
+      <UsageMeter
+        limit={limit}
+        remaining={isAuthenticated ? remaining : 0}
+        timeUntilReset={timeUntilReset}
+        status={status}
+        hasData={!isAuthenticated || hasRateLimitData}
+      />
 
       {!isAuthenticated && (
         <section className="border rounded-2xl p-5 bg-blue-50/70 dark:bg-blue-900/20">
@@ -156,6 +139,27 @@ export function InfoRail({
           </div>
         </section>
       )}
+
+      {/* Recent usage - hidden on mobile */}
+      <section className="hidden lg:block border rounded-2xl p-5 bg-card space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-semibold">Recent usage</p>
+          <span className="text-xs text-muted-foreground">Last 5 events</span>
+        </div>
+        <div className="space-y-2">
+          {usageHistory.length === 0 && (
+            <p className="text-xs text-muted-foreground">No usage recorded yet.</p>
+          )}
+          {usageHistory.map((entry) => (
+            <div key={entry.id} className="flex items-center justify-between text-xs">
+              <span className="text-foreground">{entry.description}</span>
+              <span className="text-muted-foreground">
+                {entry.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
     </aside>
   );
 }

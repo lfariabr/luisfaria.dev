@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { MainLayout } from "@/components/layouts/MainLayout";
 import { useAuth } from '@/lib/auth/AuthContext';
 import { gql, useMutation } from '@apollo/client';
@@ -10,7 +10,8 @@ import { ChatTranscript } from '@/components/chat/ChatTranscript';
 import { ChatSuggestions } from '@/components/chat/ChatSuggestions';
 import { ChatComposer } from '@/components/chat/ChatComposer';
 import { ChatHeader } from '@/components/chat/ChatHeader';
-import type { ChatMessage, ChatRateLimitInfo } from '@/components/chat/types';
+import { RateNotices } from '@/components/chat/RateNotices';
+import type { ChatMessage, ChatRateLimitInfo, UsageHistoryEntry, RateNotice, RateStatus } from '@/components/chat/types';
 
 const DEFAULT_RATE_LIMIT = 5;
 
@@ -47,8 +48,12 @@ export default function ChatbotPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [rateLimitInfo, setRateLimitInfo] = useState<ChatRateLimitInfo | null>(null);
   const [timeUntilReset, setTimeUntilReset] = useState<string>('');
+  const [usageHistory, setUsageHistory] = useState<UsageHistoryEntry[]>([]);
+  const [rateNotices, setRateNotices] = useState<RateNotice[]>([]);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
+  const previousStatusRef = useRef<RateStatus>('guest');
+  const usageEventCounterRef = useRef(0);
 
   // Update countdown timer for rate limit reset
   useEffect(() => {
@@ -69,6 +74,11 @@ export default function ChatbotPage() {
             remaining: nextLimit,
             resetTime: undefined,
           };
+        });
+        pushUsageEvent('Window refreshed');
+        pushRateNotice({
+          tone: 'success',
+          message: 'Rate limit reset. You are clear to continue.',
         });
         setTimeUntilReset('');
         return;
@@ -161,6 +171,38 @@ export default function ChatbotPage() {
     }
   });
 
+  const pushUsageEvent = useCallback((description: string) => {
+    usageEventCounterRef.current += 1;
+    const uniqueId = `usage-${Date.now()}-${usageEventCounterRef.current}`;
+    setUsageHistory((prev) => {
+      const next: UsageHistoryEntry[] = [
+        ...prev,
+        { id: uniqueId, description, timestamp: new Date() },
+      ];
+      return next.slice(-5);
+    });
+  }, []);
+
+  const activeTimeoutsRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
+  
+  useEffect(() => {
+    return () => {
+      // Clear all pending timeouts on unmount
+      activeTimeoutsRef.current.forEach((timeoutId) => clearTimeout(timeoutId));
+      activeTimeoutsRef.current.clear();
+    }
+  }, []);
+
+  const pushRateNotice = useCallback((notice: Omit<RateNotice, 'id'>) => {
+    const id = `notice-${Date.now()}`;
+    setRateNotices((prev) => [...prev, { ...notice, id }]);
+    const timeoutId = setTimeout(() => {
+      setRateNotices((prev) => prev.filter((n) => n.id !== id));
+      activeTimeoutsRef.current.delete(id);
+    }, 4000);
+    activeTimeoutsRef.current.set(id, timeoutId);
+  }, []);
+
   const handleSendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
@@ -179,6 +221,7 @@ export default function ChatbotPage() {
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
+    pushUsageEvent('Message sent');
 
     void sendDiscordWebhook('Chatbot message submitted').catch((err) => {
       console.error('sendDiscordWebhook failed:', err);
@@ -221,9 +264,36 @@ export default function ChatbotPage() {
   };
 
   const limit = rateLimitInfo?.limit ?? DEFAULT_RATE_LIMIT;
-  const remaining = rateLimitInfo ? rateLimitInfo.remaining : 0;
-  const used = Math.max(0, limit - remaining);
-  const usagePercent = limit > 0 ? Math.min(100, (used / limit) * 100) : 0;
+  // Don't guess remaining - only show real data from API
+  const hasRateLimitData = rateLimitInfo !== null;
+  const remaining = rateLimitInfo?.remaining ?? 0;
+  const rateStatus: RateStatus = useMemo(() => {
+    if (!isAuthenticated) return 'guest';
+    // Until we have real data, show 'ok' (no warnings/blocks)
+    if (!hasRateLimitData) return 'ok';
+    if (rateLimitInfo.remaining <= 0) return 'blocked';
+    if (rateLimitInfo.remaining <= Math.ceil(limit * 0.2)) return 'warning';
+    return 'ok';
+  }, [isAuthenticated, hasRateLimitData, rateLimitInfo, limit]);
+
+  useEffect(() => {
+    const previous = previousStatusRef.current;
+    if (rateStatus !== previous) {
+      previousStatusRef.current = rateStatus;
+      if (rateStatus === 'warning') {
+        pushRateNotice({
+          tone: 'warning',
+          message: `You're nearing the hourly cap. ${remaining} message(s) left.`,
+        });
+      } else if (rateStatus === 'blocked') {
+        pushRateNotice({
+          tone: 'warning',
+          message: `Rate limit reached. Next message in ${timeUntilReset || 'a moment'}.`,
+        });
+        pushUsageEvent('Rate limit reached');
+      }
+    }
+  }, [rateStatus, remaining, timeUntilReset, pushRateNotice, pushUsageEvent]);
 
   const profileInitials = useMemo(() => {
     if (user?.name) {
@@ -250,18 +320,21 @@ export default function ChatbotPage() {
 
   return (
     <MainLayout>
-      <div className="container py-8 px-4 max-w-7xl mx-auto">
-        <div className="grid gap-6 lg:gap-10 lg:grid-cols-[minmax(280px,340px)_1fr] xl:grid-cols-[360px_1fr]">
+      <RateNotices notices={rateNotices} />
+      <div className="container py-4 md:py-8 px-4 max-w-7xl mx-auto">
+        <div className="flex flex-col lg:grid lg:gap-10 lg:grid-cols-[minmax(280px,340px)_1fr] xl:grid-cols-[360px_1fr] gap-4">
           <InfoRail
             profileInitials={profileInitials}
             displayName={displayName}
             isAuthenticated={isAuthenticated}
             remaining={remaining}
             limit={limit}
-            usagePercent={usagePercent}
             timeUntilReset={timeUntilReset}
             rateLimitResetTime={rateLimitInfo?.resetTime ?? null}
             defaultLimit={DEFAULT_RATE_LIMIT}
+            status={rateStatus}
+            usageHistory={usageHistory}
+            hasRateLimitData={hasRateLimitData}
           />
 
           <section className="space-y-6">
@@ -269,6 +342,18 @@ export default function ChatbotPage() {
               <ChatHeader limit={limit} />
               <div className="border rounded-2xl bg-background">
                 <div className="flex flex-col h-[70vh]">
+                  {rateStatus !== 'ok' && rateStatus !== 'guest' && (
+                    <div className="m-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 flex items-center justify-between">
+                      <span>
+                        {rateStatus === 'warning'
+                          ? `You're close to the cap. ${remaining} message(s) left.`
+                          : `Temporarily paused. Next message in ${timeUntilReset || 'a moment'}.`}
+                      </span>
+                      <span className="text-xs text-amber-700">
+                        {timeUntilReset ? `Resets in ${timeUntilReset}` : 'Watching load'}
+                      </span>
+                    </div>
+                  )}
                   <ChatTranscript
                     ref={messagesContainerRef}
                     messages={messages}
@@ -286,10 +371,10 @@ export default function ChatbotPage() {
                 </div>
               </div>
             </div>
-            <div className="text-sm text-muted-foreground text-center space-y-2">
-              <p>This AI assistant is powered by a custom model trained on Luis' technical expertise and preferences.</p>
-              <p>All conversations are private and not stored longer than needed to provide the service.</p>
-              {rateLimitInfo?.resetTime && (
+            <div className="text-xs md:text-sm text-muted-foreground text-center space-y-1 md:space-y-2">
+              <p className="hidden md:block">This AI assistant is powered by a custom model trained on Luis' technical expertise and preferences.</p>
+              <p className="hidden md:block">All conversations are private and not stored longer than needed to provide the service.</p>
+              {rateLimitInfo?.resetTime && rateLimitInfo.remaining <= 0 && (
                 <p className="text-amber-500">Rate limit reached. Next message available in {timeUntilReset}.</p>
               )}
             </div>
