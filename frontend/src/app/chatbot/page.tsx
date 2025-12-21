@@ -180,12 +180,24 @@ export default function ChatbotPage() {
     });
   }, []);
 
+  const activeTimeoutsRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
+  
+  useEffect(() => {
+    return () => {
+      // Clear all pending timeouts on unmount
+      activeTimeoutsRef.current.forEach((timeoutId) => clearTimeout(timeoutId));
+      activeTimeoutsRef.current.clear();
+    }
+  }, []);
+
   const pushRateNotice = useCallback((notice: Omit<RateNotice, 'id'>) => {
     const id = `notice-${Date.now()}`;
     setRateNotices((prev) => [...prev, { ...notice, id }]);
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       setRateNotices((prev) => prev.filter((n) => n.id !== id));
+      activeTimeoutsRef.current.delete(id);
     }, 4000);
+    activeTimeoutsRef.current.set(id, timeoutId);
   }, []);
 
   const handleSendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
