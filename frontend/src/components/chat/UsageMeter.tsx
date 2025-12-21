@@ -8,6 +8,7 @@ interface UsageMeterProps {
   remaining: number;
   timeUntilReset: string;
   status: RateStatus;
+  hasData?: boolean;
 }
 
 const STATUS_COPY: Record<RateStatus, { title: string; body: string }> = {
@@ -29,9 +30,10 @@ const STATUS_COPY: Record<RateStatus, { title: string; body: string }> = {
   },
 };
 
-export function UsageMeter({ limit, remaining, timeUntilReset, status }: UsageMeterProps) {
-  const used = Math.max(0, limit - remaining);
-  const progress = limit > 0 ? Math.min(1, used / limit) : 0;
+export function UsageMeter({ limit, remaining, timeUntilReset, status, hasData = true }: UsageMeterProps) {
+  // When no data yet, show empty meter (no progress)
+  const used = hasData ? Math.max(0, limit - remaining) : 0;
+  const progress = hasData && limit > 0 ? Math.min(1, used / limit) : 0;
   const circumference = 2 * Math.PI * 54;
   const strokeDashoffset = circumference - progress * circumference;
   const { title, body } = STATUS_COPY[status];
@@ -41,7 +43,7 @@ export function UsageMeter({ limit, remaining, timeUntilReset, status }: UsageMe
       <div className="flex items-center justify-between gap-3 md:gap-4">
         <div className="min-w-0">
           <p className="text-xs uppercase tracking-[0.2em] md:tracking-[0.3em] text-muted-foreground">Usage Meter</p>
-          <p className="text-2xl md:text-3xl font-semibold">{remaining}/{limit}</p>
+          <p className="text-2xl md:text-3xl font-semibold">{hasData ? `${remaining}/${limit}` : `—/${limit}`}</p>
           <p className="text-xs text-muted-foreground mt-1">
             {timeUntilReset ? `Resets in ${timeUntilReset}` : 'Fresh window'}
           </p>
@@ -79,7 +81,7 @@ export function UsageMeter({ limit, remaining, timeUntilReset, status }: UsageMe
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
             <span className="text-[10px] md:text-xs uppercase tracking-[0.15em] md:tracking-[0.2em] text-muted-foreground">Used</span>
-            <span className="text-xl md:text-2xl font-semibold">{used}</span>
+            <span className="text-xl md:text-2xl font-semibold">{hasData ? used : '—'}</span>
           </div>
         </div>
       </div>

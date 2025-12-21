@@ -16,6 +16,7 @@ interface InfoRailProps {
   defaultLimit: number;
   status: RateStatus;
   usageHistory: UsageHistoryEntry[];
+  hasRateLimitData: boolean;
 }
 
 export function InfoRail({
@@ -29,8 +30,9 @@ export function InfoRail({
   defaultLimit,
   status,
   usageHistory,
+  hasRateLimitData,
 }: InfoRailProps) {
-  const showLimitBanner = isAuthenticated && remaining === 0 && rateLimitResetTime;
+  const showLimitBanner = isAuthenticated && hasRateLimitData && remaining === 0 && rateLimitResetTime;
   
   const fallbackInitials = (() => {
     const base = profileInitials?.trim() || displayName?.trim() || 'LF';
@@ -91,6 +93,7 @@ export function InfoRail({
         remaining={isAuthenticated ? remaining : 0}
         timeUntilReset={timeUntilReset}
         status={status}
+        hasData={!isAuthenticated || hasRateLimitData}
       />
 
       {!isAuthenticated && (

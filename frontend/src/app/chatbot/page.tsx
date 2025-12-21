@@ -53,6 +53,7 @@ export default function ChatbotPage() {
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
   const previousStatusRef = useRef<RateStatus>('guest');
+  const usageEventCounterRef = useRef(0);
 
   // Update countdown timer for rate limit reset
   useEffect(() => {
@@ -171,10 +172,12 @@ export default function ChatbotPage() {
   });
 
   const pushUsageEvent = useCallback((description: string) => {
+    usageEventCounterRef.current += 1;
+    const uniqueId = `usage-${Date.now()}-${usageEventCounterRef.current}`;
     setUsageHistory((prev) => {
       const next: UsageHistoryEntry[] = [
         ...prev,
-        { id: `usage-${Date.now()}`, description, timestamp: new Date() },
+        { id: uniqueId, description, timestamp: new Date() },
       ];
       return next.slice(-5);
     });
@@ -261,15 +264,17 @@ export default function ChatbotPage() {
   };
 
   const limit = rateLimitInfo?.limit ?? DEFAULT_RATE_LIMIT;
-  // Before first API response, assume full quota for authenticated users
-  const remaining = rateLimitInfo ? rateLimitInfo.remaining : (isAuthenticated ? limit : 0);
+  // Don't guess remaining - only show real data from API
+  const hasRateLimitData = rateLimitInfo !== null;
+  const remaining = rateLimitInfo?.remaining ?? 0;
   const rateStatus: RateStatus = useMemo(() => {
     if (!isAuthenticated) return 'guest';
-    // Only show blocked if we actually have rate limit info confirming 0 remaining
-    if (rateLimitInfo && rateLimitInfo.remaining <= 0) return 'blocked';
-    if (rateLimitInfo && rateLimitInfo.remaining <= Math.ceil(limit * 0.2)) return 'warning';
+    // Until we have real data, show 'ok' (no warnings/blocks)
+    if (!hasRateLimitData) return 'ok';
+    if (rateLimitInfo.remaining <= 0) return 'blocked';
+    if (rateLimitInfo.remaining <= Math.ceil(limit * 0.2)) return 'warning';
     return 'ok';
-  }, [isAuthenticated, rateLimitInfo, limit]);
+  }, [isAuthenticated, hasRateLimitData, rateLimitInfo, limit]);
 
   useEffect(() => {
     const previous = previousStatusRef.current;
@@ -329,6 +334,7 @@ export default function ChatbotPage() {
             defaultLimit={DEFAULT_RATE_LIMIT}
             status={rateStatus}
             usageHistory={usageHistory}
+            hasRateLimitData={hasRateLimitData}
           />
 
           <section className="space-y-6">
