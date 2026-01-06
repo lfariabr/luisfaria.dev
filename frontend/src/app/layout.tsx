@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import { defaultMetadata } from "./metadata";
 import { GogginsFab } from "@/components/goggins/GogginsFab";
+import { Apod } from "@/components/apod/Apod";
 
 export const metadata: Metadata = {
   ...defaultMetadata,
@@ -32,6 +33,7 @@ export default function RootLayout({
               {children}
               <Toaster />
               {/* <GogginsFab /> */}
+              <Apod />
             </AuthProvider>
           </ApolloProvider>
         </ThemeProvider>
