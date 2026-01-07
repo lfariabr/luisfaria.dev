@@ -1,6 +1,6 @@
 import React from 'react';
 import { screen } from '@testing-library/react';
-import { Button } from '../button';
+import { Button } from '@/components/ui/button';
 import { renderWithProviders } from '@/utils/test-utils';
 
 describe('Button', () => {

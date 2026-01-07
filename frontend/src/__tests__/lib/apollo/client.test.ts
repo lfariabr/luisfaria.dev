@@ -1,4 +1,4 @@
-import { createApolloClient } from '../client';
+import { createApolloClient } from '@/lib/apollo/client';
 import { gql } from '@apollo/client';
 
 describe('Apollo Client Configuration', () => {

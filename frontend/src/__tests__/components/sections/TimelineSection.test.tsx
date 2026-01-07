@@ -1,6 +1,6 @@
 import React from 'react';
 import { screen } from '@testing-library/react';
-import { TimelineSection } from '../TimelineSection';
+import { TimelineSection } from '@/components/sections/TimelineSection';
 import { renderWithProviders } from '@/utils/test-utils';
 
 describe('TimelineSection', () => {

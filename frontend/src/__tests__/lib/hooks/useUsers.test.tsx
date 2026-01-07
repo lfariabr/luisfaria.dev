@@ -1,8 +1,8 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { MockedProvider, MockedResponse } from '@apollo/client/testing';
-import { GET_USERS, GET_USER } from '../../graphql/queries/user.queries';
-import { UPDATE_USER_ROLE, DELETE_USER } from '../../graphql/mutations/user.mutations';
-import { useUsers, useUser, useUserMutations } from '../useUsers';
+import { GET_USERS, GET_USER } from '@/lib/graphql/queries/user.queries';
+import { UPDATE_USER_ROLE, DELETE_USER } from '@/lib/graphql/mutations/user.mutations';
+import { useUsers, useUser, useUserMutations } from '@/lib/hooks/useUsers';
 import { act } from 'react-dom/test-utils';
 import { toast } from 'sonner';
 
