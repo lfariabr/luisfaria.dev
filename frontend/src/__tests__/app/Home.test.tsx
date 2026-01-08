@@ -1,6 +1,6 @@
 import React from 'react';
 import { screen, within } from '@testing-library/react';
-import HomePage from '../page';
+import HomePage from '@/app/page';
 import { renderWithProviders } from '@/utils/test-utils';
 
 describe('Home Page', () => {

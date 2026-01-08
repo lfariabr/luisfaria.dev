@@ -1,4 +1,4 @@
-// frontend/src/__tests__/GogginsDialog.component.test.tsx
+// frontend/src/__tests__/app/GogginsDialog.component.test.tsx
 import { MockedProvider } from '@apollo/client/testing';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';

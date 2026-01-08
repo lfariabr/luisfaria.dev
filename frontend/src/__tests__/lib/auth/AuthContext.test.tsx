@@ -1,9 +1,9 @@
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { MockedProvider, MockedResponse } from '@apollo/client/testing';
 import { GraphQLError } from 'graphql';
-import { AuthProvider, useAuth } from '../AuthContext';
-import { ME_QUERY } from '../../graphql/queries/auth.queries';
-import { LOGIN_MUTATION, LOGOUT_MUTATION } from '../../graphql/mutations/auth.mutations';
+import { AuthProvider, useAuth } from '@/lib/auth/AuthContext';
+import { ME_QUERY } from '@/lib/graphql/queries/auth.queries';
+import { LOGIN_MUTATION, LOGOUT_MUTATION } from '@/lib/graphql/mutations/auth.mutations';
 
 // Mock next/navigation
 const mockPush = jest.fn();

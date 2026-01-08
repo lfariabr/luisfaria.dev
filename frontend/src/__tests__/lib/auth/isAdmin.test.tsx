@@ -1,10 +1,10 @@
 import { renderHook } from '@testing-library/react';
-import { useIsAdmin, useIsEditorOrAdmin } from '../isAdmin';
-import { useAuth, User } from '../AuthContext';
-import { UserRole } from '../../graphql/types/user.types';
+import { useIsAdmin, useIsEditorOrAdmin } from '@/lib/auth/isAdmin';
+import { useAuth, User } from '@/lib/auth/AuthContext';
+import { UserRole } from '@/lib/graphql/types/user.types';
 
 // Mock the AuthContext
-jest.mock('../AuthContext', () => ({
+jest.mock('@/lib/auth/AuthContext', () => ({
   useAuth: jest.fn(),
 }));
 
