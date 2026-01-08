@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@radix-ui/react-tooltip": "^1.2.8",
     "bcrypt": "^6.0.0"
   }
 }
