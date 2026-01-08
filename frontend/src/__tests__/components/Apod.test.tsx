@@ -54,7 +54,7 @@ describe("ApodFab", () => {
 
     // Tooltip should appear (may need waitFor due to animation)
     expect(
-      await screen.findByRole("tooltip", { name: /astronomy picture of the day/i })
+      await screen.findByRole("tooltip", { name: /nasa apod/i })
     ).toBeInTheDocument();
   });
 });

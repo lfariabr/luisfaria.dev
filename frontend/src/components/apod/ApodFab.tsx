@@ -54,7 +54,6 @@ export function ApodFab() {
                       fill
                       sizes="64px"
                       className="object-cover rounded-full select-none pointer-events-none"
-                      priority
                     />
                   </span>
                 </Button>
