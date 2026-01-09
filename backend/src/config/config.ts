@@ -13,6 +13,7 @@ interface Config {
     rateLimitMaxRequests: number;
     openaiApiKey: string;
     resendApiKey: string;
+    nasaApiKey: string;
 }
 
 // Validate required environment variables
@@ -25,7 +26,8 @@ const requiredEnvVars = [
   'OPENAI_API_KEY',
   'RATE_LIMIT_WINDOW',
   'RATE_LIMIT_MAX_REQUESTS',
-  'RESEND_API_KEY'
+  'RESEND_API_KEY',
+  'NASA_API_KEY'
 ];
 const missingEnvVars = requiredEnvVars.filter(env => !process.env[env]);
 
@@ -43,6 +45,7 @@ const config: Config = {
     rateLimitMaxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '5', 10),
     openaiApiKey: process.env.OPENAI_API_KEY || '',
     resendApiKey: process.env.RESEND_API_KEY || '',
+    nasaApiKey: process.env.NASA_API_KEY || '',
   };
   
 export default config;
