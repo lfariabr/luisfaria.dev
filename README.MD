@@ -1,5 +1,5 @@
-# Luis Faria Portfolio Project
-Modern full-stack portfolio powering projects, articles, AI tools, and Goggins Mode.
+# luisfaria.dev
+Welcome to my modern full-stack portfolio powering projects, articles, AI tools, and more.
 
 [![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://luisfaria.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue)](https://www.typescriptlang.org/)
@@ -13,12 +13,12 @@ This repository contains my personal portfolio, built with Next.js, TypeScript, 
 - Demonstrating full-stack and AI integration patterns
 - Hosting an authenticated AI assistant with rate limiting
 
-**If you're reviewing this for hiring or collaboration**, start here:
+**If you're reviewing this for collaboration or hiring**, start here:
 
 - Visit the live site: [luisfaria.dev](https://luisfaria.dev)
 - Try the AI chatbot (authenticated users, rate-limited)
 - Browse the Articles and Projects sections
-- Check out the article: [From Groomzilla to Full-Stack Engineer](https://luisfaria.dev/projects/from-groomzilla-to-full-stack-engineer-building-wedstack)
+- Check out the article: [From Groomzilla to Full-Stack Engineer](https://luisfaria.dev/projects/from-groomzilla-to-full-stack-engineer-building-wedstack). I built it by replicating this portfolio.
 
 ---
 
@@ -70,6 +70,8 @@ luisfaria/
 - **Rate Limiting**: Redis-based with atomic Lua scripts
 - **Caching Strategy**: Multi-layer (Redis + Apollo cache)
 
+---
+
 ### Key Design Patterns
 
 - **Backend**
@@ -81,17 +83,17 @@ luisfaria/
   - Modular schema with resolver composition
   - Typed operations with shared input/output contracts
 
-- Frontend Components 
-   - **TimelineSection**: Displays career timeline entries with styled milestones
-   - **MetricsSection**: Presents performance metrics on home page
-   - **Header**: Navigation and authentication UI
-   - **Footer**: Site information and links
-   - **ArticleList**: Displays articles with filtering and pagination
-   - **ProjectGrid**: Shows project cards with tags and descriptions
-   - **Chatbot**: AI-powered chat interface with rate limiting
-   - **ArticleDetail**: Single article view with comments
-   - **ProjectDetail**: Individual project page with detailed information
-   - **GogginsMode**: Motivational AI mini-product interface
+- **Frontend Components**
+  - **TimelineSection**: Displays career timeline entries with styled milestones
+  - **MetricsSection**: Presents performance metrics on home page
+  - **Header**: Navigation and authentication UI
+  - **Footer**: Site information and links
+  - **ArticleList**: Displays articles with filtering and pagination
+  - **ProjectGrid**: Shows project cards with tags and descriptions
+  - **Chatbot**: AI-powered chat interface with rate limiting
+  - **ArticleDetail**: Single article view with comments
+  - **ProjectDetail**: Individual project page with detailed information
+  - **GogginsMode**: Motivational AI mini-product interface
    
 > Note: *These are some of the reusable components that showcase UI architecture and state management.*
 
@@ -100,6 +102,8 @@ luisfaria/
 ## Testing
 
 > *This project treats testing as a first-class citizen, with both backend and frontend covered by automated tests.*
+
+---
 
 ### Backend Tests
 
@@ -115,6 +119,8 @@ npm run test:coverage      # Coverage report
 - Integration tests for GraphQL resolvers
 - MongoDB Memory Server for database testing
 - Mocked external services (OpenAI, Resend)
+
+---
 
 ### Frontend Tests
 ```bash
@@ -137,10 +143,11 @@ npm run test:coverage      # Coverage report
 |--------|-------------|------|-------|
 | **AI-Powered Chatbot** | Conversational assistant with custom prompt engineering | OpenAI (GPT-3.5), GraphQL, Next.js | Authenticated, stores chat history |
 | **Rate Limiting** | Per-user quotas for chatbot + Goggins Mode | Redis + Lua scripts | 5 req/hr (standard), 2 req/24h (Goggins) |
-| **Goggins Mode** | Motivational AI coach with tough-love persona | OpenAI, Redis | Discord webhook integration |
+| **Goggins Mode** | Motivational AI coach with tough-love persona (*deprecated*) | OpenAI, Redis | Discord webhook integration |
 | **Authentication** | Secure login & role-based access | JWT (httpOnly), bcrypt | Roles: ADMIN, EDITOR, USER |
 | **Real-Time Limit Display** | Shows remaining questions | GraphQL subscriptions | Live updates in UI |
 | **Performance Optimizations** | Faster loads & API responses | Redis cache, Apollo Client | Code splitting, image optimization |
+| **APOD Feature** | Astronomy Picture of the Day integration | NASA API, Next.js | Floating action button, responsive design |
 
 ---
 
@@ -159,7 +166,7 @@ npm run test:coverage      # Coverage report
 
 ---
 
-## Development Roadmap
+## Roadmap
 
 **Completed**
 1. Project setup and configuration
@@ -169,12 +176,12 @@ npm run test:coverage      # Coverage report
 5. AI chatbot integration
 6. Testing and deployment
 7. SEO optimization
-8. Goggins Mode integration
+8. Goggins Mode integration (*deprecated*)
 9. Home page redesign
 10. Security Authentication (`feature/secure-authentication`)
 
 **Work In Progress**
-- tbd
+- APOD feature implementation
 
 **Planned / Future**
 - ***Who knows?*** Stay tuned!
