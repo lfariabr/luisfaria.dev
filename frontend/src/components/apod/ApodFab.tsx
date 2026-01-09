@@ -42,12 +42,13 @@ export function ApodFab() {
                   aria-label="Open Astronomy Picture of the Day"
                   className="
                     rounded-full h-20 w-20 p-0
-                    bg-zinc-950 hover:bg-zinc-900
+                    bg-white dark:bg-zinc-950 
+                    hover:bg-zinc-100 dark:hover:bg-zinc-900
                     shadow-xl
-                    border border-white/10
+                    border border-zinc-200 dark:border-white/10
                   "
                 >
-                  <span className="relative h-16 w-16 rounded-full overflow-hidden bg-black ring-1 ring-white/15">
+                  <span className="relative h-16 w-16 rounded-full overflow-hidden bg-zinc-100 dark:bg-black ring-1 ring-zinc-300 dark:ring-white/15">
                     <Image
                       src="/apod.png"
                       alt="NASA APOD"
@@ -65,7 +66,7 @@ export function ApodFab() {
 
             <TooltipContent
               side="left"
-              className="bg-zinc-950 text-white/80 border border-white/10"
+              className="bg-white dark:bg-zinc-950 text-zinc-700 dark:text-white/80 border border-zinc-200 dark:border-white/10"
             >
               <p>
                 <span className="text-emerald-400">NASA</span> APOD
