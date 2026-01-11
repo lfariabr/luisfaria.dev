@@ -9,8 +9,10 @@ import { chatbotQueries } from './chatbot/queries';
 import { chatbotMutations } from './chatbot/mutations';
 import { screamMutations } from './screams/mutations';
 import { sendGogginsEmailMutation } from './resend/mutations';
+import { ApodQueries } from './apod/queries';
 import Project from '../models/Project';
 import { slugify } from '../utils/slugUtils';
+import type { ApodResponse } from '../services/apod';
 
 // Combine all resolvers
 export const resolvers = {
@@ -20,6 +22,7 @@ export const resolvers = {
     ...userQueries,
     ...rateTestQueries,
     ...chatbotQueries,
+    ...ApodQueries,
   },
   
   Mutation: {
@@ -45,5 +48,11 @@ export const resolvers = {
       }
       return generated;
     },
+  },
+
+  // Map NASA API snake_case fields to GraphQL camelCase
+  Apod: {
+    mediaType: (parent: ApodResponse) => parent.media_type,
+    serviceVersion: (parent: ApodResponse) => parent.service_version,
   },
 };
