@@ -87,7 +87,7 @@ export async function fetchApod(
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     if (attempt > 0) {
       logger.info(`Retrying NASA API request (attempt ${attempt + 1}/${MAX_RETRIES + 1})`, logContext);
-      await delay(RETRY_DELAY_MS * attempt); // Exponential backoff
+      await delay(RETRY_DELAY_MS * attempt); // Linear backoff
     }
 
     // Create AbortController for timeout

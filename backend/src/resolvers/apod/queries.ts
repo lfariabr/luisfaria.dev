@@ -1,5 +1,6 @@
 import { GraphQLError } from 'graphql';
 import { fetchApod, ApodServiceError } from '../../services/apod';
+import { logger } from '../../utils/logger';
 
 /**
  * Maps ApodServiceError codes to GraphQL error codes.
@@ -44,6 +45,7 @@ export const ApodQueries = {
         });
       }
       // Unknown error - wrap it
+      logger.error('Unexpected error in getTodaysApod', { error });
       throw new GraphQLError('An unexpected error occurred while fetching APOD', {
         extensions: {
           code: 'INTERNAL_SERVER_ERROR',
@@ -89,6 +91,8 @@ export const ApodQueries = {
           },
         });
       }
+      // Unknown error - wrap it
+      logger.error('Unexpected error in getApodByDate', { error });
       throw new GraphQLError('An unexpected error occurred while fetching APOD', {
         extensions: {
           code: 'INTERNAL_SERVER_ERROR',
