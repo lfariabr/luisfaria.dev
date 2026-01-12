@@ -25,7 +25,8 @@ export async function fetchApod(
     return await fetchApodFromApi(url, logContext);
   } catch (error) {
     // HTML fallback only works for today's APOD
-    if (date) {
+    const today = new Date().toISOString().slice(0, 10);
+    if (date && date !== today) {
       throw error; // Re-throw for historical requests
     }
     
