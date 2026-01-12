@@ -1,5 +1,5 @@
 import { GraphQLError } from 'graphql';
-import { fetchApod, ApodServiceError } from '../../services/apod';
+import { fetchApod, ApodServiceError } from '../../services/apod/';
 import { logger } from '../../utils/logger';
 
 /**

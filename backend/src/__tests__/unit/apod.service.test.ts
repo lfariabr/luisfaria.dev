@@ -1,16 +1,8 @@
-// npm test -- --testPathPattern="apod" --verbose 2>&1
+// npm test -- --testPathPattern="apod.service" --verbose 2>&1
 
-// Mock the config module BEFORE importing the service
-jest.mock('../../config/config', () => ({
-  default: {
-    nasaApiKey: 'test-api-key',
-    nodeEnv: 'test',
-  },
-}));
+import { ApodServiceError } from '../../services/apod/apod.errors';
 
-import { fetchApod, ApodServiceError } from '../../services/apod';
-
-// Mock the logger to prevent console output during tests
+// Mock the logger
 jest.mock('../../utils/logger', () => ({
   logger: {
     info: jest.fn(),
@@ -19,427 +11,146 @@ jest.mock('../../utils/logger', () => ({
   },
 }));
 
-// Mock global fetch
-const mockFetch = jest.fn();
-global.fetch = mockFetch;
+// Mock config
+jest.mock('../../config/config', () => ({
+  default: {
+    nasaApiKey: 'test-api-key',
+    nodeEnv: 'test',
+  },
+}));
 
-describe('APOD Service - fetchApod', () => {
+// Mock the internal API and fallback modules
+jest.mock('../../services/apod/apod.api');
+jest.mock('../../services/apod/apod.fallback');
+
+import { fetchApod } from '../../services/apod/';
+import { fetchApodFromApi } from '../../services/apod/apod.api';
+import { fetchApodHtmlFallback } from '../../services/apod/apod.fallback';
+
+const mockFetchApodFromApi = fetchApodFromApi as jest.MockedFunction<typeof fetchApodFromApi>;
+const mockFetchApodHtmlFallback = fetchApodHtmlFallback as jest.MockedFunction<typeof fetchApodHtmlFallback>;
+
+describe('APOD Service - fetchApod (Orchestrator)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('Success Cases', () => {
-    it('should fetch and validate APOD successfully', async () => {
-      const mockApodResponse = {
-        copyright: 'Test Photographer',
-        date: '2024-01-15',
-        explanation: 'A beautiful image of the cosmos.',
-        media_type: 'image',
-        service_version: 'v1',
-        title: 'Cosmic Wonder',
-        url: 'https://apod.nasa.gov/apod/image.jpg',
-        hdurl: 'https://apod.nasa.gov/apod/image_hd.jpg',
-      };
+  const mockApodResponse = {
+    copyright: 'Test Photographer',
+    date: '2024-01-15',
+    explanation: 'A beautiful image of the cosmos.',
+    media_type: 'image' as const,
+    service_version: 'v1',
+    title: 'Cosmic Wonder',
+    url: 'https://apod.nasa.gov/apod/image.jpg',
+    hdurl: 'https://apod.nasa.gov/apod/image_hd.jpg',
+  };
 
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve(mockApodResponse),
-      });
+  const mockFallbackResponse = {
+    date: '2024-01-15',
+    explanation: 'Fallback explanation',
+    media_type: 'image' as const,
+    service_version: 'v1',
+    title: 'Fallback Title',
+    url: 'https://apod.nasa.gov/apod/fallback.jpg',
+    hdurl: 'https://apod.nasa.gov/apod/fallback.jpg',
+  };
+
+  describe('API Success', () => {
+    it('should return APOD from API when successful', async () => {
+      mockFetchApodFromApi.mockResolvedValueOnce(mockApodResponse);
 
       const result = await fetchApod();
 
       expect(result).toEqual(mockApodResponse);
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('api.nasa.gov/planetary/apod'),
-        expect.objectContaining({ signal: expect.any(AbortSignal) })
-      );
+      expect(mockFetchApodFromApi).toHaveBeenCalledTimes(1);
+      expect(mockFetchApodHtmlFallback).not.toHaveBeenCalled();
     });
 
-    it('should fetch APOD for a specific date', async () => {
-      const mockApodResponse = {
-        date: '2023-12-25',
-        explanation: 'Christmas in space!',
-        media_type: 'image',
-        service_version: 'v1',
-        title: 'Holiday Star',
-        url: 'https://apod.nasa.gov/apod/holiday.jpg',
-      };
+    it('should pass date parameter to API', async () => {
+      mockFetchApodFromApi.mockResolvedValueOnce(mockApodResponse);
 
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve(mockApodResponse),
-      });
+      await fetchApod({ date: '2023-12-25' });
 
-      const result = await fetchApod({ date: '2023-12-25' });
-
-      expect(result.date).toBe('2023-12-25');
-      expect(mockFetch).toHaveBeenCalledWith(
+      expect(mockFetchApodFromApi).toHaveBeenCalledWith(
         expect.stringContaining('date=2023-12-25'),
-        expect.objectContaining({ signal: expect.any(AbortSignal) })
+        expect.any(Object)
       );
     });
 
-    it('should handle video media type', async () => {
-      const mockVideoResponse = {
-        date: '2024-01-10',
-        explanation: 'An amazing cosmic video.',
-        media_type: 'video',
-        service_version: 'v1',
-        title: 'Space Video',
-        url: 'https://www.youtube.com/embed/xyz123',
-      };
+    it('should include API key in URL', async () => {
+      mockFetchApodFromApi.mockResolvedValueOnce(mockApodResponse);
 
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve(mockVideoResponse),
-      });
+      await fetchApod();
+
+      // Verify URL contains api_key parameter (value depends on config)
+      expect(mockFetchApodFromApi).toHaveBeenCalledWith(
+        expect.stringContaining('api_key='),
+        expect.any(Object)
+      );
+    });
+
+    it('should pass user context in logContext', async () => {
+      mockFetchApodFromApi.mockResolvedValueOnce(mockApodResponse);
+
+      await fetchApod({ context: { userId: 'user-123' } });
+
+      expect(mockFetchApodFromApi).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ userId: 'user-123' })
+      );
+    });
+  });
+
+  describe('Fallback Behavior', () => {
+    it('should fallback to HTML scraping when API fails', async () => {
+      const { logger } = require('../../utils/logger');
+      mockFetchApodFromApi.mockRejectedValueOnce(new Error('API failed'));
+      mockFetchApodHtmlFallback.mockResolvedValueOnce(mockFallbackResponse);
+
+      const result = await fetchApod();
+
+      expect(result).toEqual(mockFallbackResponse);
+      expect(mockFetchApodFromApi).toHaveBeenCalledTimes(1);
+      expect(mockFetchApodHtmlFallback).toHaveBeenCalledTimes(1);
+      expect(logger.warn).toHaveBeenCalledWith(
+        'NASA API failed, falling back to HTML',
+        expect.objectContaining({ reason: 'API failed' })
+      );
+    });
+
+    it('should fallback when API throws ApodServiceError', async () => {
+      mockFetchApodFromApi.mockRejectedValueOnce(
+        new ApodServiceError('Rate limit', 'RATE_LIMITED', 429)
+      );
+      mockFetchApodHtmlFallback.mockResolvedValueOnce(mockFallbackResponse);
+
+      const result = await fetchApod();
+
+      expect(result).toEqual(mockFallbackResponse);
+    });
+
+    it('should throw if both API and fallback fail', async () => {
+      mockFetchApodFromApi.mockRejectedValueOnce(new Error('API failed'));
+      mockFetchApodHtmlFallback.mockRejectedValueOnce(new Error('Fallback failed'));
+
+      await expect(fetchApod()).rejects.toThrow('Fallback failed');
+    });
+  });
+
+  describe('Video Media Type', () => {
+    it('should handle video responses from API', async () => {
+      const videoResponse = {
+        ...mockApodResponse,
+        media_type: 'video' as const,
+        url: 'https://youtube.com/embed/xyz',
+        hdurl: undefined,
+      };
+      mockFetchApodFromApi.mockResolvedValueOnce(videoResponse);
 
       const result = await fetchApod();
 
       expect(result.media_type).toBe('video');
-      expect(result.hdurl).toBeUndefined();
-    });
-
-    it('should pass user context for logging', async () => {
-      const { logger } = require('../../utils/logger');
-      
-      const mockApodResponse = {
-        date: '2024-01-15',
-        explanation: 'Test explanation',
-        media_type: 'image',
-        service_version: 'v1',
-        title: 'Test Title',
-        url: 'https://apod.nasa.gov/apod/test.jpg',
-      };
-
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve(mockApodResponse),
-      });
-
-      await fetchApod({
-        context: { userId: 'user-123', requestId: 'req-456' },
-      });
-
-      expect(logger.info).toHaveBeenCalledWith(
-        'Fetching APOD from NASA API',
-        expect.objectContaining({
-          userId: 'user-123',
-          requestId: 'req-456',
-        })
-      );
-    });
-  });
-
-  describe('Rate Limiting (429)', () => {
-    it('should throw RATE_LIMITED error on 429 response', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        status: 429,
-        json: () => Promise.resolve({}),
-      });
-
-      try {
-        await fetchApod();
-        fail('Should have thrown');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ApodServiceError);
-        expect((error as ApodServiceError).code).toBe('RATE_LIMITED');
-        expect((error as ApodServiceError).statusCode).toBe(429);
-      }
-    });
-
-    it('should log warning on rate limit', async () => {
-      const { logger } = require('../../utils/logger');
-      
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        status: 429,
-        json: () => Promise.resolve({}),
-      });
-
-      await expect(fetchApod()).rejects.toThrow();
-
-      expect(logger.warn).toHaveBeenCalledWith(
-        'NASA API rate limit exceeded',
-        expect.objectContaining({
-          statusCode: 429,
-        })
-      );
-    });
-  });
-
-  describe('NASA API Errors', () => {
-    it('should handle 403 Forbidden with structured error', async () => {
-      const nasaError = {
-        error: {
-          code: 'API_KEY_INVALID',
-          message: 'An invalid api_key was supplied.',
-        },
-      };
-
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        status: 403,
-        json: () => Promise.resolve(nasaError),
-      });
-
-      try {
-        await fetchApod();
-        fail('Should have thrown');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ApodServiceError);
-        expect((error as ApodServiceError).code).toBe('NASA_API_ERROR');
-        expect((error as ApodServiceError).statusCode).toBe(403);
-        expect((error as ApodServiceError).message).toBe('An invalid api_key was supplied.');
-      }
-    });
-
-    it('should handle 404 Not Found for invalid date', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        status: 404,
-        json: () => Promise.resolve({ error: { code: 'NOT_FOUND', message: 'No data found for date' } }),
-      });
-
-      try {
-        await fetchApod({ date: '1990-01-01' });
-        fail('Should have thrown');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ApodServiceError);
-        expect((error as ApodServiceError).code).toBe('NASA_API_ERROR');
-        expect((error as ApodServiceError).statusCode).toBe(404);
-      }
-    });
-
-    it('should handle 500 Internal Server Error', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-        json: () => Promise.reject(new Error('Invalid JSON')),
-      });
-
-      try {
-        await fetchApod();
-        fail('Should have thrown');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ApodServiceError);
-        expect((error as ApodServiceError).code).toBe('NASA_API_ERROR');
-        expect((error as ApodServiceError).statusCode).toBe(500);
-      }
-    });
-  });
-
-  describe('Network Errors', () => {
-    it('should throw NETWORK_ERROR on fetch failure', async () => {
-      // Mock 3 failures for all retry attempts
-      mockFetch
-        .mockRejectedValueOnce(new Error('ETIMEDOUT'))
-        .mockRejectedValueOnce(new Error('ETIMEDOUT'))
-        .mockRejectedValueOnce(new Error('ETIMEDOUT'));
-
-      try {
-        await fetchApod();
-        fail('Should have thrown');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ApodServiceError);
-        expect((error as ApodServiceError).code).toBe('NETWORK_ERROR');
-        expect((error as ApodServiceError).message).toBe('Failed to connect to NASA API');
-      }
-    });
-
-    it('should log network error with latency', async () => {
-      const { logger } = require('../../utils/logger');
-      
-      // Mock 3 failures for all retry attempts
-      mockFetch
-        .mockRejectedValueOnce(new Error('Connection refused'))
-        .mockRejectedValueOnce(new Error('Connection refused'))
-        .mockRejectedValueOnce(new Error('Connection refused'));
-
-      await expect(fetchApod()).rejects.toThrow();
-
-      expect(logger.error).toHaveBeenCalledWith(
-        'Network error fetching APOD after all retries',
-        expect.objectContaining({
-          latencyMs: expect.any(Number),
-          attempts: 3,
-        })
-      );
-    });
-  });
-
-  describe('Validation Errors (Invalid Payloads)', () => {
-    it('should throw VALIDATION_ERROR for missing required fields', async () => {
-      const invalidResponse = {
-        date: '2024-01-15',
-        // Missing: explanation, media_type, service_version, title, url
-      };
-
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve(invalidResponse),
-      });
-
-      try {
-        await fetchApod();
-        fail('Should have thrown');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ApodServiceError);
-        expect((error as ApodServiceError).code).toBe('VALIDATION_ERROR');
-      }
-    });
-
-    it('should throw VALIDATION_ERROR for invalid date format', async () => {
-      const invalidResponse = {
-        date: 'January 15, 2024', // Wrong format
-        explanation: 'Test',
-        media_type: 'image',
-        service_version: 'v1',
-        title: 'Test',
-        url: 'https://example.com/image.jpg',
-      };
-
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve(invalidResponse),
-      });
-
-      try {
-        await fetchApod();
-        fail('Should have thrown');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ApodServiceError);
-        expect((error as ApodServiceError).code).toBe('VALIDATION_ERROR');
-      }
-    });
-
-    it('should throw VALIDATION_ERROR for invalid media_type', async () => {
-      const invalidResponse = {
-        date: '2024-01-15',
-        explanation: 'Test',
-        media_type: 'audio', // Invalid - only 'image' or 'video' allowed
-        service_version: 'v1',
-        title: 'Test',
-        url: 'https://example.com/audio.mp3',
-      };
-
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve(invalidResponse),
-      });
-
-      try {
-        await fetchApod();
-        fail('Should have thrown');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ApodServiceError);
-        expect((error as ApodServiceError).code).toBe('VALIDATION_ERROR');
-      }
-    });
-
-    it('should throw VALIDATION_ERROR for invalid URL', async () => {
-      const invalidResponse = {
-        date: '2024-01-15',
-        explanation: 'Test',
-        media_type: 'image',
-        service_version: 'v1',
-        title: 'Test',
-        url: 'not-a-valid-url',
-      };
-
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve(invalidResponse),
-      });
-
-      try {
-        await fetchApod();
-        fail('Should have thrown');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ApodServiceError);
-        expect((error as ApodServiceError).code).toBe('VALIDATION_ERROR');
-      }
-    });
-
-    it('should throw VALIDATION_ERROR for non-JSON response', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: () => Promise.reject(new Error('Unexpected token')),
-      });
-
-      try {
-        await fetchApod();
-        fail('Should have thrown');
-      } catch (error) {
-        expect(error).toBeInstanceOf(ApodServiceError);
-        expect((error as ApodServiceError).code).toBe('VALIDATION_ERROR');
-        expect((error as ApodServiceError).message).toBe('Invalid JSON response from NASA API');
-      }
-    });
-
-    it('should include validation error details', async () => {
-      const { logger } = require('../../utils/logger');
-      
-      const invalidResponse = {
-        date: '2024-01-15',
-        // Missing required fields
-      };
-
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve(invalidResponse),
-      });
-
-      await expect(fetchApod()).rejects.toThrow();
-
-      expect(logger.error).toHaveBeenCalledWith(
-        'NASA API response failed schema validation',
-        expect.objectContaining({
-          validationErrors: expect.any(Array),
-        })
-      );
-    });
-  });
-
-  describe('Latency Logging', () => {
-    it('should log latency on successful request', async () => {
-      const { logger } = require('../../utils/logger');
-      
-      const mockApodResponse = {
-        date: '2024-01-15',
-        explanation: 'Test',
-        media_type: 'image',
-        service_version: 'v1',
-        title: 'Test',
-        url: 'https://example.com/image.jpg',
-      };
-
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve(mockApodResponse),
-      });
-
-      await fetchApod();
-
-      expect(logger.info).toHaveBeenCalledWith(
-        'APOD fetched successfully',
-        expect.objectContaining({
-          latencyMs: expect.any(Number),
-          statusCode: 200,
-        })
-      );
     });
   });
 });
