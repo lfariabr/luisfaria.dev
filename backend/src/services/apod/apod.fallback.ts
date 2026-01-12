@@ -1,8 +1,18 @@
 import { ApodResponse } from "./apod.types";
+import { REQUEST_TIMEOUT_MS } from "./apod.constants";
+import { APOD_HTML_URL } from "./apod.constants";
 
 export async function fetchApodHtmlFallback(): Promise<ApodResponse> {
-  const res = await fetch("https://apod.nasa.gov/apod/astropix.html");
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
+  let res: Response;
+  try {
+    res = await fetch(APOD_HTML_URL, { signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+  
   if (!res.ok) {
     throw new Error(`APOD HTML fallback failed with status ${res.status}`);
   }
