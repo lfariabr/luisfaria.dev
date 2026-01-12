@@ -1,4 +1,3 @@
-import { APOD_HTML_URL } from "./apod.constants";
 import { ApodResponse } from "./apod.types";
 
 export async function fetchApodHtmlFallback(): Promise<ApodResponse> {

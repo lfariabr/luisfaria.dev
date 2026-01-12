@@ -1,7 +1,6 @@
 // npm test -- --testPathPattern="apod.resolver" --verbose 2>&1
 
 import { ApodQueries } from '../../resolvers/apod/queries';
-import { ApodServiceError } from '../../services/apod/';
 import { GraphQLError } from 'graphql';
 
 // Mock the APOD service
