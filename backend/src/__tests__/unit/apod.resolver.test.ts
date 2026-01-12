@@ -1,9 +1,10 @@
+// npm test -- --testPathPattern="apod.resolver" --verbose 2>&1
+
 import { ApodQueries } from '../../resolvers/apod/queries';
-import { ApodServiceError } from '../../services/apod';
 import { GraphQLError } from 'graphql';
 
 // Mock the APOD service
-jest.mock('../../services/apod', () => ({
+jest.mock('../../services/apod/', () => ({
   fetchApod: jest.fn(),
   ApodServiceError: class ApodServiceError extends Error {
     constructor(
@@ -18,7 +19,7 @@ jest.mock('../../services/apod', () => ({
   },
 }));
 
-const { fetchApod } = require('../../services/apod');
+const { fetchApod } = require('../../services/apod/');
 
 describe('APOD Resolver - ApodQueries', () => {
   beforeEach(() => {

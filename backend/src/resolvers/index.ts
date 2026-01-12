@@ -12,7 +12,7 @@ import { sendGogginsEmailMutation } from './resend/mutations';
 import { ApodQueries } from './apod/queries';
 import Project from '../models/Project';
 import { slugify } from '../utils/slugUtils';
-import type { ApodResponse } from '../services/apod';
+import type { ApodResponse } from '../services/apod/';
 
 // Combine all resolvers
 export const resolvers = {
