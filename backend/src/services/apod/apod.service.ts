@@ -24,6 +24,11 @@ export async function fetchApod(
   try {
     return await fetchApodFromApi(url, logContext);
   } catch (error) {
+    // HTML fallback only works for today's APOD
+    if (date) {
+      throw error; // Re-throw for historical requests
+    }
+    
     logger.warn("NASA API failed, falling back to HTML", {
       ...logContext,
       reason: error instanceof Error ? error.message : "unknown",
