@@ -5,6 +5,16 @@ import { fetchApodHtmlFallback } from "./apod.fallback";
 import { APOD_API_URL } from "./apod.constants";
 import { ApodRequestContext, ApodResponse } from "./apod.types";
 
+/**
+ * Generates the direct APOD page URL for a given date.
+ * Format: https://apod.nasa.gov/apod/apYYMMDD.html
+ */
+function buildApodPageUrl(date: string): string {
+  const [year, month, day] = date.split("-");
+  const shortYear = year.slice(2);
+  return `https://apod.nasa.gov/apod/ap${shortYear}${month}${day}.html`;
+}
+
 export async function fetchApod(
   options: { date?: string; context?: ApodRequestContext } = {}
 ): Promise<ApodResponse> {
@@ -21,8 +31,10 @@ export async function fetchApod(
     date: date ?? "today",
   };
 
+  let apodData: ApodResponse;
+
   try {
-    return await fetchApodFromApi(url, logContext);
+    apodData = await fetchApodFromApi(url, logContext);
   } catch (error) {
     // HTML fallback only works for today's APOD
     const today = new Date().toISOString().slice(0, 10);
@@ -35,6 +47,12 @@ export async function fetchApod(
       reason: error instanceof Error ? error.message : "unknown",
     });
 
-    return await fetchApodHtmlFallback();
+    apodData = await fetchApodHtmlFallback();
   }
+
+  // Enrich with direct APOD page URL
+  return {
+    ...apodData,
+    apod_url: buildApodPageUrl(apodData.date),
+  };
 }

@@ -9,8 +9,10 @@ export const apodTypes = `#graphql
     mediaType: String!
     serviceVersion: String!
     title: String!
-    url: String!
+    url: String
     hdurl: String
+    "Direct link to the APOD page on NASA's website"
+    apodUrl: String!
   }
 
   extend type Query {
