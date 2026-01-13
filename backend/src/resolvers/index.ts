@@ -54,5 +54,6 @@ export const resolvers = {
   Apod: {
     mediaType: (parent: ApodResponse) => parent.media_type,
     serviceVersion: (parent: ApodResponse) => parent.service_version,
+    apodUrl: (parent: ApodResponse) => parent.apod_url,
   },
 };

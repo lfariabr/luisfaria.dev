@@ -50,6 +50,10 @@ export async function fetchApodHtmlFallback(): Promise<ApodResponse> {
   // so we safely use today's date.
   const date = new Date().toISOString().slice(0, 10);
 
+  // --- APOD PAGE URL ---
+  const [year, month, day] = date.split("-");
+  const apod_url = `https://apod.nasa.gov/apod/ap${year.slice(2)}${month}${day}.html`;
+
   return {
     date,
     title,
@@ -58,5 +62,6 @@ export async function fetchApodHtmlFallback(): Promise<ApodResponse> {
     service_version: "v1",
     url: imageUrl,
     hdurl: imageUrl,
+    apod_url,
   };
 }
