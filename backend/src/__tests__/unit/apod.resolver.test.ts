@@ -3,21 +3,14 @@
 import { ApodQueries } from '../../resolvers/apod/queries';
 import { GraphQLError } from 'graphql';
 
-// Mock the APOD service
-jest.mock('../../services/apod/', () => ({
-  fetchApod: jest.fn(),
-  ApodServiceError: class ApodServiceError extends Error {
-    constructor(
-      message: string,
-      public readonly code: 'RATE_LIMITED' | 'NASA_API_ERROR' | 'VALIDATION_ERROR' | 'NETWORK_ERROR',
-      public readonly statusCode?: number,
-      public readonly details?: unknown
-    ) {
-      super(message);
-      this.name = 'ApodServiceError';
-    }
-  },
-}));
+// Mock the APOD service - import real error handler and error class
+jest.mock('../../services/apod/', () => {
+  const actual = jest.requireActual('../../services/apod/');
+  return {
+    ...actual,
+    fetchApod: jest.fn(),
+  };
+});
 
 const { fetchApod } = require('../../services/apod/');
 
