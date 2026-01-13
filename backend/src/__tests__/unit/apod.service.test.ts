@@ -62,7 +62,8 @@ describe('APOD Service - fetchApod (Orchestrator)', () => {
 
       const result = await fetchApod();
 
-      expect(result).toEqual(mockApodResponse);
+      expect(result).toMatchObject(mockApodResponse);
+      expect(result.apod_url).toBe('https://apod.nasa.gov/apod/ap240115.html');
       expect(mockFetchApodFromApi).toHaveBeenCalledTimes(1);
       expect(mockFetchApodHtmlFallback).not.toHaveBeenCalled();
     });
@@ -110,7 +111,8 @@ describe('APOD Service - fetchApod (Orchestrator)', () => {
 
       const result = await fetchApod();
 
-      expect(result).toEqual(mockFallbackResponse);
+      expect(result).toMatchObject(mockFallbackResponse);
+      expect(result.apod_url).toBe('https://apod.nasa.gov/apod/ap240115.html');
       expect(mockFetchApodFromApi).toHaveBeenCalledTimes(1);
       expect(mockFetchApodHtmlFallback).toHaveBeenCalledTimes(1);
       expect(logger.warn).toHaveBeenCalledWith(
@@ -127,7 +129,8 @@ describe('APOD Service - fetchApod (Orchestrator)', () => {
 
       const result = await fetchApod();
 
-      expect(result).toEqual(mockFallbackResponse);
+      expect(result).toMatchObject(mockFallbackResponse);
+      expect(result.apod_url).toBe('https://apod.nasa.gov/apod/ap240115.html');
     });
 
     it('should throw if both API and fallback fail', async () => {

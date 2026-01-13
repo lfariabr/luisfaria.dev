@@ -10,6 +10,9 @@ import { ApodRequestContext, ApodResponse } from "./apod.types";
  * Format: https://apod.nasa.gov/apod/apYYMMDD.html
  */
 function buildApodPageUrl(date: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    throw new Error(`Invalid date format: ${date}`);
+  }
   const [year, month, day] = date.split("-");
   const shortYear = year.slice(2);
   return `https://apod.nasa.gov/apod/ap${shortYear}${month}${day}.html`;
