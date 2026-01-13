@@ -11,6 +11,9 @@ export type { ApodResponse, ApodRequestContext } from "./apod.types";
 export { ApodServiceError } from "./apod.errors";
 export type { ApodErrorCode } from "./apod.errors";
 
+// Error handling for resolvers
+export { withApodErrorHandling } from "./apod.errorHandler";
+
 // Constants (for testing/config overrides)
 export {
   APOD_API_URL,
