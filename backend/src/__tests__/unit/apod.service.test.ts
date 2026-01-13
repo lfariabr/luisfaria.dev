@@ -44,6 +44,7 @@ describe('APOD Service - fetchApod (Orchestrator)', () => {
     title: 'Cosmic Wonder',
     url: 'https://apod.nasa.gov/apod/image.jpg',
     hdurl: 'https://apod.nasa.gov/apod/image_hd.jpg',
+    apod_url: 'https://apod.nasa.gov/apod/ap240115.html',
   };
 
   const mockFallbackResponse = {
@@ -54,6 +55,7 @@ describe('APOD Service - fetchApod (Orchestrator)', () => {
     title: 'Fallback Title',
     url: 'https://apod.nasa.gov/apod/fallback.jpg',
     hdurl: 'https://apod.nasa.gov/apod/fallback.jpg',
+    apod_url: 'https://apod.nasa.gov/apod/ap240115.html',
   };
 
   describe('API Success', () => {
@@ -148,6 +150,7 @@ describe('APOD Service - fetchApod (Orchestrator)', () => {
         media_type: 'video' as const,
         url: 'https://youtube.com/embed/xyz',
         hdurl: undefined,
+        apod_url: 'https://apod.nasa.gov/apod/ap240115.html',
       };
       mockFetchApodFromApi.mockResolvedValueOnce(videoResponse);
 
