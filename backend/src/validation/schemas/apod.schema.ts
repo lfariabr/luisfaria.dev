@@ -13,7 +13,7 @@ export const apodResponseSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   url: z.string().url('URL must be valid').optional(),
   hdurl: z.string().url().optional(),
-  apod_url: z.string().url(),
+  apod_url: z.string().url().optional(),
 });
 
 export type ApodResponse = z.infer<typeof apodResponseSchema>;
