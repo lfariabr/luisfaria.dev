@@ -1,7 +1,6 @@
 import { logger } from "../../utils/logger";
-import { apodResponseSchema, nasaErrorSchema } from "../../validation/schemas/apod.schema";
+import { nasaApodRawSchema, nasaErrorSchema, NasaApodRaw } from "../../validation/schemas/apod.schema";
 import { ApodServiceError } from "./apod.errors";
-import { ApodResponse } from "./apod.types";
 import {
   REQUEST_TIMEOUT_MS,
   MAX_RETRIES,
@@ -17,7 +16,7 @@ const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 export async function fetchApodFromApi(
   url: string,
   logContext: Record<string, unknown>
-): Promise<ApodResponse> {
+): Promise<NasaApodRaw> {
   const startTime = Date.now();
   let response!: Response;
   let statusCode!: number;
@@ -157,7 +156,7 @@ export async function fetchApodFromApi(
     );
   }
 
-  const parsed = apodResponseSchema.safeParse(rawData);
+  const parsed = nasaApodRawSchema.safeParse(rawData);
 
   if (!parsed.success) {
     logger.error("NASA API response failed schema validation", {

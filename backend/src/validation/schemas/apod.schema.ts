@@ -1,18 +1,27 @@
 import { z } from 'zod';
 
 /**
- * Zod schema for NASA APOD API response validation.
- * Ensures type safety and catches malformed responses early.
+ * Zod schema for raw NASA APOD API response validation.
+ * NASA doesn't return apod_url - we add it in the service layer.
  */
-export const apodResponseSchema = z.object({
+export const nasaApodRawSchema = z.object({
   copyright: z.string().optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
   explanation: z.string().min(1, 'Explanation is required'),
   media_type: z.enum(['image', 'video', 'other']),
   service_version: z.string(),
   title: z.string().min(1, 'Title is required'),
-  url: z.string().url('URL must be valid').optional(),
+  url: z.string().url('URL must be valid'),
   hdurl: z.string().url().optional(),
+});
+
+export type NasaApodRaw = z.infer<typeof nasaApodRawSchema>;
+
+/**
+ * Extended schema for enriched APOD response (what our service returns).
+ * Includes apod_url which is always injected by the service layer.
+ */
+export const apodResponseSchema = nasaApodRawSchema.extend({
   apod_url: z.string().url(),
 });
 

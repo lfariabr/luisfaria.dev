@@ -10,10 +10,18 @@ interface JWTPayload {
     role: string;
 }
 
-// Get auth user from the token (cookie-based auth)
+// Get auth user from the token (cookie or Authorization header)
 export const getUser = (req: Request): JWTPayload | null => {
-    // Get token directly from httpOnly cookie
-    const token = req.cookies?.token;
+    // Try cookie first (browser clients)
+    let token = req.cookies?.token;
+    
+    // Fallback to Authorization header (Apollo Studio, mobile, etc.)
+    if (!token) {
+        const authHeader = req.headers.authorization;
+        if (authHeader?.startsWith('Bearer ')) {
+            token = authHeader.slice(7);
+        }
+    }
     
     if (!token) {
         return null;
@@ -35,6 +43,10 @@ export const getUser = (req: Request): JWTPayload | null => {
                     break;
                 case 'user':
                     decoded.role = UserRole.USER;
+                    break;
+                default:
+                    // Unknown role - log for monitoring
+                    console.warn(`Unknown role in token: ${decoded.role}`);
                     break;
             }
         }
