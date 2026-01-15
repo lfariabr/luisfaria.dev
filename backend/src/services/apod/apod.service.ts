@@ -3,7 +3,7 @@ import { logger } from "../../utils/logger";
 import { fetchApodFromApi } from "./apod.api";
 import { fetchApodHtmlFallback } from "./apod.fallback";
 import { APOD_API_URL } from "./apod.constants";
-import { ApodRequestContext, ApodResponse } from "./apod.types";
+import { ApodRequestContext, ApodResponse, NasaApodRaw } from "./apod.types";
 
 /**
  * Generates the direct APOD page URL for a given date.
@@ -34,7 +34,7 @@ export async function fetchApod(
     date: date ?? "today",
   };
 
-  let apodData: ApodResponse;
+  let apodData: NasaApodRaw;
 
   try {
     apodData = await fetchApodFromApi(url, logContext);
