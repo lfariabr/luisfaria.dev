@@ -44,6 +44,10 @@ export const getUser = (req: Request): JWTPayload | null => {
                 case 'user':
                     decoded.role = UserRole.USER;
                     break;
+                default:
+                    // Unknown role - log for monitoring
+                    console.warn(`Unknown role in token: ${decoded.role}`);
+                    break;
             }
         }
         

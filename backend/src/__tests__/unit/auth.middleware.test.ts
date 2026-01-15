@@ -9,6 +9,12 @@ describe('Auth Middleware - getUser', () => {
   // Use the actual JWT secret from config (loaded from env)
   const jwtSecret = config.jwtSecret;
 
+  beforeAll(() => {
+    if (!jwtSecret) {
+      throw new Error('JWT secret not configured - ensure test environment is properly set up');
+    }
+  });
+
   const mockPayload = {
     id: 'user-123',
     email: 'test@example.com',
@@ -79,6 +85,16 @@ describe('Auth Middleware - getUser', () => {
       const token = jwt.sign(mockPayload, jwtSecret);
       const req = createMockRequest({
         authorization: token, // No "Bearer " prefix
+      });
+
+      const user = getUser(req);
+
+      expect(user).toBeNull();
+    });
+
+    it('should return null for Bearer prefix with no token', () => {
+      const req = createMockRequest({
+        authorization: 'Bearer ', // Just the prefix, no token
       });
 
       const user = getUser(req);
@@ -189,5 +205,22 @@ describe('Auth Middleware - getUser', () => {
 
       expect(user?.role).toBe('USER');
     });
+  });
+  it('should preserve already uppercase ADMIN role', () => {
+    const token = jwt.sign({ ...mockPayload, role: 'ADMIN' }, jwtSecret);
+    const req = createMockRequest({ authorization: `Bearer ${token}` });
+
+    const user = getUser(req);
+
+    expect(user?.role).toBe('ADMIN');
+  });
+
+  it('should normalize mixed case Admin to ADMIN', () => {
+    const token = jwt.sign({ ...mockPayload, role: 'Admin' }, jwtSecret);
+    const req = createMockRequest({ authorization: `Bearer ${token}` });
+
+    const user = getUser(req);
+
+    expect(user?.role).toBe('ADMIN');
   });
 });
