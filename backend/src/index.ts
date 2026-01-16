@@ -43,6 +43,7 @@ interface MyContext {
     email: string;
     role: UserRole;
   } | null;
+  clientIp: string;
 }
 
 async function startServer() {
@@ -133,8 +134,14 @@ async function startServer() {
           // Get the user from the token
           const user = getUser(req);
           
-          // Add the user and response object to the context
-          return { user, req, res };
+          // Extract client IP for rate limiting (supports proxies)
+          const forwardedFor = req.headers['x-forwarded-for'];
+          const clientIp = forwardedFor
+            ? (Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor.split(',')[0].trim())
+            : req.socket?.remoteAddress || 'unknown';
+          
+          // Add the user, clientIp, and response object to the context
+          return { user, clientIp, req, res };
         },
       })
     );

@@ -32,7 +32,7 @@ describe('APOD Resolver - ApodQueries', () => {
 
       fetchApod.mockResolvedValueOnce(mockApod);
 
-      const result = await ApodQueries.getTodaysApod({}, {}, { user: undefined });
+      const result = await ApodQueries.getTodaysApod({}, {}, { user: undefined, clientIp: '127.0.0.1' });
 
       expect(result).toEqual(mockApod);
       expect(fetchApod).toHaveBeenCalledWith({
@@ -52,7 +52,7 @@ describe('APOD Resolver - ApodQueries', () => {
 
       fetchApod.mockResolvedValueOnce(mockApod);
 
-      await ApodQueries.getTodaysApod({}, {}, { user: { id: 'user-123' } });
+      await ApodQueries.getTodaysApod({}, {}, { user: { id: 'user-123' }, clientIp: '127.0.0.1' });
 
       expect(fetchApod).toHaveBeenCalledWith({
         context: { userId: 'user-123' },
@@ -66,7 +66,7 @@ describe('APOD Resolver - ApodQueries', () => {
       );
 
       try {
-        await ApodQueries.getTodaysApod({}, {}, { user: undefined });
+        await ApodQueries.getTodaysApod({}, {}, { user: undefined, clientIp: '127.0.0.1' });
         fail('Should have thrown');
       } catch (error) {
         expect(error).toBeInstanceOf(GraphQLError);
@@ -82,7 +82,7 @@ describe('APOD Resolver - ApodQueries', () => {
       );
 
       try {
-        await ApodQueries.getTodaysApod({}, {}, { user: undefined });
+        await ApodQueries.getTodaysApod({}, {}, { user: undefined, clientIp: '127.0.0.1' });
         fail('Should have thrown');
       } catch (error) {
         expect(error).toBeInstanceOf(GraphQLError);
@@ -98,7 +98,7 @@ describe('APOD Resolver - ApodQueries', () => {
       );
 
       try {
-        await ApodQueries.getTodaysApod({}, {}, { user: undefined });
+        await ApodQueries.getTodaysApod({}, {}, { user: undefined, clientIp: '127.0.0.1' });
         fail('Should have thrown');
       } catch (error) {
         expect(error).toBeInstanceOf(GraphQLError);
@@ -114,7 +114,7 @@ describe('APOD Resolver - ApodQueries', () => {
       );
 
       try {
-        await ApodQueries.getTodaysApod({}, {}, { user: undefined });
+        await ApodQueries.getTodaysApod({}, {}, { user: undefined, clientIp: '127.0.0.1' });
         fail('Should have thrown');
       } catch (error) {
         expect(error).toBeInstanceOf(GraphQLError);
@@ -126,7 +126,7 @@ describe('APOD Resolver - ApodQueries', () => {
       fetchApod.mockRejectedValueOnce(new Error('Random unexpected error'));
 
       try {
-        await ApodQueries.getTodaysApod({}, {}, { user: undefined });
+        await ApodQueries.getTodaysApod({}, {}, { user: undefined, clientIp: '127.0.0.1' });
         fail('Should have thrown');
       } catch (error) {
         expect(error).toBeInstanceOf(GraphQLError);
