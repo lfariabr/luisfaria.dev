@@ -8,17 +8,18 @@ export const ApodQueries = {
    * Fetches today's Astronomy Picture of the Day.
    * Public endpoint - no auth required, but logs user context if available.
    */
-  getTodaysApod: async (_: unknown, __: unknown, context: { user?: { id: string } }) => {
-    // Rate limit for public endpoint - uses global key (not per-user)
-    // More restrictive: 10 requests per hour for unauthenticated, normal limits for authenticated
+  getTodaysApod: async (_: unknown, __: unknown, context: { user?: { id: string }; clientIp: string }) => {
+    // Rate limit: per-user for authenticated, per-IP for anonymous
+    // More restrictive limit (5/hour) for unauthenticated clients
     const limitKey = context.user?.id 
       ? `apod:today:${context.user.id}` 
-      : 'apod:today:public';
-    const limit = context.user ? config.rateLimitMaxRequests : 10;
+      : `apod:today:ip:${context.clientIp}`;
+    const limit = context.user ? config.rateLimitMaxRequests : 5;
     
     await applyRateLimit(limitKey, limit, config.rateLimitWindow, {
       resolver: 'getTodaysApod',
       userId: context.user?.id,
+      metadata: { clientIp: context.clientIp },
     });
 
     return withApodErrorHandling(
