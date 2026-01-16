@@ -89,8 +89,6 @@ interface ButtonProps {
 
 **Interview Answer:** "TypeScript adds compile-time type checking to JavaScript. In my portfolio, it prevents runtime errors, improves IDE autocomplete, and makes refactoring safer. For example, my GraphQL schema types ensure I never pass wrong data between frontend and backend."
 
-*Updated todo list*
-
 ### Planner Response
 
 ## 2. Client-Side vs Server-Side Rendering 🌐
@@ -119,8 +117,6 @@ const [messages, setMessages] = useState([]); // Client-side state
 ```
 
 **Interview Answer:** "Client-side renders in the browser using JavaScript, giving rich interactivity but slower initial loads. Server-side pre-renders HTML on the server for faster first paint and better SEO. My portfolio uses Next.js for SSR benefits while maintaining client-side interactivity for features like the chatbot."
-
-*Updated todo list*
 
 ### Planner Response
 
@@ -176,8 +172,6 @@ const expensiveCalculation = useMemo(() => {
 
 **Interview Answer:** "useMemo memoizes expensive calculations. It only recalculates when dependencies change. In large datasets, this prevents unnecessary re-renders and improves performance."
 
-*Updated todo list*
-
 ### Planner Response
 
 ## 4. Scaling Frontend Data & Performance 📈
@@ -214,8 +208,6 @@ const ASK_QUESTION_MUTATION = gql`
 ```
 
 **Interview Answer:** "For scaling frontend data, I use useMemo to cache expensive calculations, React.lazy for code splitting, and GraphQL to fetch only required fields. My portfolio implements rate limiting and efficient state management to handle growth."
-
-*Updated todo list*
 
 ### Planner Response
 
@@ -257,8 +249,6 @@ healthcheck:
 6. **CDN** - Static asset delivery (Cloudflare)
 
 **Interview Answer:** "DigitalOcean is excellent for most applications and more cost-effective than AWS. For 99% uptime, I implement health checks, load balancing, database replication, monitoring alerts, and automated backups. My portfolio uses Docker health checks and could easily scale with DigitalOcean's load balancers."
-
-*Updated todo list*
 
 ### Planner Response
 
@@ -314,8 +304,6 @@ const [askQuestion] = useMutation(ASK_QUESTION_MUTATION, {
 5. **SWR/React Query** - Server state management
 
 **Interview Answer:** "I use React Context for global UI state like authentication, and Apollo Client for server state management. This eliminates Redux complexity while providing the same benefits. Context API is perfect for auth state, while Apollo handles caching and synchronization of server data."
-
-*Updated todo list*
 
 ### Planner Response
 
@@ -395,8 +383,6 @@ Cookies.set('token', data.login.token, cookieOptions);
 5. **Reset Timer** - Real-time countdown in UI
 
 **Interview Answer:** "I implement rate limiting using Redis with user-specific keys and sliding windows. JWT tokens are stored securely in httpOnly cookies and localStorage. Redis tracks request counts per user with automatic expiration. My chatbot shows real-time rate limit status and countdown timers for better UX."
-
-*Updated todo list*
 
 ### Planner Response
 
@@ -481,8 +467,6 @@ const author = await userLoader.load(project.authorId); // Batched!
 ```
 
 **Interview Answer:** "GraphQL resolvers handle business logic, authentication, and data fetching. I structure them modularly for easy maintenance. For versioning, I use additive changes and deprecation rather than breaking changes. Data loaders batch database queries to solve N+1 problems - something I could implement in my portfolio for user lookups."
-
-*Updated todo list*
 
 *Viewed [layout.tsx](file:///Users/luisfaria/Desktop/sEngineer/luisfaria/frontend/src/app/layout.tsx) *
 
@@ -615,8 +599,6 @@ export const orderMutations = {
 ```
 
 **Interview Answer:** "For MERN e-commerce, I'd extend my portfolio's architecture: Next.js with App Router for the frontend, GraphQL API with modular resolvers, MongoDB for data persistence, and Redis for cart sessions. I'd use my existing auth system, add Stripe for payments, implement inventory management, and use my rate limiting for order protection. The modular structure makes it scalable and maintainable."
-
-*Updated todo list*
 
 ### Planner Response
 

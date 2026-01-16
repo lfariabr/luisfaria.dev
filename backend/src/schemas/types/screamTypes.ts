@@ -8,7 +8,7 @@ export const screamTypes = `#graphql
     rateLimitInfo: RateLimitInfo
     createdAt: String!
     isSubscriber: Boolean! # future validation, today everyone starting with True
-    # #TODO at activateGogginsMode.ts: const isSubscriber = await checkStripeCustomer(email) // or fetch from local User collection
+    # at activateGogginsMode.ts: const isSubscriber = await checkStripeCustomer(email) // or fetch from local User collection
     # subscriptionType: String! # e.g. "weekly", "daily", "monthly", "lifetime", "enterprise"
     # goalsArray: [String]! # future
   }

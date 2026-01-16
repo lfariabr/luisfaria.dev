@@ -16,9 +16,9 @@ const ScreamSchema = new Schema(
     userEmail: { type: String, required: true, lowercase: true, trim: true },
     text: { type: String, required: true },
     modelUsed: { type: String, required: true },
-    explicitMode: { type: Boolean, default: true }, // TODO: change to FALSE
+    explicitMode: { type: Boolean, default: true }, // ⚠️ change to FALSE
 
-    isSubscriber: { type: Boolean, default: true },  // ⚠️ TODO: replace with checkStripeCustomer(email) or add a isActiveSubscription field if not comming straight from Stripe, but i doubt it will be needed
+    isSubscriber: { type: Boolean, default: true },  // ⚠️ replace with checkStripeCustomer(email) or add a isActiveSubscription field if not comming straight from Stripe, but i doubt it will be needed
     subscriptionType: { type: String, default: 'free' }, // 🔜 future paid logic
     goalsArray: { type: [String], default: [] }, // 🔜 user-defined goals
     },
