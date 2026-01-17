@@ -37,11 +37,20 @@ export const apodCache = {
 
   /**
    * Build cache key for today's APOD.
-   * Uses current date in YYYY-MM-DD format for consistency.
+   *
+   * Uses US Eastern timezone (America/New_York) to match NASA APOD's server-local
+   * date interpretation. The APOD API publishes new images based on Eastern time,
+   * so using UTC can cause off-by-one cache key mismatches (e.g., at 11pm UTC on
+   * Jan 15, it's already Jan 16 UTC but still Jan 15 Eastern where APOD updates).
+   *
+   * @see https://api.nasa.gov/ - APOD API documentation
+   * @see buildTodayKey - Called by getTodaysApod resolver for cache lookup
    */
   buildTodayKey(): string {
-    const today = new Date().toISOString().split('T')[0];
-    return `date:${today}`;
+    const easternDate = new Date().toLocaleDateString('en-CA', {
+      timeZone: 'America/New_York',
+    });
+    return `date:${easternDate}`;
   },
 
   /**
