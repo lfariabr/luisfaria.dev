@@ -160,8 +160,11 @@ describe('APOD Resolvers Integration Tests', () => {
 
         const testIp = `192.168.1.${Math.floor(Math.random() * 255)}`;
 
-        // Make requests up to the limit (5 for anonymous)
-        for (let i = 0; i < 5; i++) {
+        // Use actual anonymous rate limit from config
+        const anonymousLimit = config.rateLimitAnonymousRequests;
+
+        // Make requests up to the limit
+        for (let i = 0; i < anonymousLimit; i++) {
           await executeOperation(GET_TODAYS_APOD, {}, { clientIp: testIp });
         }
 
@@ -183,8 +186,9 @@ describe('APOD Resolvers Integration Tests', () => {
         const ip1 = `10.0.0.${Math.floor(Math.random() * 255)}`;
         const ip2 = `10.0.1.${Math.floor(Math.random() * 255)}`;
 
-        // Exhaust IP1's limit
-        for (let i = 0; i < 5; i++) {
+        // Exhaust IP1's limit using config value
+        const anonymousLimit = config.rateLimitAnonymousRequests;
+        for (let i = 0; i < anonymousLimit; i++) {
           await executeOperation(GET_TODAYS_APOD, {}, { clientIp: ip1 });
         }
 
@@ -204,8 +208,9 @@ describe('APOD Resolvers Integration Tests', () => {
 
         const testIp = `172.16.0.${Math.floor(Math.random() * 255)}`;
 
-        // Exhaust limit
-        for (let i = 0; i < 5; i++) {
+        // Exhaust limit using config value
+        const anonymousLimit = config.rateLimitAnonymousRequests;
+        for (let i = 0; i < anonymousLimit; i++) {
           await executeOperation(GET_TODAYS_APOD, {}, { clientIp: testIp });
         }
 
