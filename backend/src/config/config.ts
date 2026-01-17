@@ -11,6 +11,7 @@ interface Config {
     redisUrl: string;
     rateLimitWindow: number;
     rateLimitMaxRequests: number;
+    rateLimitAnonymousRequests: number;
     openaiApiKey: string;
     resendApiKey: string;
     nasaApiKey: string;
@@ -26,6 +27,7 @@ const requiredEnvVars = [
   'OPENAI_API_KEY',
   'RATE_LIMIT_WINDOW',
   'RATE_LIMIT_MAX_REQUESTS',
+  'RATE_LIMIT_ANONYMOUS_REQUESTS',
   'RESEND_API_KEY',
   'NASA_API_KEY'
 ];
@@ -43,6 +45,7 @@ const config: Config = {
     redisUrl: process.env.REDIS_URL || '',
     rateLimitWindow: parseInt(process.env.RATE_LIMIT_WINDOW || '60', 10),
     rateLimitMaxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '5', 10),
+    rateLimitAnonymousRequests: parseInt(process.env.RATE_LIMIT_ANONYMOUS_REQUESTS || '5', 10),
     openaiApiKey: process.env.OPENAI_API_KEY || '',
     resendApiKey: process.env.RESEND_API_KEY || '',
     nasaApiKey: process.env.NASA_API_KEY || '',
