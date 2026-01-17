@@ -47,10 +47,13 @@ export const apodCache = {
    * @see buildTodayKey - Called by getTodaysApod resolver for cache lookup
    */
   buildTodayKey(): string {
-    const easternDate = new Date().toLocaleDateString('en-CA', {
-      timeZone: 'America/New_York',
-    });
-    return `date:${easternDate}`;
+    const now = new Date();
+    // Get date in Eastern timezone to match NASA APOD API
+    const easternDate = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+    const year = easternDate.getFullYear();
+    const month = String(easternDate.getMonth() + 1).padStart(2, '0');
+    const day = String(easternDate.getDate()).padStart(2, '0');
+    return `date:${year}-${month}-${day}`;
   },
 
   /**

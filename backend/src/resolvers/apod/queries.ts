@@ -12,11 +12,11 @@ export const ApodQueries = {
    */
   getTodaysApod: async (_: unknown, __: unknown, context: { user?: { id: string }; clientIp: string }) => {
     // Rate limit: per-user for authenticated, per-IP for anonymous
-    // More restrictive limit (5/hour) for unauthenticated clients
+    // More restrictive limit for unauthenticated clients (configurable via RATE_LIMIT_ANONYMOUS_REQUESTS)
     const limitKey = context.user?.id 
       ? `apod:today:${context.user.id}` 
       : `apod:today:ip:${context.clientIp}`;
-    const limit = context.user ? config.rateLimitMaxRequests : 5;
+    const limit = context.user ? config.rateLimitMaxRequests : config.rateLimitAnonymousRequests;
     
     await applyRateLimit(limitKey, limit, config.rateLimitWindow, {
       resolver: 'getTodaysApod',
