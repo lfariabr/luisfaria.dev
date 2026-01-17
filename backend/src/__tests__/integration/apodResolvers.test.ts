@@ -3,6 +3,7 @@
 import * as dbHandler from '../helpers/dbHandler';
 import { executeOperation } from '../helpers/testServer';
 import { connectRedis, disconnectRedis, getRedisClient } from '../../services/redis';
+import config from '../../config/config';
 
 // Mock the APOD service - keep error handling real
 jest.mock('../../services/apod/', () => {
@@ -330,21 +331,28 @@ describe('APOD Resolvers Integration Tests', () => {
           clientIp: '127.0.0.1',
         };
 
-        // Make requests up to the limit (using default config)
-        // Default is typically higher for authenticated users
-        // We'll make enough requests to trigger the limit
-        for (let i = 0; i < 100; i++) {
+        // Use actual rate limit from config (same setting used by the resolver)
+        const limit = config.rateLimitMaxRequests;
+
+        // Make exactly `limit` requests - all should succeed
+        for (let i = 0; i < limit; i++) {
           const res = await executeOperation(GET_APOD_BY_DATE, { date: '2024-01-15' }, userContext);
-          if (res.body.kind === 'single' && res.body.singleResult.errors) {
-            // Found the rate limit
-            expect(res.body.singleResult.errors[0].extensions?.code).toBe('RATE_LIMIT_EXCEEDED');
-            return;
+          expect(res.body.kind).toBe('single');
+          if (res.body.kind === 'single') {
+            expect(res.body.singleResult.errors).toBeUndefined();
           }
         }
 
-        // If we got here without hitting rate limit, that's also acceptable
-        // (means rate limit is set very high for authenticated users)
-        expect(true).toBe(true);
+        // The (limit + 1)th request MUST be rate limited
+        const finalRes = await executeOperation(GET_APOD_BY_DATE, { date: '2024-01-15' }, userContext);
+        expect(finalRes.body.kind).toBe('single');
+        if (finalRes.body.kind === 'single') {
+          const { errors } = finalRes.body.singleResult;
+          expect(errors).toBeDefined();
+          expect(errors?.[0].extensions?.code).toBe('RATE_LIMIT_EXCEEDED');
+        } else {
+          throw new Error('Expected single result with rate limit error');
+        }
       });
     });
   });
