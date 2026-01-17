@@ -1,7 +1,9 @@
 import config from '../../config/config';
 import { Errors } from '../../utils/errors';
+import { logger } from '../../utils/logger';
 import { applyRateLimit } from '../../utils/applyRateLimit';
-import { fetchApod, withApodErrorHandling } from '../../services/apod/';
+import { fetchApod, withApodErrorHandling, APOD_CACHE_TTL_TODAY_SECONDS, APOD_CACHE_TTL_DATE_SECONDS } from '../../services/apod/';
+import { apodCache } from '../../services/cache/apodCache';
 
 export const ApodQueries = {
   /**
@@ -22,10 +24,23 @@ export const ApodQueries = {
       metadata: { clientIp: context.clientIp },
     });
 
-    return withApodErrorHandling(
+    const cacheKey = apodCache.buildTodayKey();
+    const cached = await apodCache.get(cacheKey);
+    
+    if (cached) {
+      logger.info('APOD cache hit', { resolver: 'getTodaysApod', cacheKey, source: 'cache' });
+      return cached;
+    }
+
+    const apod = await withApodErrorHandling(
       () => fetchApod({ context: { userId: context.user?.id } }),
       'getTodaysApod'
     );
+
+    await apodCache.set(cacheKey, apod, APOD_CACHE_TTL_TODAY_SECONDS);
+    logger.info('APOD cache miss', { resolver: 'getTodaysApod', cacheKey, source: 'nasa', ttlSeconds: APOD_CACHE_TTL_TODAY_SECONDS });
+    
+    return apod;
   },
 
   /**
@@ -50,9 +65,22 @@ export const ApodQueries = {
       userId,
     });
 
-    return withApodErrorHandling(
+    const cacheKey = apodCache.buildDateKey(args.date);
+    const cached = await apodCache.get(cacheKey);
+    
+    if (cached) {
+      logger.info('APOD cache hit', { resolver: 'getApodByDate', cacheKey, date: args.date, source: 'cache' });
+      return cached;
+    }
+
+    const apod = await withApodErrorHandling(
       () => fetchApod({ date: args.date, context: { userId } }),
       'getApodByDate'
     );
+
+    await apodCache.set(cacheKey, apod, APOD_CACHE_TTL_DATE_SECONDS);
+    logger.info('APOD cache miss', { resolver: 'getApodByDate', cacheKey, date: args.date, source: 'nasa', ttlSeconds: APOD_CACHE_TTL_DATE_SECONDS });
+    
+    return apod;
   },
 };
