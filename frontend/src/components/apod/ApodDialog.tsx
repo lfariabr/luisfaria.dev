@@ -23,7 +23,8 @@ export type ApodDialogProps = {
 export function ApodDialog({ open, onOpenChange }: ApodDialogProps) {
   const { data, loading, error, refetch } = useQuery<{ getTodaysApod: Apod }>(GET_TODAYS_APOD, {
     skip: !open,
-    fetchPolicy: 'cache-first',
+    fetchPolicy: 'cache-and-network',
+    nextFetchPolicy: 'cache-first',
   });
 
   const apod = data?.getTodaysApod;
@@ -107,12 +108,24 @@ export function ApodDialog({ open, onOpenChange }: ApodDialogProps) {
 
               {!loading && !error && apod && (
                 apod.mediaType === 'video' ? (
-                  <iframe
-                    src={apod.url ?? ''}
-                    title={apod.title}
-                    className="absolute inset-0 w-full h-full"
-                    allowFullScreen
-                  />
+                  apod.url ? (
+                    <iframe
+                      src={apod.url}
+                      title={apod.title}
+                      className="absolute inset-0 w-full h-full"
+                      allowFullScreen
+                    />
+                  ) : (
+                    <div className="relative flex h-full items-center justify-center p-4 text-center">
+                      <div className="space-y-2">
+                        <Rocket className="mx-auto h-10 w-10 text-zinc-400 dark:text-white/30" />
+                        <p className="text-sm text-zinc-600 dark:text-white/70">Interactive content</p>
+                        <p className="text-xs text-zinc-400 dark:text-white/45">
+                          View on NASA&apos;s website
+                        </p>
+                      </div>
+                    </div>
+                  )
                 ) : apod.url ? (
                   <Image
                     src={apod.url}
