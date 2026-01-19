@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useMemo } from "react";
 import Image from "next/image";
 import {
   Dialog,
@@ -9,25 +9,57 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Rocket, Calendar, ExternalLink, AlertCircle, RefreshCw } from "lucide-react";
+import { Rocket, Calendar, ExternalLink, AlertCircle, RefreshCw, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from '@apollo/client';
-import { GET_TODAYS_APOD } from '@/lib/graphql/queries/apod.queries';
+import { GET_TODAYS_APOD, GET_APOD_BY_DATE } from '@/lib/graphql/queries/apod.queries';
 import type { Apod } from '@/lib/graphql/types/apod.types';
+import { useAuth } from '@/lib/auth/AuthContext';
 
 export type ApodDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
+const FIRST_APOD_DATE = '1995-06-16';
+
+function getTodayDateString(): string {
+  return new Date().toISOString().split('T')[0];
+}
+
 export function ApodDialog({ open, onOpenChange }: ApodDialogProps) {
-  const { data, loading, error, refetch } = useQuery<{ getTodaysApod: Apod }>(GET_TODAYS_APOD, {
-    skip: !open,
+  const { isAuthenticated } = useAuth();
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  
+  const todayStr = useMemo(() => getTodayDateString(), []);
+  const isHistorical = selectedDate !== null && selectedDate !== todayStr;
+
+  const { data: todayData, loading: todayLoading, error: todayError, refetch: refetchToday } = useQuery<{ getTodaysApod: Apod }>(GET_TODAYS_APOD, {
+    skip: !open || isHistorical,
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
   });
 
-  const apod = data?.getTodaysApod;
+  const { data: dateData, loading: dateLoading, error: dateError, refetch: refetchDate } = useQuery<{ getApodByDate: Apod }>(GET_APOD_BY_DATE, {
+    skip: !open || !isHistorical,
+    variables: { date: selectedDate },
+    fetchPolicy: 'cache-and-network',
+    nextFetchPolicy: 'cache-first',
+  });
+
+  const loading = isHistorical ? dateLoading : todayLoading;
+  const error = isHistorical ? dateError : todayError;
+  const apod = isHistorical ? dateData?.getApodByDate : todayData?.getTodaysApod;
+  const refetch = isHistorical ? refetchDate : refetchToday;
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSelectedDate(value || null);
+  };
+
+  const handleResetToToday = () => {
+    setSelectedDate(null);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -61,9 +93,50 @@ export function ApodDialog({ open, onOpenChange }: ApodDialogProps) {
               </span>
             </DialogTitle>
 
-            <DialogDescription className="flex items-center gap-2 text-sm text-zinc-500 dark:text-white/60">
-              <Calendar className="h-4 w-4" />
-              {loading ? "..." : apod?.date ?? "—"}
+            <DialogDescription asChild>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-white/60">
+                  <Calendar className="h-4 w-4" />
+                  {loading ? "..." : apod?.date ?? "—"}
+                  {isHistorical && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleResetToToday}
+                      className="h-6 px-2 text-xs text-emerald-500 hover:text-emerald-400"
+                    >
+                      ← Today
+                    </Button>
+                  )}
+                </div>
+                
+                {isAuthenticated ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="date"
+                      value={selectedDate ?? ''}
+                      onChange={handleDateChange}
+                      min={FIRST_APOD_DATE}
+                      max={todayStr}
+                      className="
+                        h-8 px-2 text-xs rounded-md
+                        border border-zinc-200 dark:border-white/15
+                        bg-zinc-50 dark:bg-white/5
+                        text-zinc-700 dark:text-white/80
+                        focus:outline-none focus:ring-2 focus:ring-emerald-500/50
+                      "
+                    />
+                    <span className="text-xs text-zinc-400 dark:text-white/40">
+                      Explore historical APODs
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5 text-xs text-zinc-400 dark:text-white/40">
+                    <Lock className="h-3 w-3" />
+                    <span>Login to explore historical APODs</span>
+                  </div>
+                )}
+              </div>
             </DialogDescription>
           </DialogHeader>
 
@@ -83,7 +156,9 @@ export function ApodDialog({ open, onOpenChange }: ApodDialogProps) {
                 <div className="relative flex h-full items-center justify-center p-4 text-center">
                   <div className="space-y-2">
                     <RefreshCw className="mx-auto h-8 w-8 text-emerald-400 animate-spin" />
-                    <p className="text-sm text-zinc-600 dark:text-white/70">Loading today&apos;s APOD...</p>
+                    <p className="text-sm text-zinc-600 dark:text-white/70">
+                      {isHistorical ? `Loading APOD for ${selectedDate}...` : "Loading today's APOD..."}
+                    </p>
                   </div>
                 </div>
               )}
