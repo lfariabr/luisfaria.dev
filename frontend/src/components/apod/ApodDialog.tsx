@@ -114,6 +114,7 @@ export function ApodDialog({ open, onOpenChange }: ApodDialogProps) {
                       title={apod.title}
                       className="absolute inset-0 w-full h-full"
                       allowFullScreen
+                      sandbox="allow-scripts allow-same-origin allow-presentation"
                     />
                   ) : (
                     <div className="relative flex h-full items-center justify-center p-4 text-center">

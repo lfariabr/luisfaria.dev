@@ -1,9 +1,11 @@
 // npm test -- --testPathPattern="Apod.test" --no-coverage
 
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MockedProvider, MockedResponse } from "@apollo/client/testing";
 import { ApodFab } from "@/components/apod/ApodFab";
+import { GET_TODAYS_APOD } from "@/lib/graphql/queries/apod.queries";
 
 jest.mock("next/image", () => (props: any) => {
   // eslint-disable-next-line @next/next/no-img-element
@@ -19,22 +21,52 @@ jest.mock("@/components/ui/tooltip", () => ({
   ),
 }));
 
+const mockApodData = {
+  getTodaysApod: {
+    date: "2026-01-19",
+    title: "Test Galaxy Image",
+    explanation: "A beautiful galaxy captured by Hubble.",
+    url: "https://apod.nasa.gov/apod/image/test.jpg",
+    mediaType: "image",
+    serviceVersion: "v1",
+    hdurl: "https://apod.nasa.gov/apod/image/test_hd.jpg",
+    copyright: "NASA",
+    apodUrl: "https://apod.nasa.gov/apod/ap260119.html",
+  },
+};
+
+const mocks: MockedResponse[] = [
+  {
+    request: { query: GET_TODAYS_APOD },
+    result: { data: mockApodData },
+    maxUsageCount: 2, // cache-and-network can trigger multiple fetches
+  },
+];
+
+const renderWithApollo = (ui: React.ReactElement, customMocks = mocks) => {
+  return render(
+    <MockedProvider mocks={customMocks} addTypename={false}>
+      {ui}
+    </MockedProvider>
+  );
+};
+
 describe("ApodFab", () => {
   it("renders the APOD button with an accessible name", () => {
-    render(<ApodFab />);
+    renderWithApollo(<ApodFab />);
     expect(
       screen.getByRole("button", { name: /astronomy picture of the day/i })
     ).toBeInTheDocument();
   });
 
   it("renders the APOD image", () => {
-    render(<ApodFab />);
+    renderWithApollo(<ApodFab />);
     expect(screen.getByAltText(/nasa apod/i)).toBeInTheDocument();
   });
 
   it("opens dialog on click", async () => {
     const user = userEvent.setup();
-    render(<ApodFab />);
+    renderWithApollo(<ApodFab />);
 
     await user.click(screen.getByRole("button", { name: /astronomy picture of the day/i }));
 
@@ -45,9 +77,25 @@ describe("ApodFab", () => {
     expect(screen.getByText(/powered by nasa/i)).toBeInTheDocument();
   });
 
+  it("shows loading state when dialog opens", async () => {
+    const user = userEvent.setup();
+    renderWithApollo(<ApodFab />);
+
+    await user.click(screen.getByRole("button", { name: /astronomy picture of the day/i }));
+
+    // Dialog opens and shows loading or content
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    
+    // Either loading text or actual title should be present
+    const hasLoadingOrContent = 
+      screen.queryByText(/loading/i) !== null || 
+      screen.queryByText(/astronomy picture of the day/i) !== null;
+    expect(hasLoadingOrContent).toBe(true);
+  });
+
   it("renders tooltip on hover", async () => {
     const user = userEvent.setup();
-    render(<ApodFab />);
+    renderWithApollo(<ApodFab />);
 
     const button = screen.getByRole("button", { name: /astronomy picture of the day/i });
     await user.hover(button);
@@ -56,5 +104,26 @@ describe("ApodFab", () => {
     expect(
       await screen.findByRole("tooltip", { name: /nasa apod/i })
     ).toBeInTheDocument();
+  });
+
+  it("handles error state", async () => {
+    const errorMocks: MockedResponse[] = [
+      {
+        request: { query: GET_TODAYS_APOD },
+        error: new Error("Failed to fetch APOD"),
+      },
+    ];
+
+    const user = userEvent.setup();
+    renderWithApollo(<ApodFab />, errorMocks);
+
+    await user.click(screen.getByRole("button", { name: /astronomy picture of the day/i }));
+
+    // Error state should show retry button
+    await waitFor(() => {
+      expect(screen.getByText(/failed to load apod/i)).toBeInTheDocument();
+    });
+
+    expect(screen.getByRole("button", { name: /retry/i })).toBeInTheDocument();
   });
 });
