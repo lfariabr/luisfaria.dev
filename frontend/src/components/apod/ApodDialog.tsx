@@ -156,25 +156,43 @@ export function ApodDialog({ open, onOpenChange }: ApodDialogProps) {
 
             {/* Footer */}
             <div className="flex items-center justify-between pt-1">
-              <Button
-                variant="outline"
-                size="sm"
-                className="
-                  gap-2
-                  border-zinc-200 dark:border-white/15
-                  bg-zinc-100 dark:bg-white/5
-                  text-zinc-700 dark:text-white/80
-                  hover:bg-zinc-200 dark:hover:bg-white/10
-                  hover:text-zinc-900 dark:hover:text-white
-                "
-                asChild
-                disabled={!apod}
-              >
-                <a href={apod?.apodUrl ?? '#'} target="_blank" rel="noopener noreferrer">
+              {apod ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="
+                    gap-2
+                    border-zinc-200 dark:border-white/15
+                    bg-zinc-100 dark:bg-white/5
+                    text-zinc-700 dark:text-white/80
+                    hover:bg-zinc-200 dark:hover:bg-white/10
+                    hover:text-zinc-900 dark:hover:text-white
+                  "
+                  asChild
+                >
+                  <a href={apod.apodUrl} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4" />
+                    Visit APOD
+                  </a>
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="
+                    gap-2
+                    border-zinc-200 dark:border-white/15
+                    bg-zinc-100 dark:bg-white/5
+                    text-zinc-700 dark:text-white/80
+                    pointer-events-none
+                  "
+                  disabled
+                  aria-disabled="true"
+                >
                   <ExternalLink className="h-4 w-4" />
                   Visit APOD
-                </a>
-              </Button>
+                </Button>
+              )}
 
               <p className="text-xs text-zinc-400 dark:text-white/45">
                 Powered by NASA Open APIs

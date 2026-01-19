@@ -1,7 +1,7 @@
 // npm test -- --testPathPattern="Apod.test" --no-coverage
 
 import React from "react";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MockedProvider, MockedResponse } from "@apollo/client/testing";
 import { ApodFab } from "@/components/apod/ApodFab";
@@ -78,19 +78,34 @@ describe("ApodFab", () => {
   });
 
   it("shows loading state when dialog opens", async () => {
+    // Use a delayed mock to ensure we can observe the loading state
+    const delayedMocks: MockedResponse[] = [
+      {
+        request: { query: GET_TODAYS_APOD },
+        result: { data: mockApodData },
+        delay: 100, // Delay response to observe loading state
+        maxUsageCount: 2,
+      },
+    ];
+
     const user = userEvent.setup();
-    renderWithApollo(<ApodFab />);
+    renderWithApollo(<ApodFab />, delayedMocks);
 
     await user.click(screen.getByRole("button", { name: /astronomy picture of the day/i }));
 
-    // Dialog opens and shows loading or content
-    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    // Dialog opens
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog).toBeInTheDocument();
     
-    // Either loading text or actual title should be present
-    const hasLoadingOrContent = 
-      screen.queryByText(/loading/i) !== null || 
-      screen.queryByText(/astronomy picture of the day/i) !== null;
-    expect(hasLoadingOrContent).toBe(true);
+    // Scope assertions to dialog content only
+    const dialogContent = within(dialog);
+    
+    // Check for loading indicators inside the dialog (multiple loading texts present)
+    const loadingElements = dialogContent.getAllByText(/loading/i);
+    expect(loadingElements.length).toBeGreaterThan(0);
+    
+    // Verify the mock data title is NOT present yet (still loading)
+    expect(dialogContent.queryByText(/Test Galaxy Image/i)).not.toBeInTheDocument();
   });
 
   it("renders tooltip on hover", async () => {
