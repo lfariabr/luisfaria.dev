@@ -10,7 +10,8 @@ Tags: #python #automation #streamlit #productivity #workflow
 
 ---
 
-## 🎯 The Challenge: When Spreadsheets Become a Time Sink
+## 🎯 The Challenge:
+### When Spreadsheets Become a Time Sink
 
 If you've ever worked in shift-based operations, you know the drill. Every roster cycle, the same tedious routine: open a spreadsheet, manually tick boxes for every single day you're available, triple-check you didn't miss anything, export it, draft an email, attach the file, and finally hit send. Rinse and repeat, week after week. 
 
@@ -31,7 +32,8 @@ I saw this inefficiency firsthand and thought: *There has to be a better way.*
 
 ---
 
-## 🤖 The Solution: myRoster—Automation Meets Simplicity
+## 🤖 The Solution:
+### _myRoster_: Automation Meets Simplicity
 
 That's when **myRoster** was born: A lightweight and intuitive web application that transforms shift availability submission from a chore into a 2-minute task. 
 
