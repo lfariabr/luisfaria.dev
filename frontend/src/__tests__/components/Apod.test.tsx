@@ -5,7 +5,12 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MockedProvider, MockedResponse } from "@apollo/client/testing";
 import { ApodFab } from "@/components/apod/ApodFab";
-import { GET_TODAYS_APOD } from "@/lib/graphql/queries/apod.queries";
+import { GET_TODAYS_APOD, GET_APOD_BY_DATE } from "@/lib/graphql/queries/apod.queries";
+
+const mockUseAuth = jest.fn();
+jest.mock("@/lib/auth/AuthContext", () => ({
+  useAuth: () => mockUseAuth(),
+}));
 
 jest.mock("next/image", () => (props: any) => {
   // eslint-disable-next-line @next/next/no-img-element
@@ -52,6 +57,14 @@ const renderWithApollo = (ui: React.ReactElement, customMocks = mocks) => {
 };
 
 describe("ApodFab", () => {
+  beforeEach(() => {
+    mockUseAuth.mockReturnValue({ isAuthenticated: false, user: null, loading: false });
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   it("renders the APOD button with an accessible name", () => {
     renderWithApollo(<ApodFab />);
     expect(
@@ -140,5 +153,52 @@ describe("ApodFab", () => {
     });
 
     expect(screen.getByRole("button", { name: /retry/i })).toBeInTheDocument();
+  });
+
+  describe("Authenticated Features", () => {
+    it("shows login prompt for unauthenticated users", async () => {
+      mockUseAuth.mockReturnValue({ isAuthenticated: false, user: null, loading: false });
+      const user = userEvent.setup();
+      renderWithApollo(<ApodFab />);
+
+      await user.click(screen.getByRole("button", { name: /astronomy picture of the day/i }));
+
+      const dialog = await screen.findByRole("dialog");
+      const dialogContent = within(dialog);
+
+      expect(dialogContent.getByText(/login to explore historical apods/i)).toBeInTheDocument();
+      expect(dialog.querySelector('input[type="date"]')).not.toBeInTheDocument();
+    });
+
+    it("shows date picker for authenticated users", async () => {
+      mockUseAuth.mockReturnValue({ isAuthenticated: true, user: { id: "1", name: "Test" }, loading: false });
+      const user = userEvent.setup();
+      renderWithApollo(<ApodFab />);
+
+      await user.click(screen.getByRole("button", { name: /astronomy picture of the day/i }));
+
+      const dialog = await screen.findByRole("dialog");
+      const dialogContent = within(dialog);
+
+      expect(dialogContent.getByText(/explore historical apods/i)).toBeInTheDocument();
+      expect(dialogContent.queryByText(/login to explore/i)).not.toBeInTheDocument();
+    });
+
+    it("renders date input for authenticated users", async () => {
+      mockUseAuth.mockReturnValue({ isAuthenticated: true, user: { id: "1", name: "Test" }, loading: false });
+
+      const user = userEvent.setup();
+      renderWithApollo(<ApodFab />);
+
+      await user.click(screen.getByRole("button", { name: /astronomy picture of the day/i }));
+
+      const dialog = await screen.findByRole("dialog");
+      
+      // Verify date input exists with proper constraints
+      const dateInput = dialog.querySelector('input[type="date"]') as HTMLInputElement;
+      expect(dateInput).toBeInTheDocument();
+      expect(dateInput.min).toBe("1995-06-16");
+      expect(dateInput.max).toBeTruthy(); // Today's date
+    });
   });
 });
