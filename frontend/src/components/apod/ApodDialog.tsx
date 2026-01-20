@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import {
   Dialog,
@@ -24,14 +24,21 @@ export type ApodDialogProps = {
 const FIRST_APOD_DATE = '1995-06-16';
 
 function getTodayDateString(): string {
-  return new Date().toISOString().split('T')[0];
+  // return new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const tzOffsetMs = now.getTimezoneOffset() * 60_000;
+  return new Date(now.getTime() - tzOffsetMs).toISOString().slice(0, 10);
 }
 
 export function ApodDialog({ open, onOpenChange }: ApodDialogProps) {
   const { isAuthenticated } = useAuth();
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   
-  const todayStr = useMemo(() => getTodayDateString(), []);
+  useEffect(() => {
+    if (!isAuthenticated) setSelectedDate(null);
+  }, [isAuthenticated]);
+
+  const todayStr = useMemo(() => getTodayDateString(), [open]);
   const isHistorical = selectedDate !== null && selectedDate !== todayStr;
 
   const { data: todayData, loading: todayLoading, error: todayError, refetch: refetchToday } = useQuery<{ getTodaysApod: Apod }>(GET_TODAYS_APOD, {
@@ -114,6 +121,7 @@ export function ApodDialog({ open, onOpenChange }: ApodDialogProps) {
                   <div className="flex items-center gap-2">
                     <input
                       type="date"
+                      aria-label="Select APOD date"
                       value={selectedDate ?? ''}
                       onChange={handleDateChange}
                       min={FIRST_APOD_DATE}

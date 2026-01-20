@@ -167,7 +167,7 @@ describe("ApodFab", () => {
       const dialogContent = within(dialog);
 
       expect(dialogContent.getByText(/login to explore historical apods/i)).toBeInTheDocument();
-      expect(dialogContent.queryByRole("textbox")).not.toBeInTheDocument();
+      expect(dialog.querySelector('input[type="date"]')).not.toBeInTheDocument();
     });
 
     it("shows date picker for authenticated users", async () => {
