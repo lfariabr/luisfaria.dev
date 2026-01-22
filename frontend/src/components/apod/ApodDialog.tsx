@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import Image from "next/image";
 import {
   Dialog,
@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Rocket, Calendar, ExternalLink, AlertCircle, RefreshCw, Lock } from "lucide-react";
+import { Rocket, Calendar, ExternalLink, AlertCircle, RefreshCw, Lock, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from '@apollo/client';
 import { GET_TODAYS_APOD, GET_APOD_BY_DATE } from '@/lib/graphql/queries/apod.queries';
@@ -22,6 +22,9 @@ export type ApodDialogProps = {
 };
 
 const FIRST_APOD_DATE = '1995-06-16';
+const READ_MORE_CHAR_THRESHOLD = 400; // ~5-7 lines of text
+const MAX_HEIGHT_COLLAPSED = '120px'; // ~5 lines
+const MAX_HEIGHT_EXPANDED = '400px'; // Scrollable
 
 function getTodayDateString(): string {
   // return new Date().toISOString().split('T')[0];
@@ -33,6 +36,9 @@ function getTodayDateString(): string {
 export function ApodDialog({ open, onOpenChange }: ApodDialogProps) {
   const { isAuthenticated } = useAuth();
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [shouldShowReadMore, setShouldShowReadMore] = useState(false);
+  const explanationRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     if (!isAuthenticated) setSelectedDate(null);
@@ -59,6 +65,34 @@ export function ApodDialog({ open, onOpenChange }: ApodDialogProps) {
   const apod = isHistorical ? dateData?.getApodByDate : todayData?.getTodaysApod;
   const refetch = isHistorical ? refetchDate : refetchToday;
 
+  // Check if explanation text exceeds threshold
+  useEffect(() => {
+    if (apod?.explanation) {
+      // Primary check: character count threshold
+      const isLong = apod.explanation.length > READ_MORE_CHAR_THRESHOLD;
+      
+      // Secondary check: visual overflow (scroll height vs client height)
+      if (explanationRef.current) {
+        const scrollHeight = explanationRef.current.scrollHeight;
+        const clientHeight = explanationRef.current.clientHeight;
+        const hasVisualOverflow = scrollHeight > clientHeight;
+        setShouldShowReadMore(isLong || hasVisualOverflow);
+      } else {
+        setShouldShowReadMore(isLong);
+      }
+    } else {
+      setShouldShowReadMore(false);
+      setIsExpanded(false);
+    }
+  }, [apod?.explanation]);
+
+  // Reset expansion state when dialog closes or apod changes
+  useEffect(() => {
+    if (!open) {
+      setIsExpanded(false);
+    }
+  }, [open]);
+
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSelectedDate(value || null);
@@ -66,6 +100,10 @@ export function ApodDialog({ open, onOpenChange }: ApodDialogProps) {
 
   const handleResetToToday = () => {
     setSelectedDate(null);
+  };
+
+  const toggleExpanded = () => {
+    setIsExpanded(prev => !prev);
   };
 
   return (
@@ -232,10 +270,59 @@ export function ApodDialog({ open, onOpenChange }: ApodDialogProps) {
               )}
             </div>
 
-            {/* Explanation */}
-            <p className="text-sm leading-relaxed text-zinc-600 dark:text-white/65 line-clamp-4">
-              {loading ? "Loading explanation..." : apod?.explanation ?? ""}
-            </p>
+            {/* Explanation - Scrollable with Read More */}
+            <div className="space-y-2">
+              <div
+                ref={explanationRef}
+                className={`
+                  text-sm leading-relaxed text-zinc-600 dark:text-white/65
+                  overflow-y-auto
+                  transition-all duration-300 ease-in-out
+                  ${!isExpanded && shouldShowReadMore ? 'line-clamp-5' : ''}
+                  pr-2
+                  focus:outline-none focus:ring-2 focus:ring-emerald-500/30 rounded
+                `}
+                style={{
+                  maxHeight: isExpanded ? MAX_HEIGHT_EXPANDED : MAX_HEIGHT_COLLAPSED,
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: 'rgba(212, 212, 216, 0.5) transparent',
+                }}
+                tabIndex={isExpanded ? 0 : -1}
+                aria-label="APOD explanation text"
+              >
+                {loading ? "Loading explanation..." : apod?.explanation ?? ""}
+              </div>
+              
+              {shouldShowReadMore && !loading && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={toggleExpanded}
+                  className="
+                    w-full gap-2
+                    text-xs
+                    text-emerald-500 hover:text-emerald-400
+                    dark:text-emerald-400 dark:hover:text-emerald-300
+                    h-7
+                    focus:ring-2 focus:ring-emerald-500/50
+                  "
+                  aria-expanded={isExpanded}
+                  aria-label={isExpanded ? "Read less" : "Read more"}
+                >
+                  {isExpanded ? (
+                    <>
+                      <ChevronUp className="h-3 w-3" />
+                      Read Less
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="h-3 w-3" />
+                      Read More
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
 
             {/* Footer */}
             <div className="flex items-center justify-between pt-1">
