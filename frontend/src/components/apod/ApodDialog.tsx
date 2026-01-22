@@ -22,6 +22,9 @@ export type ApodDialogProps = {
 };
 
 const FIRST_APOD_DATE = '1995-06-16';
+const READ_MORE_CHAR_THRESHOLD = 400; // ~5-7 lines of text
+const MAX_HEIGHT_COLLAPSED = '120px'; // ~5 lines
+const MAX_HEIGHT_EXPANDED = '400px'; // Scrollable
 
 function getTodayDateString(): string {
   // return new Date().toISOString().split('T')[0];
@@ -62,17 +65,18 @@ export function ApodDialog({ open, onOpenChange }: ApodDialogProps) {
   const apod = isHistorical ? dateData?.getApodByDate : todayData?.getTodaysApod;
   const refetch = isHistorical ? refetchDate : refetchToday;
 
-  // Check if explanation text exceeds threshold (approx 5-7 lines at ~80 chars/line)
+  // Check if explanation text exceeds threshold
   useEffect(() => {
     if (apod?.explanation) {
-      // Show read more if content exceeds ~400 chars (approx 5-7 lines)
-      const isLong = apod.explanation.length > 400;
+      // Primary check: character count threshold
+      const isLong = apod.explanation.length > READ_MORE_CHAR_THRESHOLD;
       
-      // Additionally check scroll height if ref is available
-      if (explanationRef.current && !isLong) {
+      // Secondary check: visual overflow (scroll height vs client height)
+      if (explanationRef.current) {
         const scrollHeight = explanationRef.current.scrollHeight;
         const clientHeight = explanationRef.current.clientHeight;
-        setShouldShowReadMore(scrollHeight > clientHeight);
+        const hasVisualOverflow = scrollHeight > clientHeight;
+        setShouldShowReadMore(isLong || hasVisualOverflow);
       } else {
         setShouldShowReadMore(isLong);
       }
@@ -274,14 +278,14 @@ export function ApodDialog({ open, onOpenChange }: ApodDialogProps) {
                   text-sm leading-relaxed text-zinc-600 dark:text-white/65
                   overflow-y-auto
                   transition-all duration-300 ease-in-out
-                  ${isExpanded ? 'max-h-[400px]' : 'max-h-[120px]'}
                   ${!isExpanded && shouldShowReadMore ? 'line-clamp-5' : ''}
                   pr-2
                   focus:outline-none focus:ring-2 focus:ring-emerald-500/30 rounded
                 `}
                 style={{
+                  maxHeight: isExpanded ? MAX_HEIGHT_EXPANDED : MAX_HEIGHT_COLLAPSED,
                   scrollbarWidth: 'thin',
-                  scrollbarColor: 'rgb(212 212 216 / 0.5) transparent',
+                  scrollbarColor: 'rgba(212, 212, 216, 0.5) transparent',
                 }}
                 tabIndex={isExpanded ? 0 : -1}
                 aria-label="APOD explanation text"

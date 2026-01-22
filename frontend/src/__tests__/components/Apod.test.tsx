@@ -43,7 +43,9 @@ const mockApodData = {
   },
 };
 
-const longExplanationText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. ".repeat(20);
+// Generate long text that exceeds READ_MORE_CHAR_THRESHOLD of 400
+// Each repetition is 57 characters, so 8 repetitions = 456 characters > 400
+const longExplanationText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. ".repeat(8);
 
 const mockApodDataLongExplanation = {
   getTodaysApod: {
