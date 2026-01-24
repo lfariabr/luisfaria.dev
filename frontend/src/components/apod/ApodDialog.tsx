@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Rocket, Calendar, ExternalLink, AlertCircle, RefreshCw, Lock, ChevronDown, ChevronUp } from "lucide-react";
+import { Rocket, Calendar, ExternalLink, AlertCircle, RefreshCw, Lock, ChevronDown, ChevronUp, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from '@apollo/client';
 import { GET_TODAYS_APOD, GET_APOD_BY_DATE } from '@/lib/graphql/queries/apod.queries';
@@ -26,6 +26,17 @@ const READ_MORE_CHAR_THRESHOLD = 400; // ~5-7 lines of text
 const MAX_HEIGHT_COLLAPSED = '120px'; // ~5 lines
 const MAX_HEIGHT_EXPANDED = '400px'; // Scrollable
 
+// Helper to format countdown duration
+function formatCountdown(seconds: number): string {
+  if (seconds <= 0) return '0s';
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  if (h > 0) return `${h}h ${m}m`;
+  if (m >= 5) return `${m}m`;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
 function getTodayDateString(): string {
   // return new Date().toISOString().split('T')[0];
   const now = new Date();
@@ -40,8 +51,20 @@ export function ApodDialog({ open, onOpenChange }: ApodDialogProps) {
   const [shouldShowReadMore, setShouldShowReadMore] = useState(false);
   const explanationRef = useRef<HTMLDivElement>(null);
   
+  // Rate limit state (for authenticated historical browsing)
+  const [rateLimitInfo, setRateLimitInfo] = useState<{
+    limit: number;
+    remaining: number;
+    resetTime: string;
+  } | null>(null);
+  const [secondsUntilReset, setSecondsUntilReset] = useState<number | null>(null);
+  
   useEffect(() => {
-    if (!isAuthenticated) setSelectedDate(null);
+    if (!isAuthenticated) {
+      setSelectedDate(null);
+      setRateLimitInfo(null);
+      setSecondsUntilReset(null);
+    }
   }, [isAuthenticated]);
 
   const todayStr = useMemo(() => getTodayDateString(), [open]);
@@ -64,6 +87,51 @@ export function ApodDialog({ open, onOpenChange }: ApodDialogProps) {
   const error = isHistorical ? dateError : todayError;
   const apod = isHistorical ? dateData?.getApodByDate : todayData?.getTodaysApod;
   const refetch = isHistorical ? refetchDate : refetchToday;
+  
+  // Rate limit derived state
+  const isRateLimited = secondsUntilReset !== null && secondsUntilReset > 0;
+  const isRateLimitError = dateError?.graphQLErrors?.[0]?.extensions?.code === 'RATE_LIMIT_EXCEEDED';
+
+  // Extract rate limit info from GraphQL errors
+  useEffect(() => {
+    if (dateError) {
+      const gqlError = dateError.graphQLErrors?.[0];
+      const ext = gqlError?.extensions as Record<string, unknown> | undefined;
+      if (ext?.code === 'RATE_LIMIT_EXCEEDED') {
+        const limit = ext.limit as number;
+        const remaining = ext.remaining as number;
+        const resetTime = ext.resetTime as string;
+        setRateLimitInfo({ limit, remaining, resetTime });
+        // Calculate seconds until reset
+        const resetMs = new Date(resetTime).getTime() - Date.now();
+        setSecondsUntilReset(Math.max(0, Math.ceil(resetMs / 1000)));
+      }
+    }
+  }, [dateError]);
+
+  // Countdown timer for rate limit reset
+  useEffect(() => {
+    if (secondsUntilReset === null || secondsUntilReset <= 0) return;
+    const id = setInterval(() => {
+      setSecondsUntilReset(prev => {
+        if (prev === null || prev <= 1) {
+          // Reset rate limit state when countdown ends
+          setRateLimitInfo(null);
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [secondsUntilReset]);
+
+  // Reset rate limit state when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setRateLimitInfo(null);
+      setSecondsUntilReset(null);
+    }
+  }, [open]);
 
   // Check if explanation text exceeds threshold
   useEffect(() => {
@@ -156,25 +224,42 @@ export function ApodDialog({ open, onOpenChange }: ApodDialogProps) {
                 </div>
                 
                 {isAuthenticated ? (
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="date"
-                      aria-label="Select APOD date"
-                      value={selectedDate ?? ''}
-                      onChange={handleDateChange}
-                      min={FIRST_APOD_DATE}
-                      max={todayStr}
-                      className="
-                        h-8 px-2 text-xs rounded-md
-                        border border-zinc-200 dark:border-white/15
-                        bg-zinc-50 dark:bg-white/5
-                        text-zinc-700 dark:text-white/80
-                        focus:outline-none focus:ring-2 focus:ring-emerald-500/50
-                      "
-                    />
-                    <span className="text-xs text-zinc-400 dark:text-white/40">
-                      Explore historical APODs
-                    </span>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="date"
+                        aria-label="Select APOD date"
+                        value={selectedDate ?? ''}
+                        onChange={handleDateChange}
+                        min={FIRST_APOD_DATE}
+                        max={todayStr}
+                        disabled={isRateLimited}
+                        className={`
+                          h-8 px-2 text-xs rounded-md
+                          border border-zinc-200 dark:border-white/15
+                          bg-zinc-50 dark:bg-white/5
+                          text-zinc-700 dark:text-white/80
+                          focus:outline-none focus:ring-2 focus:ring-emerald-500/50
+                          ${isRateLimited ? 'opacity-50 cursor-not-allowed' : ''}
+                        `}
+                      />
+                      <span className="text-xs text-zinc-400 dark:text-white/40">
+                        {isRateLimited ? 'Rate limit reached' : 'Explore historical APODs'}
+                      </span>
+                    </div>
+                    
+                    {/* Rate Limit Badge - only shown when rate limited */}
+                    {isRateLimited && rateLimitInfo && (
+                      <div className="flex items-center gap-2 rounded-md border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-900/20 px-2 py-1.5">
+                        <Clock className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+                        <span className="text-xs text-amber-700 dark:text-amber-300">
+                          {rateLimitInfo.remaining}/{rateLimitInfo.limit} requests
+                        </span>
+                        <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                          Resets in {formatCountdown(secondsUntilReset ?? 0)}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="flex items-center gap-1.5 text-xs text-zinc-400 dark:text-white/40">
@@ -212,17 +297,31 @@ export function ApodDialog({ open, onOpenChange }: ApodDialogProps) {
               {error && (
                 <div className="relative flex h-full items-center justify-center p-4 text-center">
                   <div className="space-y-3">
-                    <AlertCircle className="mx-auto h-8 w-8 text-red-400" />
-                    <p className="text-sm text-zinc-600 dark:text-white/70">Failed to load APOD</p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => refetch()}
-                      className="gap-2"
-                    >
-                      <RefreshCw className="h-3 w-3" />
-                      Retry
-                    </Button>
+                    {isRateLimitError ? (
+                      <>
+                        <Clock className="mx-auto h-8 w-8 text-amber-500" />
+                        <p className="text-sm text-zinc-600 dark:text-white/70">
+                          Rate limit reached
+                        </p>
+                        <p className="text-xs text-zinc-400 dark:text-white/50">
+                          Try again in {formatCountdown(secondsUntilReset ?? 0)}
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <AlertCircle className="mx-auto h-8 w-8 text-red-400" />
+                        <p className="text-sm text-zinc-600 dark:text-white/70">Failed to load APOD</p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => refetch()}
+                          className="gap-2"
+                        >
+                          <RefreshCw className="h-3 w-3" />
+                          Retry
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               )}
