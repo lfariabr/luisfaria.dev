@@ -9,10 +9,22 @@ export const ApodQueries = {
   /**
    * Fetches today's Astronomy Picture of the Day.
    * Public endpoint - no auth required, but logs user context if available.
+   * 
+   * Flow: Cache check → (if miss) Rate limit → NASA API
+   * Rate limit only consumed on cache miss to prevent UX degradation.
    */
   getTodaysApod: async (_: unknown, __: unknown, context: { user?: { id: string }; clientIp: string }) => {
+    // Check cache FIRST - no rate limit consumed on cache hits
+    const cacheKey = apodCache.buildTodayKey();
+    const cached = await apodCache.get(cacheKey);
+    
+    if (cached) {
+      logger.info('APOD cache hit', { resolver: 'getTodaysApod', cacheKey, source: 'cache' });
+      return cached;
+    }
+
+    // Cache miss - apply rate limit before fetching from NASA API
     // Rate limit: per-user for authenticated, per-IP for anonymous
-    // More restrictive limit for unauthenticated clients (configurable via RATE_LIMIT_ANONYMOUS_REQUESTS)
     const limitKey = context.user?.id 
       ? `apod:today:${context.user.id}` 
       : `apod:today:ip:${context.clientIp}`;
@@ -23,14 +35,6 @@ export const ApodQueries = {
       userId: context.user?.id,
       metadata: { clientIp: context.clientIp },
     });
-
-    const cacheKey = apodCache.buildTodayKey();
-    const cached = await apodCache.get(cacheKey);
-    
-    if (cached) {
-      logger.info('APOD cache hit', { resolver: 'getTodaysApod', cacheKey, source: 'cache' });
-      return cached;
-    }
 
     const apod = await withApodErrorHandling(
       () => fetchApod({ context: { userId: context.user?.id } }),
@@ -46,6 +50,9 @@ export const ApodQueries = {
   /**
    * Fetches APOD for a specific date.
    * Requires authentication to prevent abuse.
+   * 
+   * Flow: Auth check → Cache check → (if miss) Rate limit → NASA API
+   * Rate limit only consumed on cache miss to prevent UX degradation.
    */
   getApodByDate: async (
     _: unknown,
@@ -57,14 +64,7 @@ export const ApodQueries = {
       throw Errors.unauthenticated('Authentication required to browse historical APODs');
     }
 
-    const userId = context.user.id;
-    const limitKey = `apod:date:${userId}`;
-    
-    await applyRateLimit(limitKey, config.rateLimitMaxRequests, config.rateLimitWindow, {
-      resolver: 'getApodByDate',
-      userId,
-    });
-
+    // Check cache FIRST - no rate limit consumed on cache hits
     const cacheKey = apodCache.buildDateKey(args.date);
     const cached = await apodCache.get(cacheKey);
     
@@ -72,6 +72,15 @@ export const ApodQueries = {
       logger.info('APOD cache hit', { resolver: 'getApodByDate', cacheKey, date: args.date, source: 'cache' });
       return cached;
     }
+
+    // Cache miss - apply rate limit before fetching from NASA API
+    const userId = context.user.id;
+    const limitKey = `apod:date:${userId}`;
+    
+    await applyRateLimit(limitKey, config.rateLimitMaxRequests, config.rateLimitWindow, {
+      resolver: 'getApodByDate',
+      userId,
+    });
 
     const apod = await withApodErrorHandling(
       () => fetchApod({ date: args.date, context: { userId } }),

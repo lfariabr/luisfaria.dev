@@ -12,7 +12,24 @@ jest.mock('../../services/apod/', () => {
   };
 });
 
+// Mock the cache service
+jest.mock('../../services/cache/apodCache', () => ({
+  apodCache: {
+    get: jest.fn(),
+    set: jest.fn(),
+    buildTodayKey: jest.fn().mockReturnValue('date:2024-01-15'),
+    buildDateKey: jest.fn((date: string) => `date:${date}`),
+  },
+}));
+
+// Mock rate limiter
+jest.mock('../../utils/applyRateLimit', () => ({
+  applyRateLimit: jest.fn().mockResolvedValue({ success: true, remaining: 4, limit: 5 }),
+}));
+
 const { fetchApod } = require('../../services/apod/');
+const { apodCache } = require('../../services/cache/apodCache');
+const { applyRateLimit } = require('../../utils/applyRateLimit');
 
 describe('APOD Resolver - ApodQueries', () => {
   beforeEach(() => {
@@ -20,7 +37,7 @@ describe('APOD Resolver - ApodQueries', () => {
   });
 
   describe('getTodaysApod', () => {
-    it('should return APOD data successfully', async () => {
+    it('should return APOD data successfully on cache miss', async () => {
       const mockApod = {
         date: '2024-01-15',
         explanation: 'Beautiful cosmos',
@@ -30,6 +47,7 @@ describe('APOD Resolver - ApodQueries', () => {
         url: 'https://apod.nasa.gov/apod/image.jpg',
       };
 
+      apodCache.get.mockResolvedValueOnce(null); // Cache miss
       fetchApod.mockResolvedValueOnce(mockApod);
 
       const result = await ApodQueries.getTodaysApod({}, {}, { user: undefined, clientIp: '127.0.0.1' });
@@ -38,6 +56,44 @@ describe('APOD Resolver - ApodQueries', () => {
       expect(fetchApod).toHaveBeenCalledWith({
         context: { userId: undefined },
       });
+    });
+
+    it('should NOT call rate limiter on cache hit', async () => {
+      const cachedApod = {
+        date: '2024-01-15',
+        explanation: 'Cached cosmos',
+        media_type: 'image',
+        service_version: 'v1',
+        title: 'Cached Wonder',
+        url: 'https://apod.nasa.gov/apod/cached.jpg',
+      };
+
+      apodCache.get.mockResolvedValueOnce(cachedApod); // Cache hit
+
+      const result = await ApodQueries.getTodaysApod({}, {}, { user: undefined, clientIp: '127.0.0.1' });
+
+      expect(result).toEqual(cachedApod);
+      expect(applyRateLimit).not.toHaveBeenCalled();
+      expect(fetchApod).not.toHaveBeenCalled();
+    });
+
+    it('should call rate limiter only on cache miss', async () => {
+      const mockApod = {
+        date: '2024-01-15',
+        explanation: 'Fresh cosmos',
+        media_type: 'image',
+        service_version: 'v1',
+        title: 'Fresh Wonder',
+        url: 'https://apod.nasa.gov/apod/fresh.jpg',
+      };
+
+      apodCache.get.mockResolvedValueOnce(null); // Cache miss
+      fetchApod.mockResolvedValueOnce(mockApod);
+
+      await ApodQueries.getTodaysApod({}, {}, { user: undefined, clientIp: '127.0.0.1' });
+
+      expect(applyRateLimit).toHaveBeenCalledTimes(1);
+      expect(fetchApod).toHaveBeenCalledTimes(1);
     });
 
     it('should pass user context when authenticated', async () => {
@@ -50,6 +106,7 @@ describe('APOD Resolver - ApodQueries', () => {
         url: 'https://example.com/image.jpg',
       };
 
+      apodCache.get.mockResolvedValueOnce(null); // Cache miss
       fetchApod.mockResolvedValueOnce(mockApod);
 
       await ApodQueries.getTodaysApod({}, {}, { user: { id: 'user-123' }, clientIp: '127.0.0.1' });
@@ -61,6 +118,7 @@ describe('APOD Resolver - ApodQueries', () => {
 
     it('should throw GraphQLError with TOO_MANY_REQUESTS code on rate limit', async () => {
       const { ApodServiceError } = require('../../services/apod');
+      apodCache.get.mockResolvedValueOnce(null); // Cache miss
       fetchApod.mockRejectedValueOnce(
         new ApodServiceError('Rate limit exceeded', 'RATE_LIMITED', 429)
       );
@@ -77,6 +135,7 @@ describe('APOD Resolver - ApodQueries', () => {
 
     it('should throw GraphQLError with EXTERNAL_SERVICE_ERROR code on NASA API error', async () => {
       const { ApodServiceError } = require('../../services/apod');
+      apodCache.get.mockResolvedValueOnce(null); // Cache miss
       fetchApod.mockRejectedValueOnce(
         new ApodServiceError('Invalid API key', 'NASA_API_ERROR', 403)
       );
@@ -93,6 +152,7 @@ describe('APOD Resolver - ApodQueries', () => {
 
     it('should throw GraphQLError with BAD_GATEWAY code on validation error', async () => {
       const { ApodServiceError } = require('../../services/apod');
+      apodCache.get.mockResolvedValueOnce(null); // Cache miss
       fetchApod.mockRejectedValueOnce(
         new ApodServiceError('Invalid response', 'VALIDATION_ERROR', 200, [{ field: 'date' }])
       );
@@ -109,6 +169,7 @@ describe('APOD Resolver - ApodQueries', () => {
 
     it('should throw GraphQLError with SERVICE_UNAVAILABLE code on network error', async () => {
       const { ApodServiceError } = require('../../services/apod');
+      apodCache.get.mockResolvedValueOnce(null); // Cache miss
       fetchApod.mockRejectedValueOnce(
         new ApodServiceError('Failed to connect', 'NETWORK_ERROR')
       );
@@ -123,6 +184,7 @@ describe('APOD Resolver - ApodQueries', () => {
     });
 
     it('should handle unknown errors with INTERNAL_SERVER_ERROR', async () => {
+      apodCache.get.mockResolvedValueOnce(null); // Cache miss
       fetchApod.mockRejectedValueOnce(new Error('Random unexpected error'));
 
       try {
@@ -149,7 +211,7 @@ describe('APOD Resolver - ApodQueries', () => {
       }
     });
 
-    it('should fetch APOD for specific date when authenticated', async () => {
+    it('should fetch APOD for specific date when authenticated (cache miss)', async () => {
       const mockApod = {
         date: '2023-12-25',
         explanation: 'Holiday special',
@@ -159,6 +221,7 @@ describe('APOD Resolver - ApodQueries', () => {
         url: 'https://example.com/holiday.jpg',
       };
 
+      apodCache.get.mockResolvedValueOnce(null); // Cache miss
       fetchApod.mockResolvedValueOnce(mockApod);
 
       const result = await ApodQueries.getApodByDate(
@@ -174,8 +237,55 @@ describe('APOD Resolver - ApodQueries', () => {
       });
     });
 
+    it('should NOT call rate limiter on cache hit', async () => {
+      const cachedApod = {
+        date: '2023-12-25',
+        explanation: 'Cached holiday',
+        media_type: 'image',
+        service_version: 'v1',
+        title: 'Cached Star',
+        url: 'https://example.com/cached-holiday.jpg',
+      };
+
+      apodCache.get.mockResolvedValueOnce(cachedApod); // Cache hit
+
+      const result = await ApodQueries.getApodByDate(
+        {},
+        { date: '2023-12-25' },
+        { user: { id: 'user-456' } }
+      );
+
+      expect(result).toEqual(cachedApod);
+      expect(applyRateLimit).not.toHaveBeenCalled();
+      expect(fetchApod).not.toHaveBeenCalled();
+    });
+
+    it('should call rate limiter only on cache miss', async () => {
+      const mockApod = {
+        date: '2023-12-25',
+        explanation: 'Fresh holiday',
+        media_type: 'image',
+        service_version: 'v1',
+        title: 'Fresh Star',
+        url: 'https://example.com/fresh-holiday.jpg',
+      };
+
+      apodCache.get.mockResolvedValueOnce(null); // Cache miss
+      fetchApod.mockResolvedValueOnce(mockApod);
+
+      await ApodQueries.getApodByDate(
+        {},
+        { date: '2023-12-25' },
+        { user: { id: 'user-456' } }
+      );
+
+      expect(applyRateLimit).toHaveBeenCalledTimes(1);
+      expect(fetchApod).toHaveBeenCalledTimes(1);
+    });
+
     it('should propagate service errors with correct GraphQL error codes', async () => {
       const { ApodServiceError } = require('../../services/apod');
+      apodCache.get.mockResolvedValueOnce(null); // Cache miss
       fetchApod.mockRejectedValueOnce(
         new ApodServiceError('Rate limit exceeded', 'RATE_LIMITED', 429)
       );
