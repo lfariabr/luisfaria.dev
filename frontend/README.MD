@@ -279,3 +279,26 @@ To add new tests:
 
 ## 11. Dockerfile for frontend
 All details in docs/11.DockerFrontend.MD
+
+## 12. APOD Feature - Client Analytics Events (Issue #64)
+
+The APOD (Astronomy Picture of the Day) feature emits the following analytics events via `trackClientEvent()` (backed by Google Analytics `gtag`):
+
+| Event Name | Trigger | Payload |
+|------------|---------|---------|
+| `apod_opened` | Dialog opens | `{ isAuthenticated: boolean }` |
+| `apod_fetch_success` | APOD data loads successfully | `{ date, mediaType, isHistorical }` |
+| `apod_fetch_error` | APOD fetch fails (non-rate-limit) | `{ date, isHistorical, errorCode }` |
+| `apod_date_changed` | User selects historical date | `{ date }` |
+| `apod_rate_limit_exhausted` | Rate limit error on historical browse | `{ date, limit, remaining, resetTime }` |
+
+### Usage
+
+```typescript
+import { trackClientEvent } from '@/utils/analytics';
+
+// Example: track custom event
+trackClientEvent('my_event', { key: 'value' });
+```
+
+The utility safely no-ops in SSR and falls back to `console.log` when `window.gtag` is unavailable (e.g., local dev without GA).

@@ -15,6 +15,7 @@ import { useQuery } from '@apollo/client';
 import { GET_TODAYS_APOD, GET_APOD_BY_DATE } from '@/lib/graphql/queries/apod.queries';
 import type { Apod } from '@/lib/graphql/types/apod.types';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { trackClientEvent } from '@/utils/analytics';
 
 export type ApodDialogProps = {
   open: boolean;
@@ -67,6 +68,11 @@ export function ApodDialog({ open, onOpenChange }: ApodDialogProps) {
     }
   }, [isAuthenticated]);
 
+  useEffect(() => {
+    if (!open) return;
+    trackClientEvent('apod_opened', { isAuthenticated });
+  }, [open, isAuthenticated]);
+
   const todayStr = useMemo(() => getTodayDateString(), [open]);
   const isHistorical = selectedDate !== null && selectedDate !== todayStr;
 
@@ -105,9 +111,43 @@ export function ApodDialog({ open, onOpenChange }: ApodDialogProps) {
         // Calculate seconds until reset
         const resetMs = new Date(resetTime).getTime() - Date.now();
         setSecondsUntilReset(Math.max(0, Math.ceil(resetMs / 1000)));
+
+        trackClientEvent('apod_rate_limit_exhausted', {
+          date: selectedDate,
+          limit,
+          remaining,
+          resetTime,
+        });
       }
     }
-  }, [dateError]);
+  }, [dateError, selectedDate]);
+
+  // Track successful APOD fetches
+  useEffect(() => {
+    if (!open) return;
+    if (!apod) return;
+    if (!apod.date) return;
+
+    trackClientEvent('apod_fetch_success', {
+      date: apod.date,
+      mediaType: apod.mediaType,
+      isHistorical,
+    });
+  }, [open, apod, isHistorical]);
+
+  // Track fetch errors (excluding rate limit which has its own event)
+  useEffect(() => {
+    if (!open) return;
+    if (!error) return;
+    if (isHistorical && isRateLimitError) return;
+
+    const extCode = error.graphQLErrors?.[0]?.extensions?.code;
+    trackClientEvent('apod_fetch_error', {
+      date: selectedDate,
+      isHistorical,
+      errorCode: typeof extCode === 'string' ? extCode : undefined,
+    });
+  }, [open, error, isHistorical, isRateLimitError, selectedDate]);
 
   // Countdown timer for rate limit reset
   useEffect(() => {
@@ -164,6 +204,10 @@ export function ApodDialog({ open, onOpenChange }: ApodDialogProps) {
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSelectedDate(value || null);
+
+    trackClientEvent('apod_date_changed', {
+      date: value || null,
+    });
   };
 
   const handleResetToToday = () => {
