@@ -70,6 +70,23 @@ describe('APOD Service - fetchApod (Orchestrator)', () => {
       expect(mockFetchApodHtmlFallback).not.toHaveBeenCalled();
     });
 
+    it('should support NASA responses where url is missing (Issue #102)', async () => {
+      const responseWithoutUrl = {
+        ...mockApodResponse,
+        date: '2026-01-13',
+        url: undefined,
+      };
+
+      mockFetchApodFromApi.mockResolvedValueOnce(responseWithoutUrl);
+
+      const result = await fetchApod({ date: '2026-01-13', context: { userId: 'user-123' } });
+
+      expect(result.date).toBe('2026-01-13');
+      expect(result.url).toBeUndefined();
+      expect(result.apod_url).toBe('https://apod.nasa.gov/apod/ap260113.html');
+      expect(mockFetchApodHtmlFallback).not.toHaveBeenCalled();
+    });
+
     it('should pass date parameter to API', async () => {
       mockFetchApodFromApi.mockResolvedValueOnce(mockApodResponse);
 
