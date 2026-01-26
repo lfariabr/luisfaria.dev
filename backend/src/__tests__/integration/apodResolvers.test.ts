@@ -202,8 +202,8 @@ describe('APOD Resolvers Integration Tests', () => {
         }
       });
 
-      it('should NOT call cache/fetch when rate limited', async () => {
-        apodCache.get.mockResolvedValue(null);
+      it('should check cache first, then rate limit on cache miss (Issue #97)', async () => {
+        apodCache.get.mockResolvedValue(null); // Cache miss
         fetchApod.mockResolvedValue(mockApodResponse);
 
         const testIp = `172.16.0.${Math.floor(Math.random() * 255)}`;
@@ -217,12 +217,18 @@ describe('APOD Resolvers Integration Tests', () => {
         // Clear mocks after exhausting limit
         jest.clearAllMocks();
 
-        // Rate limited request
-        await executeOperation(GET_TODAYS_APOD, {}, { clientIp: testIp });
+        // Rate limited request - cache is still checked first (Issue #97 optimization)
+        const response = await executeOperation(GET_TODAYS_APOD, {}, { clientIp: testIp });
 
-        // Cache and fetch should NOT be called when rate limited
-        expect(apodCache.get).not.toHaveBeenCalled();
+        // Cache IS checked first (new behavior per Issue #97)
+        expect(apodCache.get).toHaveBeenCalled();
+        // But fetch should NOT be called because rate limit kicks in on cache miss
         expect(fetchApod).not.toHaveBeenCalled();
+        // Should return rate limit error
+        expect(response.body.kind).toBe('single');
+        if (response.body.kind === 'single') {
+          expect(response.body.singleResult.errors?.[0]?.extensions?.code).toBe('RATE_LIMIT_EXCEEDED');
+        }
       });
     });
   });
@@ -363,17 +369,34 @@ describe('APOD Resolvers Integration Tests', () => {
   });
 
   describe('Audit logging', () => {
-    it('should log rate limit check with correct metadata', async () => {
+    it('should log cache hit when data is cached (skips rate limit per Issue #97)', async () => {
       apodCache.get.mockResolvedValueOnce(mockApodResponse);
 
       const testIp = `audit-log-${Date.now()}`;
       await executeOperation(GET_TODAYS_APOD, {}, { clientIp: testIp });
 
+      // With Issue #97, cache is checked first - on cache hit, rate limit is skipped
       expect(mockLoggerInfo).toHaveBeenCalledWith(
-        'Rate limit check',
+        'APOD cache hit',
         expect.objectContaining({
           resolver: 'getTodaysApod',
-          rateLimitSuccess: true,
+          source: 'cache',
+        })
+      );
+    });
+
+    it('should log cache miss when fetching from NASA API', async () => {
+      apodCache.get.mockResolvedValueOnce(null); // Cache miss
+      fetchApod.mockResolvedValueOnce(mockApodResponse);
+
+      const testIp = `audit-log-miss-${Date.now()}`;
+      await executeOperation(GET_TODAYS_APOD, {}, { clientIp: testIp });
+
+      expect(mockLoggerInfo).toHaveBeenCalledWith(
+        'APOD cache miss',
+        expect.objectContaining({
+          resolver: 'getTodaysApod',
+          source: 'nasa',
         })
       );
     });
