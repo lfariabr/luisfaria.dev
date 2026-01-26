@@ -11,7 +11,7 @@ export const nasaApodRawSchema = z.object({
   media_type: z.enum(['image', 'video', 'other']),
   service_version: z.string(),
   title: z.string().min(1, 'Title is required'),
-  url: z.string().url('URL must be valid'),
+  url: z.string().url('URL must be valid').optional(),
   hdurl: z.string().url().optional(),
 });
 
