@@ -5,7 +5,7 @@ Welcome to my modern full-stack portfolio powering projects, articles, AI tools,
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue)](https://www.typescriptlang.org/)
 ![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/lfariabr/luisfaria.dev)
 
-## Project Overview
+## 📝 Project Overview
 This repository contains my personal portfolio, built with Next.js, TypeScript, Node.js, GraphQL, MongoDB, and Redis. It serves as my digital home for:
 
 - Showcasing engineering projects and real-world architectures
@@ -19,10 +19,13 @@ This repository contains my personal portfolio, built with Next.js, TypeScript, 
 - Try the AI chatbot (authenticated users, rate-limited)
 - Browse the Articles and Projects sections
 - Check out the article: [From Groomzilla to Full-Stack Engineer](https://luisfaria.dev/projects/from-groomzilla-to-full-stack-engineer-building-wedstack). I built it by replicating this portfolio.
+- Check out the article [Security Incident Report: Cryptominer Attack on Next.js Application](https://dev.to/lfariaus/security-incident-report-cryptominer-attack-on-nextjs-application-1df4). It led to the implementation of feature/sec-auth.
 
 ---
 
-## Features & Milestones
+## 🗂️ Features & Milestones
+
+![Features & Milestones Hero](https://images.unsplash.com/photo-1682957311875-e37cb0d587f5?q=80&w=2340&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D)
 
 | Version | Feature | Milestone
 | --- | --- | ---
@@ -30,16 +33,20 @@ This repository contains my personal portfolio, built with Next.js, TypeScript, 
 | **v1.2.0** | `feature/articles` | Articles section with categorization |
 | **v1.3.0** | `feature/auth` | Secure login area with JWT authentication |
 | **v1.4.0** | `feature/chatbot` | AI-powered chatbot (rate-limited to 5 questions per hour per user) |
+| **v1.13.0** | `feature/seo` | SEO upgrades (meta, sitemap, robots, social sharing) |
+| **v1.15.0** | `feature/markdown-renderer` | Markdown support for images + code syntax highlighting |
 | **v2.0.0** | `feature/goggins-mode` | Goggins Mode feature (rate-limited to 2 questions per 24h per user) |
 | **v2.0.1** | `feature/atomic-rate-limiting` | Atomic rate limiting with Lua scripts |
 | **v2.0.2** | `feature/home` | V2 home page with improved design |
 | **v2.2.0** | `feature/sec-auth` | Security and authentication improvements with QA regression tests and monitoring |
+| **v2.3.0** | `feature/assistant-ux` | AI assistant UX improvements (guided prompts, clearer rate limits) |
 | **v2.4.0** | `feature/apod` | NASA Astronomy Picture of the Day with caching, rate limiting, and analytics |
 | **v2.5.0** | `refactor/graphql-errors` | Shared GraphQL error handling infrastructure with standardized codes and HTTP status |
+| **v3.0.0** | `feature/resend` | Resend email integration groundwork for Goggins Mode |
 
 ---
 
-## Tech Stack
+## 💻 Tech Stack
 
 | **Frontend** | **Backend** |
 |----------|---------|
@@ -49,11 +56,11 @@ This repository contains my personal portfolio, built with Next.js, TypeScript, 
 | shadcn/ui for components | MongoDB for data storage |
 | NextAuth.js for authentication (UI & flows) | JWT for secure authentication |
 | OpenAI for AI chatbot | OpenAI client |
-| Goggins Mode component | Resend for email notifications |
+| APOD component | NASA API integration |
 
 ---
 
-## Project Structure & Architecture
+## 🏛️ Project Structure & Architecture
 ```
 luisfaria/
 ├── _docs/          # Project documentation & changelogs
@@ -61,8 +68,6 @@ luisfaria/
 ├── backend/        # Node.js, Express, Apollo Server, GraphQL API
 └── docker-compose.yml  # Container orchestration
 ```
-
-## Architecture
 
 ### System Design
 - **Frontend**: Next.js 14+ with App Router, Server-Side Rendering (SSR)
@@ -97,12 +102,13 @@ luisfaria/
   - **ArticleDetail**: Single article view with comments
   - **ProjectDetail**: Individual project page with detailed information
   - **GogginsMode**: Motivational AI mini-product interface (*deprecated*)
+  - **Apod**: NASA APOD component for displaying astronomy images
    
 > Note: *These are some of the reusable components that showcase UI architecture and state management.*
 
 ---
 
-## Testing
+## 🧪 Testing
 
 > *This project treats testing as a first-class citizen, with both backend and frontend covered by automated tests.*
 
@@ -112,7 +118,7 @@ luisfaria/
 
 ```bash
 cd backend
-npm test                    # Run all tests
+npm test                   # Run all tests
 npm run test:watch         # Watch mode
 npm run test:coverage      # Coverage report
 ```
@@ -128,7 +134,7 @@ npm run test:coverage      # Coverage report
 ### Frontend Tests
 ```bash
 cd frontend
-npm test                    # Run Jest tests
+npm test                   # Run Jest tests
 npm run test:watch         # Watch mode
 npm run test:coverage      # Coverage report
 ```
@@ -140,21 +146,19 @@ npm run test:coverage      # Coverage report
 
 ---
 
-## Highlights
+## 🌟 Highlights
 
-| Feature | Description | Tech | Notes |
-|--------|-------------|------|-------|
-| **AI-Powered Chatbot** | Conversational assistant with custom prompt engineering | OpenAI (GPT-3.5), GraphQL, Next.js | Authenticated, stores chat history |
-| **Rate Limiting** | Per-user quotas for chatbot + Goggins Mode | Redis + Lua scripts | 5 req/hr (standard), 2 req/24h (Goggins) |
-| **Performance Optimizations** | Faster loads & API responses | Redis cache, Apollo Client | Code splitting, image optimization |
-| **Authentication** | Secure login & role-based access | JWT (httpOnly), bcrypt | Roles: ADMIN, EDITOR, USER |
-| **Real-Time Limit Display** | Shows remaining questions | GraphQL subscriptions | Live updates in UI |
-| **Goggins Mode** | Motivational AI coach with tough-love persona (*deprecated*) | OpenAI, Redis | Discord webhook integration |
-| **APOD Feature** | NASA Astronomy Picture of the Day | NASA API, Redis, GraphQL | Rate limiting (5/hr), caching (24h), historical browsing for auth users |
+- **AI-Powered Chatbot**: Conversational assistant with custom prompt engineering using OpenAI (GPT-3.5), GraphQL, and Next.js. Authenticated with chat history storage.
+- **Real-Time Limit Display**: Shows remaining questions and countdown to reset directly in the UI.
+- **Rate Limiting**: Per-user quotas for chatbot and Goggins Mode using Redis + Lua scripts. 5 req/hr (standard), 2 req/24h (Goggins).
+- **Performance Optimizations**: Faster loads and API responses with Redis cache and Apollo Client. Includes code splitting and image optimization.
+- **Authentication**: Secure login and role-based access with JWT (httpOnly) and bcrypt. Roles: ADMIN, EDITOR, USER.
+- **Goggins Mode**: Motivational AI coach with tough-love persona (*deprecated*). Uses OpenAI and Redis with Discord webhook integration.
+- **APOD Feature**: NASA Astronomy Picture of the Day with NASA API, Redis, and GraphQL. Includes rate limiting (5/hr), caching (24h), and historical browsing for authenticated users.
 
 ---
 
-## Getting Started
+## 🌱 Getting Started
 
 1. Clone this repository
 2. Set up environment variables
@@ -169,7 +173,7 @@ npm run test:coverage      # Coverage report
 
 ---
 
-## Roadmap
+## 📌 Roadmap
 
 **Completed**
 1. Project setup and configuration
@@ -181,7 +185,7 @@ npm run test:coverage      # Coverage report
 7. SEO optimization
 8. Goggins Mode integration (*deprecated*)
 9. Home page redesign
-10. Security Authentication (`feature/secure-authentication`)
+10. Security Authentication (`feature/sec-auth`)
 11. APOD Feature (`feature/apod`) — NASA API integration with caching and analytics
 
 **Work In Progress**
@@ -193,4 +197,4 @@ npm run test:coverage      # Coverage report
 
 ---
 
-Built with ❤️ & ☕ using the MERN stack + Next.js
+> *Whether it’s concrete or code, structure is everything.*
