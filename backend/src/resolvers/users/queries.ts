@@ -1,21 +1,17 @@
 import User, { UserRole } from '../../models/User';
-import { GraphQLError } from 'graphql';
+import { Errors } from '../../utils/errors';
 
 export const userQueries = {
     // Get all users (admin only)
     users: async (_: any, __: any, context: any) => {
         // Check if user is authenticated and is an admin
         if (!context.user) {
-            throw new GraphQLError('Authentication required', {
-                extensions: { code: 'UNAUTHENTICATED' }
-            });
+            throw Errors.unauthenticated();
         }
         
         // Only admins can view all users
         if (context.user.role !== UserRole.ADMIN) {
-            throw new GraphQLError('Not authorized to view all users', {
-                extensions: { code: 'FORBIDDEN' }
-            });
+            throw Errors.forbidden('Not authorized to view all users');
         }
         
         // Return all users
@@ -25,16 +21,12 @@ export const userQueries = {
     user: async (_: any, { id }: { id: string }, context: any) => {
         // Check if user is authenticated and is an admin
         if (!context.user) {
-            throw new GraphQLError('Authentication required', {
-                extensions: { code: 'UNAUTHENTICATED' }
-            });
+            throw Errors.unauthenticated();
         }
         
         // Only admins or the user themselves can view user details
         if (context.user.role !== UserRole.ADMIN && context.user.id !== id) {
-            throw new GraphQLError('Not authorized to view this user', {
-                extensions: { code: 'FORBIDDEN' }
-            });
+            throw Errors.forbidden('Not authorized to view this user');
         }
         
         // Return the user
@@ -44,9 +36,7 @@ export const userQueries = {
     me: async (_: any, __: any, context: any) => {
         // Check if user is authenticated
         if (!context.user) {
-            throw new GraphQLError('Authentication required', {
-                extensions: { code: 'UNAUTHENTICATED' }
-            });
+            throw Errors.unauthenticated();
         }
         // Return user from database
         return await User.findById(context.user.id);

@@ -203,8 +203,10 @@ describe('Cookie Auth E2E - Full HTTP Flow', () => {
         .set('Cookie', [`token=${validToken}`])
         .send({ query: USERS_QUERY });
 
-      expect(response.status).toBe(200);
+      // Shared error handling returns proper HTTP status codes
+      expect(response.status).toBe(403);
       expect(response.body.errors).toBeTruthy();
+      expect(response.body.errors[0].extensions.code).toBe('FORBIDDEN');
     });
 
     it('should fail with no cookie', async () => {
@@ -212,8 +214,10 @@ describe('Cookie Auth E2E - Full HTTP Flow', () => {
         .post('/graphql')
         .send({ query: USERS_QUERY });
 
-      expect(response.status).toBe(200);
+      // Shared error handling returns proper HTTP status codes
+      expect(response.status).toBe(401);
       expect(response.body.errors).toBeTruthy();
+      expect(response.body.errors[0].extensions.code).toBe('UNAUTHENTICATED');
     });
   });
 
@@ -261,8 +265,10 @@ describe('Cookie Auth E2E - Full HTTP Flow', () => {
           variables: { id: adminUser._id.toString() }
         });
 
-      expect(response.status).toBe(200);
+      // Shared error handling returns proper HTTP status codes
+      expect(response.status).toBe(403);
       expect(response.body.errors).toBeTruthy();
+      expect(response.body.errors[0].extensions.code).toBe('FORBIDDEN');
     });
   });
 
