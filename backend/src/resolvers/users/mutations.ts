@@ -114,12 +114,14 @@ export const userMutations = {
     // Normalize role to uppercase
     const normalizedRole = (role || '').toUpperCase() as UserRole;
     
-    try {
-      const targetUser = await User.findById(id);
-      if (!targetUser) {
-        throw Errors.notFound('User');
-      }
+    // Find user first (outside try so NotFound isn't swallowed)
+    const targetUser = await User.findById(id);
+    if (!targetUser) {
+      throw Errors.notFound('User');
+    }
 
+    // Only wrap the save operation in try-catch for unexpected errors
+    try {
       targetUser.role = normalizedRole;
       await targetUser.save();
       return targetUser;
