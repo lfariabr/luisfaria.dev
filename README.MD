@@ -34,6 +34,8 @@ This repository contains my personal portfolio, built with Next.js, TypeScript, 
 | **v2.0.1** | `feature/atomic-rate-limiting` | Atomic rate limiting with Lua scripts |
 | **v2.0.2** | `feature/home` | V2 home page with improved design |
 | **v2.2.0** | `feature/sec-auth` | Security and authentication improvements with QA regression tests and monitoring |
+| **v2.4.0** | `feature/apod` | NASA Astronomy Picture of the Day with caching, rate limiting, and analytics |
+| **v2.5.0** | `refactor/graphql-errors` | Shared GraphQL error handling infrastructure with standardized codes and HTTP status |
 
 ---
 
@@ -54,10 +56,10 @@ This repository contains my personal portfolio, built with Next.js, TypeScript, 
 ## Project Structure & Architecture
 ```
 luisfaria/
-├── _docs/          # Project documentation
-├── frontend/       # Next.js with TypeScript
-├── backend/        # Node.js, Apollo, GraphQL API
-└── server/         # Nginx and GoLive procedure (hidden)
+├── _docs/          # Project documentation & changelogs
+├── frontend/       # Next.js 14+ with TypeScript, Apollo Client
+├── backend/        # Node.js, Express, Apollo Server, GraphQL API
+└── docker-compose.yml  # Container orchestration
 ```
 
 ## Architecture
@@ -91,9 +93,10 @@ luisfaria/
   - **ArticleList**: Displays articles with filtering and pagination
   - **ProjectGrid**: Shows project cards with tags and descriptions
   - **Chatbot**: AI-powered chat interface with rate limiting
+  - **ApodFab/ApodDialog**: NASA APOD floating action button with historical browsing
   - **ArticleDetail**: Single article view with comments
   - **ProjectDetail**: Individual project page with detailed information
-  - **GogginsMode**: Motivational AI mini-product interface
+  - **GogginsMode**: Motivational AI mini-product interface (*deprecated*)
    
 > Note: *These are some of the reusable components that showcase UI architecture and state management.*
 
@@ -143,11 +146,11 @@ npm run test:coverage      # Coverage report
 |--------|-------------|------|-------|
 | **AI-Powered Chatbot** | Conversational assistant with custom prompt engineering | OpenAI (GPT-3.5), GraphQL, Next.js | Authenticated, stores chat history |
 | **Rate Limiting** | Per-user quotas for chatbot + Goggins Mode | Redis + Lua scripts | 5 req/hr (standard), 2 req/24h (Goggins) |
-| **Goggins Mode** | Motivational AI coach with tough-love persona (*deprecated*) | OpenAI, Redis | Discord webhook integration |
+| **Performance Optimizations** | Faster loads & API responses | Redis cache, Apollo Client | Code splitting, image optimization |
 | **Authentication** | Secure login & role-based access | JWT (httpOnly), bcrypt | Roles: ADMIN, EDITOR, USER |
 | **Real-Time Limit Display** | Shows remaining questions | GraphQL subscriptions | Live updates in UI |
-| **Performance Optimizations** | Faster loads & API responses | Redis cache, Apollo Client | Code splitting, image optimization |
-| **APOD Feature** | Astronomy Picture of the Day integration | NASA API, Next.js | Floating action button, responsive design |
+| **Goggins Mode** | Motivational AI coach with tough-love persona (*deprecated*) | OpenAI, Redis | Discord webhook integration |
+| **APOD Feature** | NASA Astronomy Picture of the Day | NASA API, Redis, GraphQL | Rate limiting (5/hr), caching (24h), historical browsing for auth users |
 
 ---
 
@@ -179,12 +182,14 @@ npm run test:coverage      # Coverage report
 8. Goggins Mode integration (*deprecated*)
 9. Home page redesign
 10. Security Authentication (`feature/secure-authentication`)
+11. APOD Feature (`feature/apod`) — NASA API integration with caching and analytics
 
 **Work In Progress**
-- APOD feature implementation
+- CI/CD pipeline improvements
 
 **Planned / Future**
-- ***Who knows?*** Stay tuned!
+- Performance monitoring dashboard
+- Extended API documentation
 
 ---
 
