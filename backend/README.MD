@@ -753,3 +753,14 @@ docker system prune -af
 - Implement proper monitoring and logging
 - Consider setting up staging environments
 - Add notifications for successful/failed deployments
+
+## 15. APOD Feature (Astronomy Picture of the Day)
+
+Full documentation: [_docs/featureBreakdown/v2.4.Apod.MD](../_docs/featureBreakdown/v2.4.Apod.MD)
+
+**Quick Reference:**
+- **GraphQL Queries**: `getTodaysApod`, `getApodByDate(date: String!)`
+- **Rate Limiting**: 5 req/hour per user (auth users on historical dates)
+- **Caching**: Redis with 24h TTL (cache-first, rate limit only on miss)
+- **Config**: `NASA_API_KEY` env var required
+- **Service**: `backend/src/services/apod/`

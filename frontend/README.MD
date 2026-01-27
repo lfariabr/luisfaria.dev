@@ -280,9 +280,18 @@ To add new tests:
 ## 11. Dockerfile for frontend
 All details in docs/11.DockerFrontend.MD
 
-## 12. APOD Feature - Client Analytics Events (Issue #64)
+## 12. APOD Feature (Astronomy Picture of the Day)
 
-The APOD (Astronomy Picture of the Day) feature emits the following analytics events via `trackClientEvent()` (backed by Google Analytics `gtag`):
+Full documentation: [_docs/featureBreakdown/v2.4.Apod.MD](../_docs/featureBreakdown/v2.4.Apod.MD)
+
+**Quick Reference:**
+- **Components**: `ApodFab` (FAB button), `ApodDialog` (modal)
+- **Auth Features**: Date picker for historical APODs (authenticated users only)
+- **Rate Limit UI**: Badge, countdown timer, disabled date picker when exhausted
+
+### Client Analytics Events
+
+The APOD feature emits the following analytics events via `trackClientEvent()` (backed by Google Analytics `gtag`):
 
 | Event Name | Trigger | Payload |
 |------------|---------|---------|
