@@ -1,4 +1,5 @@
-import { GraphQLError } from 'graphql';
+import { Errors } from '../../utils/errors';
+import { logger } from '../../utils/logger';
 import { checkAuth } from '../../utils/authUtils';
 import { rateLimit } from '../../middleware/rateLimiter';
 import ChatMessage from '../../models/ChatMessage';
@@ -37,12 +38,8 @@ export const chatbotMutations = {
         rateLimitInfo,
       };
     } catch (error: any) {
-      console.error('Chatbot error:', error.message);
-      throw new GraphQLError('Failed to get response from AI service', {
-        extensions: {
-          code: 'INTERNAL_SERVER_ERROR',
-        },
-      });
+      logger.error('Chatbot error', { error: error.message, resolver: 'askQuestion' });
+      throw Errors.internal('Failed to get response from AI service');
     }
   },
 };

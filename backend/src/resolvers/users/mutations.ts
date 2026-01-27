@@ -1,6 +1,7 @@
 import User, { UserRole } from '../../models/User';
-import { GraphQLError } from 'graphql';
 import { AUTH_COOKIE_BASE_OPTIONS, AUTH_COOKIE_MAX_AGE } from '../../utils/authUtils';
+import { Errors } from '../../utils/errors';
+import { logger } from '../../utils/logger';
 
 export const userMutations = {
   // Register a new user
@@ -10,11 +11,7 @@ export const userMutations = {
     // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      throw new GraphQLError('Email already in use', {
-        extensions: {
-          code: 'BAD_USER_INPUT',
-        },
-      });
+      throw Errors.badInput('Email already in use');
     }
     
     // Create new user
@@ -56,21 +53,13 @@ export const userMutations = {
     // Find the user
     const user = await User.findOne({ email }).select('+password');
     if (!user) {
-      throw new GraphQLError('Invalid email or password', {
-        extensions: {
-          code: 'UNAUTHENTICATED',
-        },
-      });
+      throw Errors.unauthenticated('Invalid email or password');
     }
     
     // Check password
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      throw new GraphQLError('Invalid email or password', {
-        extensions: {
-          code: 'UNAUTHENTICATED',
-        },
-      });
+      throw Errors.unauthenticated('Invalid email or password');
     }
     
     // Generate token
@@ -114,37 +103,31 @@ export const userMutations = {
   ) => {
     // Verify permissions
     if (!context.user || context.user.role !== UserRole.ADMIN) {
-      throw new GraphQLError('Not authorized to update user roles', {
-        extensions: { code: 'FORBIDDEN' }
-      });
+      throw Errors.forbidden('Not authorized to update user roles');
     }
 
     // Prevent admins from changing their own role
     if (context.user.id === id) {
-      throw new GraphQLError('Cannot change your own role', {
-        extensions: { code: 'FORBIDDEN' }
-      });
+      throw Errors.forbidden('Cannot change your own role');
     }
 
     // Normalize role to uppercase
     const normalizedRole = (role || '').toUpperCase() as UserRole;
     
-    try {
-      const targetUser = await User.findById(id);
-      if (!targetUser) {
-        throw new GraphQLError('User not found', {
-          extensions: { code: 'NOT_FOUND' }
-        });
-      }
+    // Find user first (outside try so NotFound isn't swallowed)
+    const targetUser = await User.findById(id);
+    if (!targetUser) {
+      throw Errors.notFound('User');
+    }
 
+    // Only wrap the save operation in try-catch for unexpected errors
+    try {
       targetUser.role = normalizedRole;
       await targetUser.save();
       return targetUser;
     } catch (error) {
-      console.error('Error updating user role:', error);
-      throw new GraphQLError('Failed to update user role', {
-        extensions: { code: 'INTERNAL_SERVER_ERROR' }
-      });
+      logger.error('Error updating user role', { error, resolver: 'updateUserRole' });
+      throw Errors.internal('Failed to update user role');
     }
   },
   
@@ -152,31 +135,23 @@ export const userMutations = {
   deleteUser: async (_: any, { id }: { id: string }, context: any) => {
     // Check if user is authenticated and is an admin
     if (!context.user) {
-      throw new GraphQLError('Authentication required', {
-        extensions: { code: 'UNAUTHENTICATED' }
-      });
+      throw Errors.unauthenticated();
     }
     
     if (context.user.role !== UserRole.ADMIN) {
-      throw new GraphQLError('Not authorized to delete users', {
-        extensions: { code: 'FORBIDDEN' }
-      });
+      throw Errors.forbidden('Not authorized to delete users');
     }
     
     // Prevent admins from deleting themselves
     if (context.user.id === id) {
-      throw new GraphQLError('Cannot delete your own account', {
-        extensions: { code: 'FORBIDDEN' }
-      });
+      throw Errors.forbidden('Cannot delete your own account');
     }
     
     // Find and delete the user
     const result = await User.findByIdAndDelete(id);
     
     if (!result) {
-      throw new GraphQLError('User not found', {
-        extensions: { code: 'NOT_FOUND' }
-      });
+      throw Errors.notFound('User');
     }
     
     return true;

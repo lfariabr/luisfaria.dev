@@ -1,4 +1,3 @@
-import { GraphQLError } from 'graphql';
 import { checkAuth } from '../../utils/authUtils';
 import ChatMessage from '../../models/ChatMessage';
 import mongoose from 'mongoose';
