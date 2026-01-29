@@ -27,6 +27,8 @@ This repository contains my personal portfolio, built with Next.js, TypeScript, 
 
 ![Features & Milestones Hero](https://images.unsplash.com/photo-1682957311875-e37cb0d587f5?q=80&w=2340&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D)
 
+> *Whether it’s concrete or code, structure is everything.*
+
 | Version | Feature | Milestone
 | --- | --- | ---
 | **v1.1.0** | `feature/portfolio` | Portfolio showcase with project highlights |
@@ -194,7 +196,3 @@ npm run test:coverage      # Coverage report
 **Planned / Future**
 - Performance monitoring dashboard
 - Extended API documentation
-
----
-
-> *Whether it’s concrete or code, structure is everything.*
