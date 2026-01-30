@@ -75,8 +75,8 @@ jobs:
           REDIS_URL: redis://localhost:6379
           OPENAI_API_KEY: test-openai-key
           RATE_LIMIT_WINDOW: 3600
-          RATE_LIMIT_MAX_REQUESTS: 100
-          RATE_LIMIT_ANONYMOUS_REQUESTS: 10
+          RATE_LIMIT_MAX_REQUESTS: 5
+          RATE_LIMIT_ANONYMOUS_REQUESTS: 5
           RESEND_API_KEY: test-resend-key
           NASA_API_KEY: test-nasa-key
 
