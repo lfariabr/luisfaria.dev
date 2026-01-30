@@ -25,6 +25,9 @@ export async function sendGogginsEmail(
   text: string,
   opts?: { explicitMode?: boolean }
 ): Promise<SendEmailResult> {
+  if (process.env.NODE_ENV === 'test') {
+    return { data: null, error: null };
+  }
   if (!resend) {
     console.warn('[resendMailer] RESEND_API_KEY not set. Skipping email send.');
     return { data: null, error: null };

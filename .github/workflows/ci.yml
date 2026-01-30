@@ -52,8 +52,21 @@ jobs:
       - name: Build & Type Check
         run: npm run build
 
+      - name: Wait for MongoDB & Redis
+        run: |
+          for i in {1..30}; do
+            if (echo > /dev/tcp/127.0.0.1/27017) >/dev/null 2>&1 && (echo > /dev/tcp/127.0.0.1/6379) >/dev/null 2>&1; then
+              echo "MongoDB and Redis are reachable"
+              exit 0
+            fi
+            echo "Waiting for services... ($i/30)"
+            sleep 2
+          done
+          echo "MongoDB/Redis not reachable in time"
+          exit 1
+
       - name: Run tests
-        run: npm test
+        run: npm test -- --runInBand
         env:
           NODE_ENV: test
           PORT: 4000
