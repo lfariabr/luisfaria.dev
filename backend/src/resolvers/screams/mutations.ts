@@ -63,16 +63,18 @@ export const activateGogginsMode = async (_: any, { input }: any) => {
     subscriptionType,
   });
 
-  // Fire-and-forget email notification (non-blocking, non-fatal)
-  void sendGogginsEmail(userEmail, text, { explicitMode })
-    .then(({ error }) => {
-      if (error) {
-        console.error('[screams] sendGogginsEmail error:', error);
-      }
-    })
-    .catch((err) => {
-      console.error('[screams] sendGogginsEmail exception:', err);
-    });
+  if (process.env.NODE_ENV !== 'test') {
+    // Fire-and-forget email notification (non-blocking, non-fatal)
+    void sendGogginsEmail(userEmail, text, { explicitMode })
+      .then(({ error }) => {
+        if (error) {
+          console.error('[screams] sendGogginsEmail error:', error);
+        }
+      })
+      .catch((err) => {
+        console.error('[screams] sendGogginsEmail exception:', err);
+      });
+  }
 
   const resetIn = Math.max(0, Math.ceil((limitResult.resetTime.getTime() - Date.now()) / 1000));
 
