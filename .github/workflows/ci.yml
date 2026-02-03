@@ -268,16 +268,24 @@ jobs:
             # Navigate to project directory
             cd /var/www/luisfaria || cd ~/luisfaria || { echo "Project directory not found"; exit 1; }
             
-            # Pull latest code
-            git pull origin master || git pull origin main
+            # Fetch and reset to exact remote state (idempotent)
+            git fetch --prune origin
+            if git rev-parse --verify origin/main >/dev/null 2>&1; then
+              DEPLOY_REF="origin/main"
+            else
+              DEPLOY_REF="origin/master"
+            fi
+            echo "Deploying from $DEPLOY_REF"
+            git reset --hard $DEPLOY_REF
+            git clean -fdx -e .env -e node_modules
             
-            # Login to GHCR
-            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            # Login to GHCR with dedicated read-only token
+            echo ${{ secrets.GHCR_TOKEN }} | docker login ghcr.io -u ${{ secrets.GHCR_USER }} --password-stdin
             
             # Pull new images
             docker compose pull
             
-            # Restart with zero-downtime (stop old, start new)
+            # Restart containers (minimal-downtime single-instance redeploy)
             docker compose up -d --remove-orphans
             
             # Clean up old images
@@ -295,13 +303,26 @@ jobs:
             echo "🔍 Checking container health..."
             docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
             
-            # Basic health check - wait for containers to be healthy
+            # Wait for containers to stabilize
             sleep 10
             
-            # Check if containers are running
-            if docker ps | grep -q "luisfaria"; then
-              echo "✅ Containers are running!"
-            else
-              echo "❌ Containers not found!"
+            # Validate each required service is running
+            REQUIRED_SERVICES="nginx_gateway frontend_app backend_api mongodb_db redis_cache"
+            FAILED=0
+            
+            for SERVICE in $REQUIRED_SERVICES; do
+              if docker ps --format '{{.Names}}' | grep -q "$SERVICE"; then
+                echo "✅ $SERVICE is running"
+              else
+                echo "❌ $SERVICE is NOT running!"
+                FAILED=1
+              fi
+            done
+            
+            if [ $FAILED -eq 1 ]; then
+              echo "❌ One or more services failed health check!"
+              docker ps -a
               exit 1
             fi
+            
+            echo "✅ All services are running!"
