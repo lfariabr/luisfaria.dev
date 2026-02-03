@@ -46,8 +46,16 @@ jobs:
           cache: 'npm'
           cache-dependency-path: backend/package-lock.json
 
+      - name: Cache MongoDB binaries
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/mongodb-binaries
+          key: mongodb-binaries-${{ runner.os }}-6.0.14
+
       - name: Install dependencies
         run: npm ci
+        env:
+          MONGOMS_DOWNLOAD_DIR: ~/.cache/mongodb-binaries
 
       - name: Build & Type Check
         run: npm run build
@@ -243,7 +251,7 @@ jobs:
       - name: Cleanup old backend images (keep last 5)
         uses: actions/delete-package-versions@v5
         with:
-          package-name: '${{ github.repository }}/backend'
+          package-name: '${{ github.event.repository.name }}/backend'
           package-type: 'container'
           min-versions-to-keep: 5
           delete-only-untagged-versions: true
@@ -251,7 +259,7 @@ jobs:
       - name: Cleanup old frontend images (keep last 5)
         uses: actions/delete-package-versions@v5
         with:
-          package-name: '${{ github.repository }}/frontend'
+          package-name: '${{ github.event.repository.name }}/frontend'
           package-type: 'container'
           min-versions-to-keep: 5
           delete-only-untagged-versions: true
