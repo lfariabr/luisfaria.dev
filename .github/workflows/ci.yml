@@ -249,13 +249,14 @@ jobs:
     needs: [docker-build]
     # Only deploy on pushes to main/master (not PRs)
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    environment: prod
     
     steps:
       - name: Deploy to Server
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
+          host: ${{ vars.DEPLOY_HOST }}
+          username: ${{ vars.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
           script: |
             set -e
@@ -277,7 +278,7 @@ jobs:
             git clean -fdx -e .env -e node_modules
             
             # Login to GHCR with dedicated read-only token (suppress output to prevent token leakage)
-            if ! printf '%s' "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USER }}" --password-stdin >/dev/null 2>&1; then
+            if ! printf '%s' "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ vars.GHCR_USER }}" --password-stdin >/dev/null 2>&1; then
               echo "❌ GHCR login failed"
               exit 1
             fi
@@ -297,8 +298,8 @@ jobs:
       - name: Verify Deployment
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
+          host: ${{ vars.DEPLOY_HOST }}
+          username: ${{ vars.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
           script: |
             echo "🔍 Checking container health..."
