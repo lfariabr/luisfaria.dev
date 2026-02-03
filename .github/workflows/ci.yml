@@ -46,8 +46,16 @@ jobs:
           cache: 'npm'
           cache-dependency-path: backend/package-lock.json
 
+      - name: Cache MongoDB binaries
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/mongodb-binaries
+          key: mongodb-binaries-${{ runner.os }}-6.0.14
+
       - name: Install dependencies
         run: npm ci
+        env:
+          MONGOMS_DOWNLOAD_DIR: ~/.cache/mongodb-binaries
 
       - name: Build & Type Check
         run: npm run build
@@ -237,8 +245,24 @@ jobs:
       - name: Docker Build Success
         run: |
           echo "✅ Docker images built and pushed to GHCR!"
-          echo "Backend: ghcr.io/${{ github.repository }}/backend"
-          echo "Frontend: ghcr.io/${{ github.repository }}/frontend"
+          echo "Backend tags: ${{ steps.meta-backend.outputs.tags }}"
+          echo "Frontend tags: ${{ steps.meta-frontend.outputs.tags }}"
+
+      - name: Cleanup old backend images (keep last 5)
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: '${{ github.event.repository.name }}/backend'
+          package-type: 'container'
+          min-versions-to-keep: 5
+          delete-only-untagged-versions: false
+
+      - name: Cleanup old frontend images (keep last 5)
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: '${{ github.event.repository.name }}/frontend'
+          package-type: 'container'
+          min-versions-to-keep: 5
+          delete-only-untagged-versions: false
 
   # ============================================
   # Deploy to Production
@@ -265,6 +289,15 @@ jobs:
             
             # Navigate to project directory
             cd /var/www/luisfaria || cd ~/luisfaria || { echo "Project directory not found"; exit 1; }
+            
+            # Save current commit for rollback (persistent storage)
+            # Note: docker-compose uses build: directives, so rollback = git reset + rebuild
+            echo "📦 Saving current commit for rollback..."
+            ROLLBACK_DIR="/var/lib/deploy-rollback"
+            sudo mkdir -p $ROLLBACK_DIR
+            sudo chown $(whoami):$(whoami) $ROLLBACK_DIR
+            git rev-parse HEAD > $ROLLBACK_DIR/commit.txt
+            echo "Rollback commit saved: $(cat $ROLLBACK_DIR/commit.txt)"
             
             # Fetch and reset to exact remote state (idempotent)
             git fetch --prune origin
@@ -332,7 +365,41 @@ jobs:
             if [ $FAILED -eq 1 ]; then
               echo "❌ One or more services failed health check!"
               docker ps -a
+              
+              # Auto-rollback: reset git and rebuild (docker-compose uses build: not image:)
+              echo "🔄 Attempting automatic rollback..."
+              cd /var/www/luisfaria || cd ~/luisfaria || exit 1
+              
+              ROLLBACK_DIR="/var/lib/deploy-rollback"
+              PREV_COMMIT=$(cat $ROLLBACK_DIR/commit.txt 2>/dev/null || echo "")
+              
+              if [ -n "$PREV_COMMIT" ]; then
+                echo "Rolling back to commit: $PREV_COMMIT"
+                git reset --hard $PREV_COMMIT
+                
+                # Rebuild and restart from rolled-back Dockerfiles
+                docker compose up -d --build --remove-orphans
+                
+                # Verify rollback
+                sleep 10
+                ROLLBACK_OK=1
+                for SERVICE in backend_api frontend_app; do
+                  if ! docker ps --format '{{.Names}}' | grep -q "$SERVICE"; then
+                    ROLLBACK_OK=0
+                  fi
+                done
+                
+                if [ $ROLLBACK_OK -eq 1 ]; then
+                  echo "⚠️ Rollback completed. Services rebuilt from previous commit."
+                else
+                  echo "❌ Rollback failed! Manual intervention required."
+                fi
+              else
+                echo "❌ No rollback state found at $ROLLBACK_DIR. Manual intervention required."
+              fi
+              
               exit 1
             fi
             
             echo "✅ All services are running!"
+            echo "💾 Rollback state preserved at /var/lib/deploy-rollback for manual recovery if needed."
