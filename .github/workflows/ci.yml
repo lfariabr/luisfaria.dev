@@ -239,3 +239,99 @@ jobs:
           echo "✅ Docker images built and pushed to GHCR!"
           echo "Backend: ghcr.io/${{ github.repository }}/backend"
           echo "Frontend: ghcr.io/${{ github.repository }}/frontend"
+
+  # ============================================
+  # Deploy to Production
+  # ============================================
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [docker-build]
+    # Only deploy on pushes to main/master (not PRs)
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    
+    steps:
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          script: |
+            set -e
+            
+            echo "🚀 Starting deployment..."
+            
+            # Navigate to project directory
+            cd /var/www/luisfaria || cd ~/luisfaria || { echo "Project directory not found"; exit 1; }
+            
+            # Fetch and reset to exact remote state (idempotent)
+            git fetch --prune origin
+            if git rev-parse --verify origin/main >/dev/null 2>&1; then
+              DEPLOY_REF="origin/main"
+            else
+              DEPLOY_REF="origin/master"
+            fi
+            echo "Deploying from $DEPLOY_REF"
+            git reset --hard $DEPLOY_REF
+            git clean -fdx -e .env -e node_modules
+            
+            # Login to GHCR with dedicated read-only token (suppress output to prevent token leakage)
+            if ! printf '%s' "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USER }}" --password-stdin >/dev/null 2>&1; then
+              echo "❌ GHCR login failed"
+              exit 1
+            fi
+            echo "✅ GHCR login successful"
+            
+            # Pull new images
+            docker compose pull
+            
+            # Restart containers (minimal-downtime single-instance redeploy)
+            docker compose up -d --remove-orphans
+            
+            # Clean up old images
+            docker image prune -f
+            
+            echo "✅ Deployment complete!"
+
+      - name: Verify Deployment
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          script: |
+            echo "🔍 Checking container health..."
+            docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+            
+            # Wait for containers to stabilize
+            sleep 10
+            
+            # Validate each required service is running
+            REQUIRED_SERVICES="nginx_gateway frontend_app backend_api mongodb_db redis_cache"
+            FAILED=0
+            
+            for SERVICE in $REQUIRED_SERVICES; do
+              STATUS=$(docker inspect --format='{{.State.Status}}' "$SERVICE" 2>/dev/null || echo "not_found")
+              HEALTH=$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}no_healthcheck{{end}}' "$SERVICE" 2>/dev/null || echo "unknown")
+              
+              if [ "$STATUS" = "running" ]; then
+                if [ "$HEALTH" = "healthy" ] || [ "$HEALTH" = "no_healthcheck" ]; then
+                  echo "✅ $SERVICE is running (health: $HEALTH)"
+                else
+                  echo "⚠️ $SERVICE is running but health: $HEALTH"
+                  FAILED=1
+                fi
+              else
+                echo "❌ $SERVICE status: $STATUS"
+                FAILED=1
+              fi
+            done
+            
+            if [ $FAILED -eq 1 ]; then
+              echo "❌ One or more services failed health check!"
+              docker ps -a
+              exit 1
+            fi
+            
+            echo "✅ All services are running!"
