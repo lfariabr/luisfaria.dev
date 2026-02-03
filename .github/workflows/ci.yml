@@ -251,9 +251,6 @@ jobs:
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Deploy to Server
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -279,8 +276,12 @@ jobs:
             git reset --hard $DEPLOY_REF
             git clean -fdx -e .env -e node_modules
             
-            # Login to GHCR with dedicated read-only token
-            echo ${{ secrets.GHCR_TOKEN }} | docker login ghcr.io -u ${{ secrets.GHCR_USER }} --password-stdin
+            # Login to GHCR with dedicated read-only token (suppress output to prevent token leakage)
+            if ! printf '%s' "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USER }}" --password-stdin >/dev/null 2>&1; then
+              echo "❌ GHCR login failed"
+              exit 1
+            fi
+            echo "✅ GHCR login successful"
             
             # Pull new images
             docker compose pull
@@ -311,10 +312,18 @@ jobs:
             FAILED=0
             
             for SERVICE in $REQUIRED_SERVICES; do
-              if docker ps --format '{{.Names}}' | grep -q "$SERVICE"; then
-                echo "✅ $SERVICE is running"
+              STATUS=$(docker inspect --format='{{.State.Status}}' "$SERVICE" 2>/dev/null || echo "not_found")
+              HEALTH=$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}no_healthcheck{{end}}' "$SERVICE" 2>/dev/null || echo "unknown")
+              
+              if [ "$STATUS" = "running" ]; then
+                if [ "$HEALTH" = "healthy" ] || [ "$HEALTH" = "no_healthcheck" ]; then
+                  echo "✅ $SERVICE is running (health: $HEALTH)"
+                else
+                  echo "⚠️ $SERVICE is running but health: $HEALTH"
+                  FAILED=1
+                fi
               else
-                echo "❌ $SERVICE is NOT running!"
+                echo "❌ $SERVICE status: $STATUS"
                 FAILED=1
               fi
             done
