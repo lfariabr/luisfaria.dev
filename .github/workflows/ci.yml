@@ -254,7 +254,7 @@ jobs:
           package-name: '${{ github.event.repository.name }}/backend'
           package-type: 'container'
           min-versions-to-keep: 5
-          delete-only-untagged-versions: true
+          delete-only-untagged-versions: false
 
       - name: Cleanup old frontend images (keep last 5)
         uses: actions/delete-package-versions@v5
@@ -262,7 +262,7 @@ jobs:
           package-name: '${{ github.event.repository.name }}/frontend'
           package-type: 'container'
           min-versions-to-keep: 5
-          delete-only-untagged-versions: true
+          delete-only-untagged-versions: false
 
   # ============================================
   # Deploy to Production
@@ -290,23 +290,14 @@ jobs:
             # Navigate to project directory
             cd /var/www/luisfaria || cd ~/luisfaria || { echo "Project directory not found"; exit 1; }
             
-            # Save current state for rollback (persistent storage)
-            echo "📦 Saving current state for rollback..."
+            # Save current commit for rollback (persistent storage)
+            # Note: docker-compose uses build: directives, so rollback = git reset + rebuild
+            echo "📦 Saving current commit for rollback..."
             ROLLBACK_DIR="/var/lib/deploy-rollback"
             sudo mkdir -p $ROLLBACK_DIR
             sudo chown $(whoami):$(whoami) $ROLLBACK_DIR
-            
-            # Save image digests using image inspection (not container)
-            BACKEND_IMG=$(docker compose config --images 2>/dev/null | grep backend || echo "")
-            FRONTEND_IMG=$(docker compose config --images 2>/dev/null | grep frontend || echo "")
-            if [ -n "$BACKEND_IMG" ]; then
-              docker image inspect --format='{{index .RepoDigests 0}}' "$BACKEND_IMG" 2>/dev/null > $ROLLBACK_DIR/backend.txt || echo "" > $ROLLBACK_DIR/backend.txt
-            fi
-            if [ -n "$FRONTEND_IMG" ]; then
-              docker image inspect --format='{{index .RepoDigests 0}}' "$FRONTEND_IMG" 2>/dev/null > $ROLLBACK_DIR/frontend.txt || echo "" > $ROLLBACK_DIR/frontend.txt
-            fi
             git rev-parse HEAD > $ROLLBACK_DIR/commit.txt
-            echo "Rollback state saved to $ROLLBACK_DIR"
+            echo "Rollback commit saved: $(cat $ROLLBACK_DIR/commit.txt)"
             
             # Fetch and reset to exact remote state (idempotent)
             git fetch --prune origin
@@ -375,33 +366,22 @@ jobs:
               echo "❌ One or more services failed health check!"
               docker ps -a
               
-              # Auto-rollback using saved image digests
+              # Auto-rollback: reset git and rebuild (docker-compose uses build: not image:)
               echo "🔄 Attempting automatic rollback..."
               cd /var/www/luisfaria || cd ~/luisfaria || exit 1
               
               ROLLBACK_DIR="/var/lib/deploy-rollback"
               PREV_COMMIT=$(cat $ROLLBACK_DIR/commit.txt 2>/dev/null || echo "")
-              BACKEND_DIGEST=$(cat $ROLLBACK_DIR/backend.txt 2>/dev/null || echo "")
-              FRONTEND_DIGEST=$(cat $ROLLBACK_DIR/frontend.txt 2>/dev/null || echo "")
               
               if [ -n "$PREV_COMMIT" ]; then
                 echo "Rolling back to commit: $PREV_COMMIT"
                 git reset --hard $PREV_COMMIT
                 
-                # Pull specific image digests if available
-                if [ -n "$BACKEND_DIGEST" ]; then
-                  echo "Pulling backend: $BACKEND_DIGEST"
-                  docker pull "$BACKEND_DIGEST" || true
-                fi
-                if [ -n "$FRONTEND_DIGEST" ]; then
-                  echo "Pulling frontend: $FRONTEND_DIGEST"
-                  docker pull "$FRONTEND_DIGEST" || true
-                fi
-                
-                docker compose up -d --remove-orphans
+                # Rebuild and restart from rolled-back Dockerfiles
+                docker compose up -d --build --remove-orphans
                 
                 # Verify rollback
-                sleep 5
+                sleep 10
                 ROLLBACK_OK=1
                 for SERVICE in backend_api frontend_app; do
                   if ! docker ps --format '{{.Names}}' | grep -q "$SERVICE"; then
@@ -410,7 +390,7 @@ jobs:
                 done
                 
                 if [ $ROLLBACK_OK -eq 1 ]; then
-                  echo "⚠️ Rollback completed. Services restored to previous version."
+                  echo "⚠️ Rollback completed. Services rebuilt from previous commit."
                 else
                   echo "❌ Rollback failed! Manual intervention required."
                 fi
