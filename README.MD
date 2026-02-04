@@ -191,7 +191,7 @@ npm run test:coverage      # Coverage report
 11. APOD Feature (`feature/apod`) — NASA API integration with caching and analytics
 
 **Work In Progress**
-- CI/CD pipeline improvements
+- CI pipeline improvements
 
 **Planned / Future**
 - Performance monitoring dashboard
