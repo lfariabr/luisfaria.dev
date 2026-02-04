@@ -273,7 +273,6 @@ jobs:
     needs: [docker-build]
     # Only deploy on pushes to main/master (not PRs)
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-    environment: prod
     
     steps:
       - name: Deploy to Server
