@@ -271,7 +271,6 @@ jobs:
     name: Deploy to Production
     runs-on: ubuntu-latest
     needs: [docker-build]
-    # Only deploy on pushes to main/master (not PRs)
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     
     steps:
@@ -286,11 +285,10 @@ jobs:
             
             echo "🚀 Starting deployment..."
             
-            # Navigate to project directory
-            cd /var/www/luisfaria || cd ~/luisfaria || { echo "Project directory not found"; exit 1; }
+            # Navigate to CORRECT directory
+            cd /var/www/portfolio || { echo "❌ Project directory not found"; exit 1; }
             
-            # Save current commit for rollback (persistent storage)
-            # Note: docker-compose uses build: directives, so rollback = git reset + rebuild
+            # Save current commit for rollback
             echo "📦 Saving current commit for rollback..."
             ROLLBACK_DIR="/var/lib/deploy-rollback"
             sudo mkdir -p $ROLLBACK_DIR
@@ -298,31 +296,24 @@ jobs:
             git rev-parse HEAD > $ROLLBACK_DIR/commit.txt
             echo "Rollback commit saved: $(cat $ROLLBACK_DIR/commit.txt)"
             
-            # Fetch and reset to exact remote state (idempotent)
+            # Pull latest code (using your exact manual command)
+            echo "📥 Pulling latest code..."
             git fetch --prune origin
-            if git rev-parse --verify origin/main >/dev/null 2>&1; then
-              DEPLOY_REF="origin/main"
-            else
-              DEPLOY_REF="origin/master"
-            fi
-            echo "Deploying from $DEPLOY_REF"
-            git reset --hard $DEPLOY_REF
-            git clean -fdx -e .env -e node_modules
+            git pull origin master --ff-only
             
-            # Login to GHCR with dedicated read-only token (suppress output to prevent token leakage)
-            if ! printf '%s' "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USER }}" --password-stdin >/dev/null 2>&1; then
-              echo "❌ GHCR login failed"
-              exit 1
-            fi
-            echo "✅ GHCR login successful"
+            # Stop containers
+            echo "⏸️  Stopping containers..."
+            docker compose down
             
-            # Pull new images
-            docker compose pull
+            # Build images (CHANGED: build instead of pull)
+            echo "🔨 Building images..."
+            docker compose build
             
-            # Restart containers (minimal-downtime single-instance redeploy)
+            # Start containers
+            echo "▶️  Starting containers..."
             docker compose up -d --remove-orphans
             
-            # Clean up old images
+            # Clean up
             docker image prune -f
             
             echo "✅ Deployment complete!"
@@ -335,70 +326,90 @@ jobs:
           key: ${{ secrets.DEPLOY_KEY }}
           script: |
             echo "🔍 Checking container health..."
-            docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+            cd /var/www/portfolio
             
             # Wait for containers to stabilize
-            sleep 10
+            sleep 15
             
-            # Validate each required service is running
+            # Check all required services
+            echo "Checking service status..."
+            docker compose ps
+            
             REQUIRED_SERVICES="nginx_gateway frontend_app backend_api mongodb_db redis_cache"
             FAILED=0
             
             for SERVICE in $REQUIRED_SERVICES; do
-              STATUS=$(docker inspect --format='{{.State.Status}}' "$SERVICE" 2>/dev/null || echo "not_found")
-              HEALTH=$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}no_healthcheck{{end}}' "$SERVICE" 2>/dev/null || echo "unknown")
-              
-              if [ "$STATUS" = "running" ]; then
-                if [ "$HEALTH" = "healthy" ] || [ "$HEALTH" = "no_healthcheck" ]; then
-                  echo "✅ $SERVICE is running (health: $HEALTH)"
-                else
-                  echo "⚠️ $SERVICE is running but health: $HEALTH"
-                  FAILED=1
-                fi
+              if docker ps --format '{{.Names}}' | grep -q "$SERVICE"; then
+                echo "✅ $SERVICE is running"
               else
-                echo "❌ $SERVICE status: $STATUS"
+                echo "❌ $SERVICE is NOT running"
                 FAILED=1
               fi
             done
             
+            # Run your actual health checks
+            echo "Running application health checks..."
+            
+            # Frontend check
+            if curl -s https://luisfaria.dev | grep -q "title"; then
+              echo "✅ Frontend health check passed"
+            else
+              echo "❌ Frontend health check failed"
+              FAILED=1
+            fi
+            
+            # Backend check
+            if docker exec nginx_gateway curl -s "http://backend_api:4000/graphql" \
+              -H "Content-Type: application/json" \
+              -d '{"query":"{__schema{types{name}}}"}' | grep -q "data"; then
+              echo "✅ Backend API health check passed"
+            else
+              echo "❌ Backend API health check failed"
+              FAILED=1
+            fi
+            
+            # If any check failed, attempt rollback
             if [ $FAILED -eq 1 ]; then
-              echo "❌ One or more services failed health check!"
-              docker ps -a
-              
-              # Auto-rollback: reset git and rebuild (docker-compose uses build: not image:)
-              echo "🔄 Attempting automatic rollback..."
-              cd /var/www/luisfaria || cd ~/luisfaria || exit 1
+              echo "❌ Health checks failed! Attempting rollback..."
               
               ROLLBACK_DIR="/var/lib/deploy-rollback"
               PREV_COMMIT=$(cat $ROLLBACK_DIR/commit.txt 2>/dev/null || echo "")
               
               if [ -n "$PREV_COMMIT" ]; then
-                echo "Rolling back to commit: $PREV_COMMIT"
+                echo "🔄 Rolling back to commit: $PREV_COMMIT"
                 git reset --hard $PREV_COMMIT
                 
-                # Rebuild and restart from rolled-back Dockerfiles
-                docker compose up -d --build --remove-orphans
+                # Rebuild from previous commit
+                docker compose down
+                docker compose build
+                docker compose up -d --remove-orphans
                 
                 # Verify rollback
-                sleep 10
+                sleep 15
                 ROLLBACK_OK=1
-                for SERVICE in backend_api frontend_app; do
+                for SERVICE in nginx_gateway frontend_app backend_api mongodb_db redis_cache; do
                   if ! docker ps --format '{{.Names}}' | grep -q "$SERVICE"; then
                     ROLLBACK_OK=0
                   fi
                 done
                 
                 if [ $ROLLBACK_OK -eq 1 ]; then
-                  echo "⚠️ Rollback completed. Services rebuilt from previous commit."
+                  echo "⚠️  Rollback completed successfully"
+                  echo "📝 Recent logs:"
+                  docker compose logs --tail=20 api
                 else
                   echo "❌ Rollback failed! Manual intervention required."
                 fi
               else
-                echo "❌ No rollback state found at $ROLLBACK_DIR. Manual intervention required."
+                echo "❌ No rollback state found. Manual intervention required."
               fi
               
               exit 1
             fi
             
-            echo "✅ All services are running!"
-            echo "💾 Rollback state preserved at /var/lib/deploy-rollback for manual recovery if needed."
+            # Show logs for debugging
+            echo "📝 Recent API logs:"
+            docker compose logs --tail=20 api
+            
+            echo "✅ All health checks passed!"
+            echo "💾 Rollback state preserved at /var/lib/deploy-rollback"

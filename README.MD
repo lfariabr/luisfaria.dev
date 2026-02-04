@@ -31,20 +31,20 @@ This repository contains my personal portfolio, built with Next.js, TypeScript, 
 
 | Version | Feature | Milestone
 | --- | --- | ---
-| **v1.1.0** | `feature/portfolio` | Portfolio showcase with project highlights |
-| **v1.2.0** | `feature/articles` | Articles section with categorization |
-| **v1.3.0** | `feature/auth` | Secure login area with JWT authentication |
-| **v1.4.0** | `feature/chatbot` | AI-powered chatbot (rate-limited to 5 questions per hour per user) |
-| **v1.13.0** | `feature/seo` | SEO upgrades (meta, sitemap, robots, social sharing) |
-| **v1.15.0** | `feature/markdown-renderer` | Markdown support for images + code syntax highlighting |
-| **v2.0.0** | `feature/goggins-mode` | Goggins Mode feature (rate-limited to 2 questions per 24h per user) |
-| **v2.0.1** | `feature/atomic-rate-limiting` | Atomic rate limiting with Lua scripts |
-| **v2.0.2** | `feature/home` | V2 home page with improved design |
-| **v2.2.0** | `feature/sec-auth` | Security and authentication improvements with QA regression tests and monitoring |
-| **v2.3.0** | `feature/assistant-ux` | AI assistant UX improvements (guided prompts, clearer rate limits) |
-| **v2.4.0** | `feature/apod` | NASA Astronomy Picture of the Day with caching, rate limiting, and analytics |
-| **v2.5.0** | `refactor/graphql-errors` | Shared GraphQL error handling infrastructure with standardized codes and HTTP status |
-| **v3.0.0** | `feature/resend` | Resend email integration groundwork for Goggins Mode |
+| **v1.1.0** | `feat/portfolio` | Portfolio showcase with project highlights |
+| **v1.2.0** | `feat/articles` | Articles section with categorization |
+| **v1.3.0** | `feat/auth` | Secure login area with JWT authentication |
+| **v1.4.0** | `feat/chatbot` | AI-powered chatbot (rate-limited to 5 questions per hour per user) |
+| **v1.13.0** | `feat/seo` | SEO upgrades (meta, sitemap, robots, social sharing) |
+| **v1.15.0** | `feat/markdown-renderer` | Markdown support for images + code syntax highlighting |
+| **v2.0.0** | `feat/goggins-mode` | Goggins Mode feature (rate-limited to 2 questions per 24h per user) |
+| **v2.0.1** | `feat/atomic-rate-limiting` | Atomic rate limiting with Lua scripts |
+| **v2.0.2** | `feat/home` | V2 home page with improved design |
+| **v2.2.0** | `feat/sec-auth` | Security and authentication improvements with QA regression tests and monitoring |
+| **v2.3.0** | `feat/assistant-ux` | AI assistant UX improvements (guided prompts, clearer rate limits) |
+| **v2.4.0** | `feat/apod` | NASA Astronomy Picture of the Day with caching, rate limiting, and analytics |
+| **v2.5.0** | `feat/graphql-errors` | Shared GraphQL error handling infrastructure with standardized codes and HTTP status |
+| **v3.0.0** | `feat/resend` | Resend email integration groundwork for Goggins Mode |
 
 ---
 
