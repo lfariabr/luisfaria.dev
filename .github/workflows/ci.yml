@@ -285,18 +285,17 @@ jobs:
             
             echo "🚀 Starting deployment..."
             
-            # Navigate to CORRECT directory
+            # Navigate to project directory
             cd /var/www/portfolio || { echo "❌ Project directory not found"; exit 1; }
             
             # Save current commit for rollback
             echo "📦 Saving current commit for rollback..."
             ROLLBACK_DIR="/var/lib/deploy-rollback"
-            sudo mkdir -p $ROLLBACK_DIR
-            sudo chown $(whoami):$(whoami) $ROLLBACK_DIR
+            mkdir -p $ROLLBACK_DIR
             git rev-parse HEAD > $ROLLBACK_DIR/commit.txt
             echo "Rollback commit saved: $(cat $ROLLBACK_DIR/commit.txt)"
             
-            # Pull latest code (using your exact manual command)
+            # Pull latest code
             echo "📥 Pulling latest code..."
             git fetch --prune origin
             git pull origin master --ff-only
@@ -305,7 +304,7 @@ jobs:
             echo "⏸️  Stopping containers..."
             docker compose down
             
-            # Build images (CHANGED: build instead of pull)
+            # Build images
             echo "🔨 Building images..."
             docker compose build
             
@@ -325,16 +324,16 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
           script: |
-            echo "🔍 Checking container health..."
+            echo "🔍 Verifying deployment..."
             cd /var/www/portfolio
             
-            # Wait for containers to stabilize
+            # Wait for services to start
             sleep 15
             
-            # Check all required services
-            echo "Checking service status..."
+            # Show container status
             docker compose ps
             
+            # Check all required services
             REQUIRED_SERVICES="nginx_gateway frontend_app backend_api mongodb_db redis_cache"
             FAILED=0
             
@@ -347,10 +346,8 @@ jobs:
               fi
             done
             
-            # Run your actual health checks
-            echo "Running application health checks..."
-            
-            # Frontend check
+            # Frontend health check
+            echo "Testing frontend..."
             if curl -s https://luisfaria.dev | grep -q "title"; then
               echo "✅ Frontend health check passed"
             else
@@ -358,7 +355,8 @@ jobs:
               FAILED=1
             fi
             
-            # Backend check
+            # Backend health check
+            echo "Testing backend API..."
             if docker exec nginx_gateway curl -s "http://backend_api:4000/graphql" \
               -H "Content-Type: application/json" \
               -d '{"query":"{__schema{types{name}}}"}' | grep -q "data"; then
@@ -368,7 +366,7 @@ jobs:
               FAILED=1
             fi
             
-            # If any check failed, attempt rollback
+            # Handle failures with automatic rollback
             if [ $FAILED -eq 1 ]; then
               echo "❌ Health checks failed! Attempting rollback..."
               
@@ -378,38 +376,22 @@ jobs:
               if [ -n "$PREV_COMMIT" ]; then
                 echo "🔄 Rolling back to commit: $PREV_COMMIT"
                 git reset --hard $PREV_COMMIT
-                
-                # Rebuild from previous commit
                 docker compose down
                 docker compose build
                 docker compose up -d --remove-orphans
                 
-                # Verify rollback
                 sleep 15
-                ROLLBACK_OK=1
-                for SERVICE in nginx_gateway frontend_app backend_api mongodb_db redis_cache; do
-                  if ! docker ps --format '{{.Names}}' | grep -q "$SERVICE"; then
-                    ROLLBACK_OK=0
-                  fi
-                done
-                
-                if [ $ROLLBACK_OK -eq 1 ]; then
-                  echo "⚠️  Rollback completed successfully"
-                  echo "📝 Recent logs:"
-                  docker compose logs --tail=20 api
-                else
-                  echo "❌ Rollback failed! Manual intervention required."
-                fi
+                echo "Verifying rollback..."
+                docker compose ps
               else
-                echo "❌ No rollback state found. Manual intervention required."
+                echo "❌ No rollback state found."
               fi
               
               exit 1
             fi
             
-            # Show logs for debugging
+            # Success! Show logs
             echo "📝 Recent API logs:"
             docker compose logs --tail=20 api
             
             echo "✅ All health checks passed!"
-            echo "💾 Rollback state preserved at /var/lib/deploy-rollback"
