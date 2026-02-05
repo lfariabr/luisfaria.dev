@@ -298,10 +298,10 @@ jobs:
             git rev-parse HEAD > $ROLLBACK_DIR/commit.txt
             echo "Rollback commit saved: $(cat $ROLLBACK_DIR/commit.txt)"
             
-            # Pull latest code
+            # Pull latest code (force sync - server must match remote exactly)
             echo "📥 Pulling latest code..."
             git fetch --prune origin
-            git pull origin master --ff-only
+            git reset --hard origin/master
             
             # Stop containers
             echo "⏸️  Stopping containers..."
