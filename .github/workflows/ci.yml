@@ -288,6 +288,9 @@ jobs:
             # Navigate to project directory
             cd /var/www/portfolio || { echo "❌ Project directory not found"; exit 1; }
             
+            # Fix git safe.directory (required when deploy user != repo owner)
+            git config --global --add safe.directory /var/www/portfolio
+            
             # Save current commit for rollback
             echo "📦 Saving current commit for rollback..."
             ROLLBACK_DIR="/var/lib/deploy-rollback"
@@ -326,6 +329,7 @@ jobs:
           script: |
             echo "🔍 Verifying deployment..."
             cd /var/www/portfolio
+            git config --global --add safe.directory /var/www/portfolio
             
             # Wait for services to start
             sleep 15
