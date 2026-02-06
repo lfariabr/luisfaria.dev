@@ -280,42 +280,36 @@ jobs:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
+          command_timeout: 5m  # ← Reduced from 10m (should finish in ~1 min)
           script: |
             set -e
             
             echo "🚀 Starting deployment..."
+            cd /var/www/portfolio
             
-            # Navigate to project directory
-            cd /var/www/portfolio || { echo "❌ Project directory not found"; exit 1; }
-            
-            # Fix git safe.directory (required when deploy user != repo owner)
-            git config --global --add safe.directory /var/www/portfolio
-            
-            # Save current commit for rollback
-            echo "📦 Saving current commit for rollback..."
+            # Save rollback point
             ROLLBACK_DIR="/var/lib/deploy-rollback"
             mkdir -p $ROLLBACK_DIR
-            git rev-parse HEAD > $ROLLBACK_DIR/commit.txt
-            echo "Rollback commit saved: $(cat $ROLLBACK_DIR/commit.txt)"
+            git rev-parse HEAD > $ROLLBACK_DIR/commit.txt 2>/dev/null || echo "none" > $ROLLBACK_DIR/commit.txt
             
-            # Pull latest code (force sync - server must match remote exactly)
-            echo "📥 Pulling latest code..."
+            # Pull latest docker-compose.yml (only file that matters now)
+            echo "📥 Pulling latest configuration..."
             git fetch --prune origin
             git reset --hard origin/master
             
-            # Stop containers
-            echo "⏸️  Stopping containers..."
-            docker compose down
+            # Login to GHCR (to pull private images)
+            echo "🔐 Logging into GHCR..."
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USER }}" --password-stdin
             
-            # Build images
-            echo "🔨 Building images..."
-            docker compose build
+            # Pull pre-built images (FAST! No building!)
+            echo "📦 Pulling latest images from GHCR..."
+            docker compose pull
             
-            # Start containers
-            echo "▶️  Starting containers..."
+            # Restart with new images
+            echo "🔄 Restarting containers..."
             docker compose up -d --remove-orphans
             
-            # Clean up
+            # Cleanup
             docker image prune -f
             
             echo "✅ Deployment complete!"

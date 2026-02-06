@@ -27,7 +27,7 @@ services:
           memory: 32M
 
   webapp:
-    build: ./frontend
+    image: ghcr.io/lfariabr/luisfaria.dev/frontend:latest # ← CHANGED FROM `build:`
     container_name: frontend_app
     environment:
       - NEXT_PUBLIC_GRAPHQL_URL=https://luisfaria.dev/graphql
@@ -44,7 +44,7 @@ services:
           memory: 256M
 
   api:
-    build: ./backend
+    image: ghcr.io/lfariabr/luisfaria.dev/backend:latest # ← CHANGED FROM `build:`
     container_name: backend_api
     environment:
       - NODE_ENV=production
