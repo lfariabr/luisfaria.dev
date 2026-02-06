@@ -29,7 +29,8 @@ describe('TimelineSection', () => {
       expect(screen.getByText('2018–2023')).toBeInTheDocument();
       expect(screen.getByText('2023–2024')).toBeInTheDocument();
       expect(screen.getByText('2024')).toBeInTheDocument();
-      expect(screen.getByText('2025 →')).toBeInTheDocument();
+      expect(screen.getByText('2025')).toBeInTheDocument();
+      expect(screen.getByText('2026')).toBeInTheDocument();
     });
 
     it('renders key project names', () => {
@@ -94,7 +95,7 @@ describe('TimelineSection', () => {
       renderWithProviders(<TimelineSection />);
       
       const listItems = screen.getAllByRole('listitem');
-      expect(listItems.length).toBe(5); // 5 timeline entries
+      expect(listItems.length).toBe(6); // 5 timeline entries
     });
 
     it('uses semantic heading hierarchy', () => {
