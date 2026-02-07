@@ -376,7 +376,7 @@ jobs:
                 git reset --hard $PREV_COMMIT
                 docker compose down
                 docker compose build
-                docker compose up -d --remove-orphans
+                docker compose up -d --force-recreate --remove-orphans
                 
                 sleep 15
                 echo "Verifying rollback..."
