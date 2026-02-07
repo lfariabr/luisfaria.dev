@@ -2,7 +2,7 @@ import express, { Express } from 'express';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import { ApolloServer, BaseContext } from '@apollo/server';
-import { expressMiddleware, ExpressContextFunctionArgument } from '@apollo/server/express4';
+import { expressMiddleware, ExpressContextFunctionArgument } from '@as-integrations/express4';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { applyMiddleware } from 'graphql-middleware';
 import { typeDefs } from '../schemas/typeDefs';
