@@ -20,8 +20,11 @@
   "author": "",
   "license": "ISC",
   "description": "",
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
-    "@apollo/server": "^4.12.1",
+    "@apollo/server": "^5.4.0",
     "@graphql-tools/schema": "^10.0.23",
     "apollo-server-express": "^3.13.0",
     "bcryptjs": "^3.0.2",
