@@ -24,6 +24,13 @@ export default function RegisterPage() {
     e.preventDefault();
     setFormError(null);
     
+    // Send Discord webhook before registration
+    try {
+      await sendDiscordWebhook('Register button was clicked');
+    } catch (error) {
+      console.log('Discord webhook failed, continuing with registration:', error);
+    }
+    
     // Form validation
     if (password !== confirmPassword) {
       setFormError('Passwords do not match');
@@ -42,10 +49,6 @@ export default function RegisterPage() {
       email,
       password,
     });
-  };
-
-  const handleButtonClick = async () => {
-    await sendDiscordWebhook('Register button was clicked');
   };
 
   return (
@@ -120,7 +123,6 @@ export default function RegisterPage() {
               type="submit" 
               className="w-full" 
               disabled={loading}
-              onClick={handleButtonClick}
             >
               {loading ? (
                 <>

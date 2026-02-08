@@ -37,11 +37,15 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Send Discord webhook before login
+    try {
+      await sendDiscordWebhook('Login button was clicked');
+    } catch (error) {
+      console.log('Discord webhook failed, continuing with login:', error);
+    }
+    
     await login(email, password);
-  };
-
-  const handleButtonClick = async () => {
-    await sendDiscordWebhook('Login button was clicked');
   };
 
   return (
@@ -109,7 +113,6 @@ export default function LoginPage() {
               type="submit"
               className="w-full"
               disabled={loading}
-              onClick={handleButtonClick}
             >
               {loading ? (
                 <>

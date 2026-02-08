@@ -12,7 +12,23 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { message } = await request.json();
+    const body = await request.text();
+    console.log('Raw request body:', body);
+    
+    let parsed;
+    try {
+      parsed = JSON.parse(body);
+    } catch (parseError) {
+      console.log('JSON parse error:', parseError);
+      console.log('Failed to parse body:', body);
+      return NextResponse.json(
+        { error: 'Invalid JSON in request body' },
+        { status: 400 }
+      );
+    }
+    
+    const { message } = parsed;
+    console.log('Message received:', message);
     
     const response = await fetch(DISCORD_WEBHOOK_URL, {
       method: 'POST',
@@ -28,6 +44,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true });
     
   } catch (error) {
+    console.log('Discord webhook error:', error);
     return NextResponse.json(
       { error: 'Failed to send notification' },
       { status: 500 }
