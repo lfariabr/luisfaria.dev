@@ -14,7 +14,7 @@ RUN npm run build
 
 FROM node:20-alpine AS runner
 WORKDIR /app
-ENV NODE_ENV production
+ENV NODE_ENV=production
 # Set the environment variable for runtime as well
 ENV NEXT_PUBLIC_GRAPHQL_URL=https://luisfaria.dev/graphql
 
@@ -25,8 +25,11 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
+# Create cache directory with proper ownership (fixes "permission denied, mkdir '/app/.next/cache'")
+RUN mkdir -p .next/cache && chown -R nextjs:nodejs .next
+
 USER nextjs
 EXPOSE 3000
-ENV PORT 3000
+ENV PORT=3000
 
 CMD ["node", "server.js"]
