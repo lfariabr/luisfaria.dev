@@ -31,6 +31,7 @@ services:
     container_name: frontend_app
     environment:
       - NEXT_PUBLIC_GRAPHQL_URL=https://luisfaria.dev/graphql
+      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
     networks:
       - app-net
     restart: always
