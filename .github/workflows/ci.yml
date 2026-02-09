@@ -393,3 +393,31 @@ jobs:
             docker compose logs --tail=20 api
             
             echo "✅ All health checks passed!"
+
+      - name: Notify Discord - Success
+        if: success()
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          status: success
+          title: "✅ Deploy Successful"
+          description: |
+            **Commit:** `${{ github.sha }}`
+            **Author:** ${{ github.actor }}
+            **Message:** ${{ github.event.head_commit.message }}
+          color: 0x00ff00
+
+      - name: Notify Discord - Failure
+        if: failure()
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          status: failure
+          title: "❌ Deploy Failed"
+          description: |
+            **Commit:** `${{ github.sha }}`
+            **Author:** ${{ github.actor }}
+            **Message:** ${{ github.event.head_commit.message }}
+            
+            Check GitHub Actions for details.
+          color: 0xff0000
