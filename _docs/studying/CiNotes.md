@@ -275,8 +275,16 @@ Comitted changes and finished the battle.
 - Found a problem with frontend logs showing `permission denied, mkdir '/app/.next/cache'` post build
 - Still need to upgrade my VPS to newer OS (think about workflow_dispatch for manual testing)
 
-**UPDATE AT 09/02/2026, 08:09AM:**
-(...)
+**UPDATE AT 09/02/2026, 05:46PM:**
+- Problem 1: Discord Webhook
+Root cause: `DISCORD_WEBHOOK_URL` was never passed to the `webapp` container in `docker-compose.yml`. We fixed this in the last commit.
+
+- Problem 2: Server Action "x" Error
+Root cause: This is a transient Next.js 16 issue during deployment transitions. Next.js uses Server Actions internally for navigation/prefetching. When `--force-recreate` swaps the container, any in-flight request from the old build references a Server Action ID that doesn't exist in the new build.
+
+Looking at logs — the container doesn't crash. The two `"Starting..."` messages are from `--force-recreate` stopping the old container and starting the new one. The error is just a logged warning from a stale request.
+
+**However**, we can make this cleaner by migrating the deprecated `images.domains` config at the same time
 
 ### Issue 6: Environment Management
 - [ ] Branch-based deployments
