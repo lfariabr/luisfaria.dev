@@ -9,6 +9,7 @@ A full-stack TypeScript portfolio application featuring AI-powered tools, techni
 [![CI Pipeline](https://github.com/lfariabr/luisfaria.dev/actions/workflows/ci.yml/badge.svg)](https://github.com/lfariabr/luisfaria.dev/actions/workflows/ci.yml)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-14+-000?logo=next.js&logoColor=white)](https://nextjs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-20+-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![GraphQL](https://img.shields.io/badge/GraphQL-E10098?logo=graphql&logoColor=white)](https://graphql.org/)
 ![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/lfariabr/luisfaria.dev)
 
@@ -43,9 +44,9 @@ Browser ─── Next.js (SSR/CSR) ─── Apollo Client ─── GraphQL AP
 
 ```
 luisfaria/
-├── frontend/           # Next.js 14+, React 19, Apollo Client, TailwindCSS 4, shadcn/ui
-├── backend/            # Express, Apollo Server 5, Mongoose, Redis
 ├── _docs/              # Feature specs, release notes, articles
+├── backend/            # Express, Apollo Server 5, Mongoose, Redis
+├── frontend/           # Next.js 14+, React 19, Apollo Client, TailwindCSS 4, shadcn/ui
 └── docker-compose.yml
 ```
 
