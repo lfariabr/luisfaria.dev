@@ -39,6 +39,7 @@ import { Badge } from "@/components/ui/badge";
 import { useUsers, useUserMutations } from "@/lib/hooks/useUsers";
 import { User, UserRole } from "@/lib/graphql/types/user.types";
 import { formatDistanceToNow, parseISO, isValid } from "date-fns";
+import { logger } from '@/lib/logger';
 
 // Format date safely with fallback
 const formatDateSafe = (dateString: string) => {
@@ -49,7 +50,7 @@ const formatDateSafe = (dateString: string) => {
     }
     return 'recently';
   } catch (error) {
-    console.error('Date formatting error:', error);
+    logger.warn('Date formatting error', { error: String(error) });
     return 'recently';
   }
 };

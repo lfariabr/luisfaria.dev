@@ -12,6 +12,7 @@ import { formatDistanceToNow, parseISO, isValid } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { useState } from "react";
+import { logger } from '@/lib/logger';
 import { Article } from "@/lib/graphql/types/article.types";
 import {
   Table,
@@ -53,7 +54,7 @@ export default function ArticlesAdminPage() {
           description: "The article has been successfully deleted."
         });
       } catch (error) {
-        console.error('Error deleting article:', error);
+        logger.error('Error deleting article', { error: String(error) });
       } finally {
         setActionLoading(null);
       }
@@ -78,7 +79,7 @@ export default function ArticlesAdminPage() {
         });
       }
     } catch (error) {
-      console.error('Error toggling article publish state:', error);
+      logger.error('Error toggling article publish state', { error: String(error) });
     } finally {
       setActionLoading(null);
     }

@@ -1,5 +1,6 @@
 import { useQuery, useMutation } from '@apollo/client';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 import { GET_USERS, GET_USER } from '../graphql/queries/user.queries';
 import { UPDATE_USER_ROLE, DELETE_USER } from '../graphql/mutations/user.mutations';
 import { 
@@ -88,7 +89,7 @@ export const useUserMutations = () => {
       });
       return data?.updateUserRole || null;
     } catch (error) {
-      console.error('Error updating user role:', error);
+      logger.error('User mutation failed', { operation: 'updateRole', error: String(error) });
       return null;
     }
   };
@@ -103,7 +104,7 @@ export const useUserMutations = () => {
       });
       return data?.deleteUser || false;
     } catch (error) {
-      console.error('Error deleting user:', error);
+      logger.error('User mutation failed', { operation: 'delete', error: String(error) });
       return false;
     }
   };

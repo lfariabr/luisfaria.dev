@@ -1,25 +1,20 @@
 import { ApolloClient, InMemoryCache, HttpLink, from, NormalizedCacheObject } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
 import { RetryLink } from '@apollo/client/link/retry';
+import { logger } from '@/lib/logger';
 
 // Create a function to build Apollo Client with proper error handling and retry logic
 export function createApolloClient(): ApolloClient<NormalizedCacheObject> {
   // Error handling link for better debugging
   const errorLink = onError(({ graphQLErrors, networkError }) => {
     if (graphQLErrors) {
-      console.group('GraphQL Errors:');
       graphQLErrors.forEach(({ message, locations, path, extensions }) => {
-        console.error(
-          `[GraphQL error]: Message: ${message}, Location: ${JSON.stringify(
-            locations
-          )}, Path: ${path}, Extensions: ${JSON.stringify(extensions)}`
-        );
+        logger.error('GraphQL error', { message, locations, path, extensions });
       });
-      console.groupEnd();
     }
 
     if (networkError) {
-      console.error(`[Network error]: ${networkError}`);
+      logger.error('Network error', { error: String(networkError) });
     }
   });
 
@@ -35,7 +30,7 @@ export function createApolloClient(): ApolloClient<NormalizedCacheObject> {
       retryIf: (error) => {
         // Only retry on network errors, not auth failures
         const shouldRetry = !!error && error.statusCode !== 401;
-        console.log(`Retry decision for error: ${shouldRetry}`, error);
+        logger.debug('Retry decision', { shouldRetry, error: String(error) });
         return shouldRetry;
       },
     },

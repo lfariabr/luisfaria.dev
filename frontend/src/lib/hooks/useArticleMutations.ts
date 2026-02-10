@@ -1,5 +1,6 @@
 import { useMutation } from '@apollo/client';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 import { CREATE_ARTICLE, DELETE_ARTICLE, PUBLISH_ARTICLE, UNPUBLISH_ARTICLE, UPDATE_ARTICLE } from '../graphql/mutations/article.mutations';
 import { GET_ARTICLES, GET_PUBLISHED_ARTICLES } from '../graphql/queries/article.queries';
 import { Article, ArticleInput, ArticleUpdateInput } from '../graphql/types/article.types';
@@ -74,7 +75,7 @@ export const useArticleMutations = () => {
       });
       return data?.createArticle || null;
     } catch (error) {
-      console.error('Error creating article:', error);
+      logger.error('Article mutation failed', { operation: 'create', error: String(error) });
       return null;
     }
   };
@@ -89,7 +90,7 @@ export const useArticleMutations = () => {
       });
       return data?.updateArticle || null;
     } catch (error) {
-      console.error('Error updating article:', error);
+      logger.error('Article mutation failed', { operation: 'update', error: String(error) });
       return null;
     }
   };
@@ -104,7 +105,7 @@ export const useArticleMutations = () => {
       });
       return data?.publishArticle || null;
     } catch (error) {
-      console.error('Error publishing article:', error);
+      logger.error('Article mutation failed', { operation: 'publish', error: String(error) });
       return null;
     }
   };
@@ -119,7 +120,7 @@ export const useArticleMutations = () => {
       });
       return data?.unpublishArticle || null;
     } catch (error) {
-      console.error('Error unpublishing article:', error);
+      logger.error('Article mutation failed', { operation: 'unpublish', error: String(error) });
       return null;
     }
   };
@@ -134,7 +135,7 @@ export const useArticleMutations = () => {
       });
       return data?.deleteArticle || false;
     } catch (error) {
-      console.error('Error deleting article:', error);
+      logger.error('Article mutation failed', { operation: 'delete', error: String(error) });
       return false;
     }
   };

@@ -25,8 +25,8 @@ export default function AdminProjectsPage() {
         setDeletingId(project.id);
         await deleteProject(project.id);
         toast.success(`Project "${project.title}" deleted successfully`);
-      } catch (error) {
-        console.error('Error deleting project:', error);
+      } catch {
+        // Error logging is handled in the useProjectMutations hook
         toast.error('Failed to delete project');
       } finally {
         setDeletingId(null);

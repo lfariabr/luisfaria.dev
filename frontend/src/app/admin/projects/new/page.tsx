@@ -18,9 +18,8 @@ export default function NewProjectPage() {
       await createProject(projectData);
       router.push('/admin/projects');
       // Success toast is handled in the useProjectMutations hook
-    } catch (error) {
-      // Error toast is handled in the useProjectMutations hook
-      console.error('Error creating project:', error);
+    } catch {
+      // Error logging and toast are handled in the useProjectMutations hook
     } finally {
       setIsSubmitting(false);
     }
