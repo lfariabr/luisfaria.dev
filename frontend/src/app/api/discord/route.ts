@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     try {
       parsed = JSON.parse(body);
     } catch (parseError) {
-      logger.error('JSON parse error', { error: String(parseError), body });
+      logger.error('JSON parse error', { error: String(parseError), bodyPresent: !!body });
       return NextResponse.json(
         { error: 'Invalid JSON in request body' },
         { status: 400 }

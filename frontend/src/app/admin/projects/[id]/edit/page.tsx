@@ -8,7 +8,6 @@ import ProjectForm from '@/components/projects/ProjectForm';
 import { useProject } from '@/lib/hooks/useProjects';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { logger } from '@/lib/logger';
 
 interface EditProjectPageProps {
   params: Promise<{
@@ -32,9 +31,8 @@ export default function EditProjectPage({ params }: EditProjectPageProps) {
       await updateProject(id, projectData);
       router.push('/admin/projects');
       // Success toast is handled in the useProjectMutations hook
-    } catch (error) {
-      // Error toast is handled in the useProjectMutations hook
-      logger.error('Error updating project', { error: String(error) });
+    } catch {
+      // Error logging and toast are handled in the useProjectMutations hook
     } finally {
       setIsSubmitting(false);
     }

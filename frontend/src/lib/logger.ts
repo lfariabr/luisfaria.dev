@@ -38,11 +38,11 @@ function emit(level: LogLevel, message: string, meta?: Record<string, unknown>) 
   if (isProduction) {
     // Structured JSON for log aggregation
     const entry: Record<string, unknown> = {
+      ...meta,
       level,
       message,
       service: SERVICE,
       timestamp: new Date().toISOString(),
-      ...meta,
     };
     // eslint-disable-next-line no-console
     console[method](JSON.stringify(entry));

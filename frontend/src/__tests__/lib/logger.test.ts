@@ -104,6 +104,17 @@ describe('logger', () => {
       expect(parsed.userId).toBe('abc');
       expect(parsed.remaining).toBe(0);
     });
+
+    it('prevents meta from overwriting core fields', () => {
+      const errorSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      logger.error('test', { level: 'debug', service: 'hacked', message: 'spoofed' });
+
+      const parsed = JSON.parse(errorSpy.mock.calls[0][0] as string);
+      expect(parsed.level).toBe('error');
+      expect(parsed.service).toBe('portfolio-web');
+      expect(parsed.message).toBe('test');
+    });
   });
 
   describe('development mode (human-readable)', () => {
