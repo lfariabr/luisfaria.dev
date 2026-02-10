@@ -1,5 +1,3 @@
-# v2.4.0 — *Astronomy Picture of the Day (APOD)* ✅
-
 ### What's New
 
 - **NASA APOD Integration**
@@ -87,3 +85,33 @@ Get your free API key at: https://api.nasa.gov/
 **Deferred (Low Priority)**
 - Database Storage: MongoDB persistence for APODs
 - Agentic Routine: Daily cron job for pre-fetching
+
+## What's Changed
+* fix(slug): auto-generation (Closes #44) by @lfariabr in https://github.com/lfariabr/luisfaria.dev/pull/52
+* feat(chatbot): adds dual-pane workspace by @lfariabr in https://github.com/lfariabr/luisfaria.dev/pull/59
+* feat(chatbot): add RL clarity system (Closes #54) by @lfariabr in https://github.com/lfariabr/luisfaria.dev/pull/60
+* feat(Apod): add Apod component (Relates #61) by @lfariabr in https://github.com/lfariabr/luisfaria.dev/pull/70
+* refactor(tests): centralize all files to single location (Closes #71) by @lfariabr in https://github.com/lfariabr/luisfaria.dev/pull/72
+* feat(apod): complete APOD FAB, dialog, tooltip, tests, and docs (Clos… by @lfariabr in https://github.com/lfariabr/luisfaria.dev/pull/73
+* feat(apod): add NASA API key and config (Closes #65) by @lfariabr in https://github.com/lfariabr/luisfaria.dev/pull/74
+* feat(apod): refactor Fab for light theme sync (Closes #75) by @lfariabr in https://github.com/lfariabr/luisfaria.dev/pull/76
+* Feature/apod service by @lfariabr in https://github.com/lfariabr/luisfaria.dev/pull/77
+* feat(apod): split service into modular layers and barrel export (Clos… by @lfariabr in https://github.com/lfariabr/luisfaria.dev/pull/79
+* Refactor/shared error handling by @lfariabr in https://github.com/lfariabr/luisfaria.dev/pull/81
+* feat(apod): extend schema for non-image media and add apodUrl field (… by @lfariabr in https://github.com/lfariabr/luisfaria.dev/pull/83
+* feat(apod): support Authorization header auth and harden schema valid… by @lfariabr in https://github.com/lfariabr/luisfaria.dev/pull/89
+* feat(apod): add rate limiting and logging to requests (Relates #67) by @lfariabr in https://github.com/lfariabr/luisfaria.dev/pull/90
+* feat(apod): add Redis caching and integration tests (closes #67) by @lfariabr in https://github.com/lfariabr/luisfaria.dev/pull/91
+* feat(apod): add dialog queries + types with backend schema (relates #62) by @lfariabr in https://github.com/lfariabr/luisfaria.dev/pull/92
+* feat(apod): auth date picker (Closes #93) by @lfariabr in https://github.com/lfariabr/luisfaria.dev/pull/94
+* feat(devTo): Add myRoster draft v1 by @lfariabr in https://github.com/lfariabr/luisfaria.dev/pull/95
+* APOD modal: Add scrollable container and Read More toggle for long descriptions by @Copilot in https://github.com/lfariabr/luisfaria.dev/pull/98
+* refactor(apod): rate limit only on cache-miss (Closes #97) by @lfariabr in https://github.com/lfariabr/luisfaria.dev/pull/100
+* feat(apod): rate limit UI for historical browsing (Fixes #63, #97) by @lfariabr in https://github.com/lfariabr/luisfaria.dev/pull/101
+* fix(apod): allow nasa responses without url (Closes  #102) by @lfariabr in https://github.com/lfariabr/luisfaria.dev/pull/103
+* feat(apod): event logging (Closes #64) by @lfariabr in https://github.com/lfariabr/luisfaria.dev/pull/104
+
+## New Contributors
+* @Copilot made their first contribution in https://github.com/lfariabr/luisfaria.dev/pull/98
+
+**Full Changelog**: https://github.com/lfariabr/luisfaria.dev/compare/v2.2.0...v2.4.0
