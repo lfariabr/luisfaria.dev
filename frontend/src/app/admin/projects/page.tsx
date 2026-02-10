@@ -10,6 +10,7 @@ import { Pencil, Trash2, PlusCircle, Loader2, ExternalLink, Github } from 'lucid
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { logger } from '@/lib/logger';
 import Image from 'next/image';
 
 export default function AdminProjectsPage() {
@@ -26,7 +27,7 @@ export default function AdminProjectsPage() {
         await deleteProject(project.id);
         toast.success(`Project "${project.title}" deleted successfully`);
       } catch (error) {
-        console.error('Error deleting project:', error);
+        logger.error('Error deleting project', { error: String(error) });
         toast.error('Failed to delete project');
       } finally {
         setDeletingId(null);

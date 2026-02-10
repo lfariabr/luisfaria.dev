@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, ApolloError } from '@apollo/client';
+import { logger } from '@/lib/logger';
 import { UserRole } from '../graphql/types/user.types';
 import { ME_QUERY } from '../graphql/queries/auth.queries';
 import { LOGIN_MUTATION, REGISTER_MUTATION, LOGOUT_MUTATION } from '../graphql/mutations/auth.mutations';
@@ -162,7 +163,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       await logoutMutation();
     } catch (err) {
       // Even if mutation fails, clear local state
-      console.error('Logout error:', err);
+      logger.error('Logout failed', { error: String(err) });
     } finally {
       setUser(null);
       router.push('/login');

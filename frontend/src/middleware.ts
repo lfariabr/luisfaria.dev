@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { jwtDecode } from 'jwt-decode';
+import { logger } from '@/lib/logger';
 
 interface DecodedToken {
   id: string;
@@ -31,7 +32,7 @@ export function middleware(request: NextRequest) {
       // Check if token is expired
       const currentTime = Math.floor(Date.now() / 1000);
       if (decoded.exp < currentTime) {
-        console.log('Middleware: Token expired');
+        logger.warn('Token expired', { path: request.nextUrl.pathname });
         const loginUrl = new URL('/login', request.url);
         loginUrl.searchParams.set('redirect', request.nextUrl.pathname);
         return NextResponse.redirect(loginUrl);
@@ -43,7 +44,7 @@ export function middleware(request: NextRequest) {
       }
       
     } catch (error) {
-      console.error('Middleware: Token decoding failed', {
+      logger.error('Token decoding failed', {
         error: error instanceof Error ? error.message : 'Unknown error',
         path: request.nextUrl.pathname,
       });

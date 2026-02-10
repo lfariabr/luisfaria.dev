@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { formatDistanceToNow, parseISO, isValid } from "date-fns";
 import { notFound } from "next/navigation";
+import { logger } from '@/lib/logger';
 import { MarkdownMessage } from '@/components/chat/MarkdownMessage';
 
 interface ProjectDetailPageProps {
@@ -35,7 +36,7 @@ const formatDateSafe = (dateString: string) => {
     // If all parsing fails, return a fallback
     return 'recently';
   } catch (error) {
-    console.error('Date formatting error:', error);
+    logger.warn('Date formatting error', { error: String(error) });
     return 'recently';
   }
 };

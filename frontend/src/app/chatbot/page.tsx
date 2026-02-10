@@ -5,6 +5,7 @@ import { MainLayout } from "@/components/layouts/MainLayout";
 import { useAuth } from '@/lib/auth/AuthContext';
 import { gql, useMutation } from '@apollo/client';
 import { sendDiscordWebhook } from '@/utils/discord';
+import { logger } from '@/lib/logger';
 import { InfoRail } from '@/components/chat/InfoRail';
 import { ChatTranscript } from '@/components/chat/ChatTranscript';
 import { ChatSuggestions } from '@/components/chat/ChatSuggestions';
@@ -130,7 +131,7 @@ export default function ChatbotPage() {
       setIsLoading(false);
     },
     onError: (error) => {
-      console.error('Chatbot API error:', error);
+      logger.error('Chatbot API error', { error: String(error) });
       
       let errorMessage = error.message;
       let resetTimeString = '';
@@ -224,7 +225,7 @@ export default function ChatbotPage() {
     pushUsageEvent('Message sent');
 
     void sendDiscordWebhook('Chatbot message submitted').catch((err) => {
-      console.error('sendDiscordWebhook failed:', err);
+      logger.error('sendDiscordWebhook failed', { error: String(err) });
     });
     
     if (isAuthenticated) {
@@ -235,7 +236,7 @@ export default function ChatbotPage() {
         });
       } catch (error) {
         // Error is handled by onError in the mutation setup
-        console.error('Error sending message:', error);
+        logger.error('Error sending message', { error: String(error) });
       }
     } else {
       // Simulate API response delay for non-authenticated users

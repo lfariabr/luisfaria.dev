@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { sendDiscordWebhook } from '@/utils/discord';
+import { logger } from '@/lib/logger';
 
 export default function RegisterPage() {
   const [name, setName] = useState('');
@@ -28,7 +29,7 @@ export default function RegisterPage() {
     try {
       await sendDiscordWebhook('Register button was clicked');
     } catch (error) {
-      console.log('Discord webhook failed, continuing with registration:', error);
+      logger.warn('Discord webhook failed, continuing with registration', { error: String(error) });
     }
     
     // Form validation

@@ -1,4 +1,5 @@
 import { useMutation } from '@apollo/client';
+import { logger } from '@/lib/logger';
 import { CREATE_PROJECT, UPDATE_PROJECT, DELETE_PROJECT } from '../graphql/mutations/project.mutations';
 import { GET_PROJECTS, GET_PROJECT } from '../graphql/queries/project.queries';
 import { Project, ProjectInput, ProjectUpdateInput } from '../graphql/types/project.types';
@@ -46,7 +47,7 @@ export const useProjectMutations = () => {
       });
       return data.createProject;
     } catch (error) {
-      console.error('Error creating project:', error);
+      logger.error('Project mutation failed', { operation: 'create', error: String(error) });
       throw error;
     }
   };
@@ -65,7 +66,7 @@ export const useProjectMutations = () => {
       });
       return data.updateProject;
     } catch (error) {
-      console.error('Error updating project:', error);
+      logger.error('Project mutation failed', { operation: 'update', error: String(error) });
       throw error;
     }
   };
@@ -77,7 +78,7 @@ export const useProjectMutations = () => {
       });
       return data.deleteProject;
     } catch (error) {
-      console.error('Error deleting project:', error);
+      logger.error('Project mutation failed', { operation: 'delete', error: String(error) });
       throw error;
     }
   };

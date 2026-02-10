@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import Link from "next/link";
 import { format, parseISO, isValid } from "date-fns";
 import { notFound } from "next/navigation";
+import { logger } from '@/lib/logger';
 import { MarkdownMessage } from '@/components/chat/MarkdownMessage';
 
 interface ArticleDetailPageProps {
@@ -23,7 +24,7 @@ const formatDateSafe = (dateString: string) => {
     }
     return 'Recently';
   } catch (error) {
-    console.error('Date formatting error:', error);
+    logger.warn('Date formatting error', { error: String(error) });
     return 'Recently';
   }
 };

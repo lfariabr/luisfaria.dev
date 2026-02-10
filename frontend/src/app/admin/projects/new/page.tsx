@@ -6,6 +6,7 @@ import { useProjectMutations } from '@/lib/hooks/useProjectMutations';
 import { ProjectInput } from '@/lib/graphql/types/project.types';
 import ProjectForm from '@/components/projects/ProjectForm';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 
 export default function NewProjectPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -20,7 +21,7 @@ export default function NewProjectPage() {
       // Success toast is handled in the useProjectMutations hook
     } catch (error) {
       // Error toast is handled in the useProjectMutations hook
-      console.error('Error creating project:', error);
+      logger.error('Error creating project', { error: String(error) });
     } finally {
       setIsSubmitting(false);
     }

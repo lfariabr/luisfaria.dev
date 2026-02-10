@@ -20,6 +20,7 @@ import {
   AlertDescription
 } from '@/components/ui/alert';
 import { sendDiscordWebhook } from '@/utils/discord';
+import { logger } from '@/lib/logger';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -42,7 +43,7 @@ export default function LoginPage() {
     try {
       await sendDiscordWebhook('Login button was clicked');
     } catch (error) {
-      console.log('Discord webhook failed, continuing with login:', error);
+      logger.warn('Discord webhook failed, continuing with login', { error: String(error) });
     }
     
     await login(email, password);
