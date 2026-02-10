@@ -15,7 +15,9 @@ function getThreshold(): LogLevel {
     (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_LOG_LEVEL) ||
     '';
   if (env && env in LEVEL_PRIORITY) return env as LogLevel;
-  return process.env.NODE_ENV === 'production' ? 'warn' : 'debug';
+  const isProd =
+    typeof process !== 'undefined' && process.env?.NODE_ENV === 'production';
+  return isProd ? 'warn' : 'debug';
 }
 
 function shouldLog(level: LogLevel): boolean {

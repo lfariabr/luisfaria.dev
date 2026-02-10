@@ -73,6 +73,7 @@ describe('logger', () => {
 
   describe('production mode (structured JSON)', () => {
     beforeEach(() => {
+      // @ts-expect-error - mocking process.env for test
       process.env.NODE_ENV = 'production';
       process.env.NEXT_PUBLIC_LOG_LEVEL = 'debug';
     });
@@ -119,6 +120,7 @@ describe('logger', () => {
 
   describe('development mode (human-readable)', () => {
     beforeEach(() => {
+      // @ts-expect-error - mocking process.env for test
       process.env.NODE_ENV = 'development';
       process.env.NEXT_PUBLIC_LOG_LEVEL = 'debug';
     });
@@ -150,6 +152,7 @@ describe('logger', () => {
 
   describe('default threshold without NEXT_PUBLIC_LOG_LEVEL', () => {
     it('uses debug in development', () => {
+      // @ts-expect-error - mocking process.env for test
       process.env.NODE_ENV = 'development';
       delete process.env.NEXT_PUBLIC_LOG_LEVEL;
 
@@ -159,6 +162,7 @@ describe('logger', () => {
     });
 
     it('uses warn in production', () => {
+      // @ts-expect-error - mocking process.env for test
       process.env.NODE_ENV = 'production';
       delete process.env.NEXT_PUBLIC_LOG_LEVEL;
 
