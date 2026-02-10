@@ -44,6 +44,7 @@ This repository contains my personal portfolio, built with Next.js, TypeScript, 
 | **v2.3.0** | `feat/assistant-ux` | AI assistant UX improvements (guided prompts, clearer rate limits) |
 | **v2.4.0** | `feat/apod` | NASA Astronomy Picture of the Day with caching, rate limiting, and analytics |
 | **v2.5.0** | `feat/graphql-errors` | Shared GraphQL error handling infrastructure with standardized codes and HTTP status |
+| **v2.6.0** | `feat/ci` | CI/CD pipeline with GitHub Actions, Docker, and minimal-downtime deployment |
 | **v3.0.0** | `feat/resend` | Resend email integration groundwork for Goggins Mode |
 
 ---
@@ -189,9 +190,10 @@ npm run test:coverage      # Coverage report
 9. Home page redesign
 10. Security Authentication (`feature/sec-auth`)
 11. APOD Feature (`feature/apod`) — NASA API integration with caching and analytics
+12. CI pipeline improvements (`feature/ci`)
 
 **Work In Progress**
-- CI pipeline improvements
+- TBD
 
 **Planned / Future**
 - Performance monitoring dashboard
