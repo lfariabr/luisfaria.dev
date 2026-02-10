@@ -32,7 +32,8 @@ const CONSOLE_METHOD: Record<LogLevel, 'debug' | 'log' | 'warn' | 'error'> = {
 function emit(level: LogLevel, message: string, meta?: Record<string, unknown>) {
   if (!shouldLog(level)) return;
 
-  const isProduction = process.env.NODE_ENV === 'production';
+  const isProduction =
+    typeof process !== 'undefined' && process.env?.NODE_ENV === 'production';
   const method = CONSOLE_METHOD[level];
 
   if (isProduction) {
