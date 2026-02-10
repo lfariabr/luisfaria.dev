@@ -8,7 +8,8 @@
 
 ---
 
-## The Problem: Manual Deploys Don't Scale
+## ⚠️ The Problem: 
+### Manual Deploys Don't Scale
 
 My portfolio ([luisfaria.dev](https://luisfaria.dev)) runs a full-stack application on a single [DigitalOcean droplet](https://www.digitalocean.com/products/droplets). The stack is real — not a static site, but a living MERN application with authentication, a chatbot, rate limiting, and a GraphQL API.
 
@@ -53,7 +54,8 @@ With automated rollback if anything goes wrong.
 
 ---
 
-## The Architecture: GitHub Actions → GHCR → DigitalOcean
+## 🏛️ The Architecture:
+`GitHub Actions → GHCR → DigitalOcean`
 
 Here's the pipeline I designed:
 
@@ -63,12 +65,13 @@ Here's the pipeline I designed:
 
 ---
 
-## The Journey: 20+ Iterations, 8 Bugs, 1 Working Pipeline
+## 📝 The Journey: 
+`20+ Iterations, 8 Bugs, 1 Working Pipeline`
 
 This didn't work on the first try. Or the fifth. Here's the honest changelog — every failure and its fix.
 
-> [Epic 2.6 - CI/CD Pipeline for DigitalOcean Droplet](https://github.com/lfariabr/luisfaria.dev/issues/107)
-> [All commits to (ci) feature](https://github.com/search?q=repo%3Alfariabr%2Fluisfaria.dev+%28ci%29&type=commits&s=committer-date&o=desc)
+> * [Epic 2.6 - CI/CD Pipeline for DigitalOcean Droplet](https://github.com/lfariabr/luisfaria.dev/issues/107)
+> * [All 20+ commits to (ci) feature](https://github.com/search?q=repo%3Alfariabr%2Fluisfaria.dev+%28ci%29&type=commits&s=committer-date&o=desc)
 
 ### Phase 1: Foundation (Issues 1-3)
 
@@ -103,6 +106,8 @@ jobs:
 ```
 
 For secure server access, I created a dedicated `deploy` user with Docker permissions and ED25519 SSH keys stored in GitHub Secrets. No root access, no passwords — just key-based auth.
+
+---
 
 ### Phase 2: Deployment + Rollback (Issues 4-5)
 
@@ -139,6 +144,8 @@ git reset --hard $PREV_COMMIT
 docker compose up -d --force-recreate --remove-orphans
 ```
 
+---
+
 ### Phase 3: The Hard Part — 8 Bugs in 11 Iterations
 
 This is where things got real. Here's every failure I hit:
@@ -174,7 +181,7 @@ Docker Compose assigns internal IPs to containers. When `--force-recreate` destr
 
 ---
 
-## The Unexpected Hero: TDD
+## 🏆 The Unexpected Hero: TDD
 
 Here's a story I didn't expect to tell: After the pipeline was working, I made a simple change — added "2026" to my portfolio's timeline section. Pushed to master. The CI pipeline kicked in... and **blocked the deploy**.
 
@@ -191,7 +198,7 @@ I fixed the test, pushed again, and the deploy went through automatically. The p
 
 ---
 
-## The Result: Before vs After
+## 📊 Result
 
 | Metric | Before | After |
 |--------|--------|-------|
@@ -210,7 +217,7 @@ I fixed the test, pushed again, and the deploy went through automatically. The p
 
 ---
 
-## Key Takeaways
+## 📌 Key Takeaways
 
 Five lessons from building CI/CD on a budget:
 
@@ -270,10 +277,11 @@ The full CI/CD implementation is open source:
 | Resource | Link |
 |----------|------|
 | **Live Site** | [luisfaria.dev](https://luisfaria.dev) |
+| **Open Source Repo** | https://github.com/lfariabr/luisfaria.dev |
 | **CI Workflow** | [.github/workflows/ci.yml](https://github.com/lfariabr/luisfaria.dev/blob/master/.github/workflows/ci.yml) |
 | **Docker Compose** | [docker-compose.yml](https://github.com/lfariabr/luisfaria.dev/blob/master/docker-compose.yml) |
 | **Epic Tracker** | [Issue #107 — CI/CD Epic](https://github.com/lfariabr/luisfaria.dev/issues/107) |
-| **All CI Commits** | [Commit history](https://github.com/search?q=repo%3Alfariabr%2Fluisfaria.dev+%28ci%29&type=commits&s=committer-date&o=desc) |
+| **All 20+ CI Commits** | [Commit history](https://github.com/search?q=repo%3Alfariabr%2Fluisfaria.dev+%28ci%29&type=commits&s=committer-date&o=desc) |
 
 ---
 
