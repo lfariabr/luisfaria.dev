@@ -1,3 +1,6 @@
+// Sentry must be imported before everything else
+import { Sentry } from './instrument';
+
 import express from 'express';
 import http from 'http';
 import cors from 'cors';
@@ -27,6 +30,9 @@ import { makeExecutableSchema } from '@graphql-tools/schema';
 
 // Shield
 import { permissions } from './validation/shield';
+
+// Routes
+import healthRoutes from './routes/health';
 
 // Utils
 import { logger, requestLogger } from './utils/logger';
@@ -84,6 +90,12 @@ async function startServer() {
                     path: error.path,
                     extensions: error.extensions,
                   });
+                  // Report non-user errors to Sentry
+                  if (error.extensions?.code !== 'UNAUTHENTICATED' &&
+                      error.extensions?.code !== 'FORBIDDEN' &&
+                      error.extensions?.code !== 'BAD_USER_INPUT') {
+                    Sentry.captureException(error);
+                  }
                 });
               },
             };
@@ -121,9 +133,8 @@ async function startServer() {
     app.use(cors(corsOptions));
     app.use(express.json());
     app.use(cookieParser());
-    app.get('/health', (_, res) => {
-      res.status(200).send('OK');
-    });
+    // Health check routes (liveness + deep readiness)
+    app.use(healthRoutes);
     
     app.use('/graphql', 
       express.json(),
@@ -146,6 +157,9 @@ async function startServer() {
       })
     );
     
+    // Sentry error handler must be after all routes/middleware
+    Sentry.setupExpressErrorHandler(app);
+
     await new Promise<void>(resolve => 
       httpServer.listen({ port: config.port }, resolve)
     );

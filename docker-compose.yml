@@ -31,6 +31,7 @@ services:
     container_name: frontend_app
     environment:
       - NEXT_PUBLIC_GRAPHQL_URL=https://luisfaria.dev/graphql
+      - NEXT_PUBLIC_SENTRY_DSN=${NEXT_PUBLIC_SENTRY_DSN}
       - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
     networks:
       - app-net
@@ -59,6 +60,7 @@ services:
       - RATE_LIMIT_ANONYMOUS_REQUESTS=${RATE_LIMIT_ANONYMOUS_REQUESTS}
       - RESEND_API_KEY=${RESEND_API_KEY}
       - NASA_API_KEY=${NASA_API_KEY}
+      - SENTRY_DSN=${SENTRY_DSN}
     ports:
       - "4000:4000"
     depends_on:
