@@ -37,11 +37,13 @@ export default sentryEnabled
   ? withSentryConfig(nextConfig, {
       // Suppress source map upload logs during build
       silent: true,
-      // Upload a larger set of source maps for prettier stack traces
-      widenClientFileUpload: true,
-      // Hide source maps from generated client bundles
-      hideSourceMaps: true,
-      // Tree-shake Sentry logger statements for smaller bundles
-      disableLogger: true,
+      // Delete source maps after uploading to Sentry (keeps them out of client bundles)
+      sourcemaps: {
+        deleteSourcemapsAfterUpload: true,
+      },
+      // Tree-shake Sentry debug statements for smaller bundles
+      bundleSizeOptimizations: {
+        excludeDebugStatements: true,
+      },
     })
   : nextConfig;

@@ -23,6 +23,21 @@ function isTrusted(req: Request): boolean {
 }
 
 // ---------------------------------------------------------------------------
+// Timeout helper — rejects if the promise doesn't resolve within `ms`
+// ---------------------------------------------------------------------------
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
+    promise.then(
+      (val) => { clearTimeout(timer); resolve(val); },
+      (err) => { clearTimeout(timer); reject(err); },
+    );
+  });
+}
+
+const PING_TIMEOUT_MS = 5000;
+
+// ---------------------------------------------------------------------------
 // Shared dependency checks
 // ---------------------------------------------------------------------------
 interface CheckResult {
@@ -43,7 +58,7 @@ async function runChecks(): Promise<{ healthy: boolean; checks: Record<string, C
     if (mongoState === 1) {
       const db = mongoose.connection.db;
       if (db) {
-        await db.admin().ping();
+        await withTimeout(db.admin().ping(), PING_TIMEOUT_MS, 'MongoDB ping');
         checks.mongodb = { status: 'ok', latency: `${Date.now() - start}ms` };
       } else {
         checks.mongodb = { status: 'error', detail: 'db is undefined' };
@@ -63,7 +78,7 @@ async function runChecks(): Promise<{ healthy: boolean; checks: Record<string, C
   try {
     const start = Date.now();
     const redis = getRedisClient();
-    const pong = await redis.ping();
+    const pong = await withTimeout(redis.ping(), PING_TIMEOUT_MS, 'Redis ping');
     if (pong === 'PONG') {
       checks.redis = { status: 'ok', latency: `${Date.now() - start}ms` };
     } else {
