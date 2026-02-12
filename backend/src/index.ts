@@ -130,6 +130,10 @@ async function startServer() {
       credentials: true
     };
     
+    // Trust proxy headers from loopback and private/Docker IPs (Nginx → Express)
+    // This makes req.ip reflect the real client IP from X-Forwarded-For
+    app.set('trust proxy', 'loopback, uniquelocal');
+
     app.use(cors(corsOptions));
     app.use(express.json());
     app.use(cookieParser());
@@ -145,11 +149,8 @@ async function startServer() {
           // Get the user from the token
           const user = getUser(req);
           
-          // Extract client IP for rate limiting (supports proxies)
-          const forwardedFor = req.headers['x-forwarded-for'];
-          const clientIp = forwardedFor
-            ? (Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor.split(',')[0].trim())
-            : req.socket?.remoteAddress || 'unknown';
+          // Extract client IP for rate limiting (trust proxy resolves X-Forwarded-For)
+          const clientIp = req.ip || req.socket?.remoteAddress || 'unknown';
           
           // Add the user, clientIp, and response object to the context
           return { user, clientIp, req, res };

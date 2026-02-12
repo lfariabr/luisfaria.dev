@@ -17,7 +17,8 @@ const TRUSTED_PREFIXES = [
 ];
 
 function isTrusted(req: Request): boolean {
-  const ip = req.socket?.remoteAddress || '';
+  // req.ip honours Express 'trust proxy' — resolves real client IP from X-Forwarded-For
+  const ip = req.ip || req.socket?.remoteAddress || '';
   if (TRUSTED_EXACT.has(ip)) return true;
   return TRUSTED_PREFIXES.some((prefix) => ip.startsWith(prefix));
 }
