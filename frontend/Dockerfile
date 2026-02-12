@@ -8,8 +8,11 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN mkdir -p public
-# Set the environment variable for the build process
-ENV NEXT_PUBLIC_GRAPHQL_URL=https://luisfaria.dev/graphql
+# Set build-time environment variables (NEXT_PUBLIC_* must be present at build time)
+ARG NEXT_PUBLIC_GRAPHQL_URL=https://luisfaria.dev/graphql
+ENV NEXT_PUBLIC_GRAPHQL_URL=${NEXT_PUBLIC_GRAPHQL_URL}
+ARG NEXT_PUBLIC_SENTRY_DSN
+ENV NEXT_PUBLIC_SENTRY_DSN=${NEXT_PUBLIC_SENTRY_DSN}
 RUN npm run build
 
 FROM node:20-alpine AS runner

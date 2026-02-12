@@ -253,6 +253,7 @@ jobs:
           cache-to: type=gha,mode=max
           build-args: |
             NEXT_PUBLIC_GRAPHQL_URL=https://luisfaria.dev/graphql
+            NEXT_PUBLIC_SENTRY_DSN=${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}
 
       - name: Docker Build Success
         run: |
