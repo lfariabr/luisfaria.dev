@@ -94,6 +94,7 @@ luisfaria/
 | v2.4 | APOD | NASA Astronomy Picture of the Day — cached, rate-limited, browsable |
 | v2.5 | Error Infrastructure | Shared GraphQL error handling with standardized codes |
 | v2.6 | CI/CD | GitHub Actions pipeline, Docker, minimal-downtime deployment |
+| v2.7 | Sentry Integration | Error tracking with source maps and release management |
 | ~~v3.0~~ | ~~Resend Integration~~ | ~~Transactional emails~~ |
 
 ---

@@ -365,14 +365,16 @@ jobs:
               FAILED=1
             fi
             
-            # Backend health check
-            echo "Testing backend API..."
-            if docker exec nginx_gateway curl -s "http://backend_api:4000/graphql" \
-              -H "Content-Type: application/json" \
-              -d '{"query":"{__schema{types{name}}}"}' | grep -q "data"; then
-              echo "✅ Backend API health check passed"
+            # Backend deep health check (verifies MongoDB + Redis connectivity)
+            # Uses /health/details (IP-whitelisted, trusted from Docker network)
+            echo "Testing backend API (deep health check)..."
+            HEALTH_RESPONSE=$(docker exec nginx_gateway curl -sf "http://backend_api:4000/health/details" 2>/dev/null || echo "FAIL")
+            if echo "$HEALTH_RESPONSE" | grep -q '"status":"ok"'; then
+              echo "✅ Backend deep health check passed"
+              echo "$HEALTH_RESPONSE" | python3 -m json.tool 2>/dev/null || echo "$HEALTH_RESPONSE"
             else
-              echo "❌ Backend API health check failed"
+              echo "❌ Backend deep health check failed"
+              echo "$HEALTH_RESPONSE"
               FAILED=1
             fi
             

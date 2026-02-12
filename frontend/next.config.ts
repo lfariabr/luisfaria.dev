@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from '@sentry/nextjs';
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -29,4 +30,20 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Wrap with Sentry only if DSN is configured
+const sentryEnabled = !!process.env.NEXT_PUBLIC_SENTRY_DSN;
+
+export default sentryEnabled
+  ? withSentryConfig(nextConfig, {
+      // Suppress source map upload logs during build
+      silent: true,
+      // Delete source maps after uploading to Sentry (keeps them out of client bundles)
+      sourcemaps: {
+        deleteSourcemapsAfterUpload: true,
+      },
+      // Tree-shake Sentry debug statements for smaller bundles
+      bundleSizeOptimizations: {
+        excludeDebugStatements: true,
+      },
+    })
+  : nextConfig;

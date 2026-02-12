@@ -1,3 +1,6 @@
+// Sentry must be imported before everything else
+import { Sentry } from './instrument';
+
 import express from 'express';
 import http from 'http';
 import cors from 'cors';
@@ -27,6 +30,9 @@ import { makeExecutableSchema } from '@graphql-tools/schema';
 
 // Shield
 import { permissions } from './validation/shield';
+
+// Routes
+import healthRoutes from './routes/health';
 
 // Utils
 import { logger, requestLogger } from './utils/logger';
@@ -84,6 +90,12 @@ async function startServer() {
                     path: error.path,
                     extensions: error.extensions,
                   });
+                  // Report non-user errors to Sentry
+                  if (error.extensions?.code !== 'UNAUTHENTICATED' &&
+                      error.extensions?.code !== 'FORBIDDEN' &&
+                      error.extensions?.code !== 'BAD_USER_INPUT') {
+                    Sentry.captureException(error);
+                  }
                 });
               },
             };
@@ -118,12 +130,15 @@ async function startServer() {
       credentials: true
     };
     
+    // Trust proxy headers from loopback and private/Docker IPs (Nginx → Express)
+    // This makes req.ip reflect the real client IP from X-Forwarded-For
+    app.set('trust proxy', 'loopback, uniquelocal');
+
     app.use(cors(corsOptions));
     app.use(express.json());
     app.use(cookieParser());
-    app.get('/health', (_, res) => {
-      res.status(200).send('OK');
-    });
+    // Health check routes (liveness + deep readiness)
+    app.use(healthRoutes);
     
     app.use('/graphql', 
       express.json(),
@@ -134,11 +149,8 @@ async function startServer() {
           // Get the user from the token
           const user = getUser(req);
           
-          // Extract client IP for rate limiting (supports proxies)
-          const forwardedFor = req.headers['x-forwarded-for'];
-          const clientIp = forwardedFor
-            ? (Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor.split(',')[0].trim())
-            : req.socket?.remoteAddress || 'unknown';
+          // Extract client IP for rate limiting (trust proxy resolves X-Forwarded-For)
+          const clientIp = req.ip || req.socket?.remoteAddress || 'unknown';
           
           // Add the user, clientIp, and response object to the context
           return { user, clientIp, req, res };
@@ -146,6 +158,9 @@ async function startServer() {
       })
     );
     
+    // Sentry error handler must be after all routes/middleware
+    Sentry.setupExpressErrorHandler(app);
+
     await new Promise<void>(resolve => 
       httpServer.listen({ port: config.port }, resolve)
     );
