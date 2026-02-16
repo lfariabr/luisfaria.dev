@@ -172,6 +172,8 @@ jobs:
         run: |
           npm ci
           npm run build
+        env:
+          MONGOMS_SYSTEM_BINARY: /usr/bin/mongod
 
       - name: Build Frontend
         working-directory: frontend
