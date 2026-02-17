@@ -7,8 +7,8 @@ if (SENTRY_DSN) {
     dsn: SENTRY_DSN,
     environment: process.env.NODE_ENV,
 
-    // Performance monitoring — sample 10% of page loads in prod
-    tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+    // Performance monitoring
+    tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.2 : 1.0,
 
     // Session replay — capture 1% of sessions, 100% of errored sessions
     replaysSessionSampleRate: 0.01,
@@ -27,5 +27,12 @@ if (SENTRY_DSN) {
       }
       return event;
     },
+    
+    // Debug mode to see what's happening
+    debug: process.env.NODE_ENV === 'development',
   });
+  
+  console.log('✅ Sentry initialized (client-side) with DSN:', SENTRY_DSN.substring(0, 30) + '...');
+} else {
+  console.warn('⚠️  Sentry DSN not set — error tracking disabled (client-side)');
 }

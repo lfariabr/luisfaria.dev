@@ -109,3 +109,4 @@ dist
 server
 
 backend/dump.rdb
+frontend/src/app/test-sentry
