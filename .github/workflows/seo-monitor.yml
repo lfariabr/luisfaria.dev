@@ -1,0 +1,48 @@
+name: SEO Monitor
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'   # Every Monday at 9am UTC
+  workflow_dispatch:        # Allow manual trigger from GitHub Actions tab
+
+env:
+  NODE_VERSION: '20'
+  PASS_THRESHOLD: '80'
+
+jobs:
+  seo-audit:
+    name: SEO Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Run SEO audit (Discord report)
+        working-directory: backend
+        run: npx ts-node scripts/seo-audit.ts --discord
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+      - name: Notify Discord on failure
+        if: failure()
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          status: failure
+          title: "❌ SEO Monitor Failed"
+          description: |
+            The weekly SEO audit workflow itself failed to run (not a score failure).
+            Check GitHub Actions for details.
+          color: 0xff1744
