@@ -7,13 +7,14 @@
   "linkedin": "https://www.linkedin.com/in/lfariabr",
   "github": "https://github.com/lfariabr",
   "devto": "https://dev.to/lfariaus",
-  "summary": "Software Engineer with 10+ years leading technical projects end-to-end across Healthcare, Tech, Agencies, and Games. I break down complex backlogs with cross-functional teams and ship production-grade software in Python and JavaScript. I build systems that automate operations, drive revenue, and delight users.",
-  "current_focus": "Pursuing a Master's in Software Engineering and Artificial Intelligence (Torrens). Building AI-enabled products and automation—full‑stack apps, data pipelines, and chatbots—using Python, TypeScript, GraphQL, and modern DevOps. Open to sponsorship and engineering/TPM leadership roles.",
+  "summary": "Software Engineer with 10+ years leading technical projects end-to-end across Education, Healthcare, Tech, Agencies, and Games. I break down complex backlogs with cross-functional teams and ship production-grade software in Python and JavaScript. I build systems that automate operations, drive revenue, and delight users.",
+  "current_focus": "Data Analyst at St Catherine's School Sydney, building SQL Server pipelines and reporting workflows in a regulated educational environment. Continuing Master's in Software Engineering and AI at Torrens University. Building AI-enabled products and automation—full-stack apps, data pipelines, and chatbots—using Python, TypeScript, GraphQL, and modern DevOps. Open to sponsorship and engineering/TPM leadership roles.",
   "skills": {
     "languages": [
       "Python",
       "JavaScript",
-      "TypeScript"
+      "TypeScript",
+      "T-SQL"
     ],
     "frameworks": [
       "Django",
@@ -31,6 +32,7 @@
       "Docker",
       "NGINX",
       "CI/CD",
+      "GitHub Actions",
       "AWS",
       "DigitalOcean",
       "Railway"
@@ -39,12 +41,15 @@
       "PostgreSQL",
       "Redis",
       "MongoDB",
-      "MySQL"
+      "MySQL",
+      "SQL Server"
     ],
     "data_ml": [
       "Pandas",
       "Scikit-Learn",
-      "Streamlit"
+      "Streamlit",
+      "Matplotlib",
+      "Plotly"
     ],
     "project_methods": [
       "Agile",
@@ -55,7 +60,7 @@
   "projects": [
     {
       "name": "Portfolio (MERN/Next.js)",
-      "description": "Full‑stack portfolio built with Next.js, Node.js, GraphQL, and OpenAI. Features secure auth, dynamic blog/articles, project showcase, and an AI-powered chatbot with rate limiting.",
+      "description": "Full-stack portfolio built with Next.js, Node.js, GraphQL, and OpenAI. Features secure auth, dynamic blog/articles, project showcase, and an AI-powered chatbot with rate limiting.",
       "impact": "Public, open-source; used to demonstrate engineering capabilities and DX."
     },
     {
@@ -85,6 +90,17 @@
     }
   ],
   "experience": [
+    {
+      "title": "Data Analyst",
+      "company": "St Catherine's School Sydney",
+      "location": "Sydney, Australia",
+      "duration": "2026 – Present",
+      "achievements": [
+        "Building SQL Server pipelines and reporting workflows in a regulated educational environment",
+        "Establishing data foundations for analytics and ML initiatives",
+        "Continuing Master's studies in Software Engineering and AI at Torrens University"
+      ]
+    },
     {
       "title": "Software Engineer / Project Lead",
       "company": "Pró-Corpo Estética Avançada",
@@ -148,62 +164,184 @@
   },
   "articles": [
     {
+      "title": "From `git pull` to GitOps: How I Built a Production CI/CD Pipeline on a $12 DigitalOcean Droplet",
+      "platform": "dev.to",
+      "published": "2026-01",
+      "language": "English",
+      "term": "t1_2026",
+      "summary": "Transformed the portfolio's deployment from 15-minute manual SSH deploys with downtime to a fully automated 5-minute CI/CD pipeline using GitHub Actions, GHCR, and Docker Compose. The pipeline runs Jest tests, builds images, pushes to registry, and deploys with automatic rollback on failure.",
+      "tech": ["GitHub Actions", "GHCR", "Docker Compose", "Next.js", "Node.js", "Apollo Server", "Jest", "NGINX"]
+    },
+    {
+      "title": "Learning SQL Server the Hard Way: 16 Days of Real-World Database Work",
+      "platform": "dev.to",
+      "published": "2026-01",
+      "language": "English",
+      "term": "t1_2026",
+      "summary": "Spent 16 days learning SQL Server from zero to interview-ready, building StC DataLab—a school data platform with normalized relational database design, reporting views, stored procedures, and backup/recovery procedures. Simulates enterprise-level data administration.",
+      "tech": ["SQL Server 2022", "T-SQL", "SSMS", "Docker"]
+    },
+    {
+      "title": "From Excel to Interactive Business Insights with Python & Streamlit",
+      "platform": "dev.to",
+      "published": "2026-01",
+      "language": "English",
+      "term": "t1_2026",
+      "summary": "Transformed a multi-year building invoice ledger from a static Excel file into an interactive analytics dashboard using Python and Streamlit. Enables instant filtering, visualization, and CSV export of 4+ years of financial data across buildings, contractors, and services.",
+      "tech": ["Python", "Streamlit", "Pandas", "openpyxl"]
+    },
+    {
+      "title": "myRoster: from copypaste to 2-minute submissions",
+      "platform": "dev.to",
+      "published": "2026-01",
+      "language": "English",
+      "term": "t1_2026",
+      "summary": "Built myRoster, a Streamlit web app that reduces shift availability submission from a 15-20 minute spreadsheet task to a 2-minute process. Features interactive grids, one-click weekly shortcuts, and automated email submission to HR.",
+      "tech": ["Python", "Streamlit", "Pandas", "Gmail SMTP", "Google Cloud Platform"]
+    },
+    {
+      "title": "Security Incident Report: Cryptominer Attack on Next.js Application",
+      "platform": "dev.to",
+      "published": "2025-12",
+      "language": "English",
+      "term": "t3_2025",
+      "summary": "Documented a cryptominer attack on the luisfaria.dev portfolio running on a DigitalOcean Ubuntu droplet. The post-mortem covers RCE vulnerability exploitation, malware analysis, Docker sandboxing benefits, and comprehensive security hardening plans.",
+      "tech": ["Next.js", "Docker", "NGINX", "Ubuntu", "DigitalOcean"]
+    },
+    {
+      "title": "How I Tackled GenAI-Powered Data Analytics (And Unlocked a New Perspective on AI Strategy)",
+      "platform": "dev.to",
+      "published": "2025-11",
+      "language": "English",
+      "term": "t3_2025",
+      "summary": "Completed Tata's GenAI Powered Data Analytics simulation on Forage, covering exploratory data analysis with GenAI, designing a no-code predictive modeling framework, and architecting an ethical AI-driven collections strategy.",
+      "tech": ["Python", "Pandas", "Streamlit", "Claude", "ChatGPT"]
+    },
+    {
+      "title": "Building IRL: From a $50k AWS Horror Story to Human-Centered AI Governance",
+      "platform": "dev.to",
+      "published": "2025-10",
+      "language": "English",
+      "term": "t3_2025",
+      "summary": "Designed the Intelligent Rate Limiting (IRL) System for the Human-Centered Design subject at Torrens University. Provides governance for autonomous AI agents with five HCD pillars: visibility, feedback, fairness, accountability, and sustainability.",
+      "tech": ["Node.js", "TypeScript", "GraphQL", "Apollo Server", "Redis", "Docker"]
+    },
+    {
+      "title": "Building EigenAI: Teaching Math Foundations of AI Through Interactive Code",
+      "platform": "dev.to",
+      "published": "2025-10",
+      "language": "English",
+      "term": "t3_2025",
+      "summary": "Built EigenAI, an interactive Streamlit platform teaching mathematical foundations of AI through live computation and visualizations. Implements three case studies covering linear algebra, calculus, and optimization algorithms.",
+      "tech": ["Python", "Streamlit", "SymPy", "Matplotlib"]
+    },
+    {
+      "title": "Does NPS Really Predict Revenue in Healthcare Clinics? I Spent 12 Weeks Finding Out.",
+      "platform": "dev.to",
+      "published": "2025-09",
+      "language": "English",
+      "term": "t3_2025",
+      "summary": "Conducted a 12-week research project at Torrens University to validate whether NPS predicts revenue in healthcare. Used 27,000+ NPS survey responses and 36 months of financial data to build a Python data pipeline for correlation and regression analysis.",
+      "tech": ["Python", "Pandas", "Scipy", "Scikit-learn", "Streamlit", "Statsmodels"]
+    },
+    {
       "title": "From Groomzilla to Full-Stack Engineer: Building Wedstack",
       "platform": "dev.to",
       "published": "2025-08-17",
-      "language": "English"
+      "language": "English",
+      "term": "t2_2025",
+      "summary": "Built Wedstack, a wedding invitation web app with real-time RSVP, guestbook, gift store with Stripe integration, and multi-language support. Showcases full-stack skills with Next.js frontend, Node.js GraphQL backend, and MongoDB.",
+      "tech": ["Next.js", "TypeScript", "Node.js", "GraphQL", "MongoDB", "Stripe"]
     },
     {
       "title": "Engineering Principles Applied to Daily Life: Concierge Edition",
       "platform": "dev.to",
       "published": "2025-08-08",
-      "language": "English"
+      "language": "English",
+      "term": "t2_2025",
+      "summary": "Identified a confusing spreadsheet system for parcel deliveries at a building and solved it by building a Streamlit web app. Converts apartment numbers into clear delivery instructions, now in daily use.",
+      "tech": ["Streamlit", "Python"]
     },
     {
       "title": "My Database Conundrum: MongoDB vs Supabase for a Pure Python App",
       "platform": "dev.to",
       "published": "2025-07-29",
-      "edited": "2025-07-30",
-      "language": "English"
+      "language": "English",
+      "term": "t2_2025",
+      "summary": "Compares MongoDB and Supabase for a pure Python application, weighing developer experience, scalability, and ecosystem considerations. Explores the trade-offs of document vs relational databases for different project needs.",
+      "tech": ["MongoDB", "Supabase", "PostgreSQL", "Python"]
     },
     {
       "title": "Scaling Fastier: My AWS Solutions Architect Journey with a Virtual Challenge",
       "platform": "dev.to",
       "published": "2025-07-24",
-      "language": "English"
+      "language": "English",
+      "term": "t2_2025",
+      "summary": "Documents the journey through an AWS Solutions Architect simulation, exploring cloud architecture patterns, scalability strategies, and infrastructure design decisions.",
+      "tech": ["AWS", "Cloud Architecture", "Solutions Architect"]
     },
     {
       "title": "How I Tackled the Commonwealth's Bank Software Engineering Challenge",
       "platform": "dev.to",
       "published": "2025-07-14",
-      "language": "English"
+      "language": "English",
+      "term": "t2_2025",
+      "summary": "Completed Forage's CBA Software Engineering challenge involving .NET backend modifications, React/Redux frontend work, and xUnit/TypeScript testing. Covers full-stack modifications including MongoDB configuration and GitHub PR workflows.",
+      "tech": ["C#", ".NET", "React", "Redux", "TypeScript", "MongoDB", "xUnit"]
     },
     {
-      "title": "ClinicTrends AI - Transforming Customer Feedback Into Intelligent Insights",
+      "title": "ClinicTrends AI – Transforming Customer Feedback Into Intelligent Insights",
       "platform": "dev.to",
       "published": "2025-07-03",
-      "edited": "2025-07-05",
-      "language": "English"
+      "language": "English",
+      "term": "t2_2025",
+      "summary": "Built ClinicTrends AI, a machine learning project transforming 27,000+ NPS survey responses into actionable real-time intelligence. Uses multiple ML models for sentiment analysis including TF-IDF, Logistic Regression, and Hugging Face Transformers.",
+      "tech": ["Streamlit", "Python", "Scikit-learn", "Hugging Face", "Pandas", "Plotly"]
     },
     {
-      "title": "How I Created a Daily Follow-Up System to Dominate My Master’s Degree Assignments",
+      "title": "Build a Full-Stack QR Code Generator in MERN with GraphQL & MongoDB",
+      "platform": "dev.to",
+      "published": "2025-06-20",
+      "language": "English",
+      "term": "t2_2025",
+      "summary": "Built a QR code service for the Wedstack wedding website using Node.js, MongoDB, Apollo GraphQL, and Next.js. Generates Base64-encoded QR codes stored in MongoDB, served via GraphQL without external APIs.",
+      "tech": ["Node.js", "Apollo Server", "GraphQL", "MongoDB", "Next.js"]
+    },
+    {
+      "title": "How I Created a Daily Follow-Up System to Dominate My Master's Degree Assignments",
       "platform": "dev.to",
       "published": "2025-06-10",
-      "language": "English"
+      "language": "English",
+      "term": "t2_2025",
+      "summary": "Created a systematic daily follow-up approach for managing Master's degree workload. Shares the productivity system and tools used to stay on top of multiple concurrent academic and professional commitments.",
+      "tech": ["Productivity", "Systems Thinking"]
     },
     {
       "title": "How I Turned a 30-Minute Daily Task into a 5-Minute Automation (Saved 105 Hours a Year!)",
       "platform": "dev.to",
       "published": "2025-06-04",
-      "edited": "2025-06-10",
-      "language": "English"
+      "language": "English",
+      "term": "t2_2025",
+      "summary": "Identified a repetitive 30-minute daily task and automated it down to 5 minutes, saving approximately 105 hours per year. Demonstrates the engineering mindset of finding automation opportunities in everyday workflows.",
+      "tech": ["Python", "Automation"]
     },
     {
       "title": "From Google Sheets to a Scalable SaaS: Building Konquista with Python and Django",
       "platform": "dev.to",
       "published": "2025-05-23",
-      "edited": "2025-06-10",
-      "language": "English"
+      "language": "English",
+      "term": "t2_2025",
+      "summary": "Chronicles the evolution of Konquista from a simple Google Sheets workflow to a scalable WhatsApp CRM SaaS. Covers the Django architecture, Celery/Redis for async processing, GraphQL API, and Docker containerization.",
+      "tech": ["Python", "Django", "Celery", "Redis", "GraphQL", "Docker"]
+    },
+    {
+      "title": "CuraNexus Analytics – Security in Architecture, not Afterthought",
+      "platform": "dev.to",
+      "published": "2025-06",
+      "language": "English",
+      "term": "t2_2025",
+      "summary": "Architected CuraNexus Analytics, a healthcare analytics platform for the Secure by Design subject at Torrens University. Demonstrates embedding CIA Triad, least privilege, and defense-in-depth into early design phases.",
+      "tech": ["Python", "Django", "PostgreSQL", "Auth0", "AWS KMS"]
     }
   ]
 }
