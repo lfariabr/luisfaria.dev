@@ -9,6 +9,11 @@ import type { Project } from '@/lib/graphql/types/project.types';
 
 const BASE_URL = 'https://luisfaria.dev';
 
+function safeDate(value: string): Date {
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? new Date() : d;
+}
+
 const staticRoutes: MetadataRoute.Sitemap = [
   { url: BASE_URL, lastModified: new Date(), changeFrequency: 'daily', priority: 1 },
   { url: `${BASE_URL}/projects`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
@@ -32,14 +37,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     articleRoutes = (articlesData.publishedArticles ?? []).map((article) => ({
       url: `${BASE_URL}/articles/${article.slug}`,
-      lastModified: new Date(article.updatedAt),
+      lastModified: safeDate(article.updatedAt),
       changeFrequency: 'weekly' as const,
       priority: 0.7,
     }));
 
     projectRoutes = (projectsData.projects ?? []).map((project) => ({
       url: `${BASE_URL}/projects/${project.slug}`,
-      lastModified: new Date(project.updatedAt),
+      lastModified: safeDate(project.updatedAt),
       changeFrequency: 'monthly' as const,
       priority: 0.7,
     }));
