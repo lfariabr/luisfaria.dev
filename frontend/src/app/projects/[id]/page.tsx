@@ -1,137 +1,124 @@
-'use client';
+import { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { MainLayout } from '@/components/layouts/MainLayout';
+import { ProjectContent } from '@/components/projects/ProjectContent';
+import { fetchGql } from '@/lib/graphql/fetchGql';
+import { PROJECT_BY_SLUG_QUERY } from '@/lib/graphql/queries/server.queries';
+import type { Project } from '@/lib/graphql/types/project.types';
 
-import React from "react";
-import { MainLayout } from "@/components/layouts/MainLayout";
-import { useProjectBySlug } from "@/lib/hooks/useProjects";
-import { AlertCircle, ArrowLeft, Calendar, Github, Loader2 } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { formatDistanceToNow, parseISO, isValid } from "date-fns";
-import { notFound } from "next/navigation";
-import { logger } from '@/lib/logger';
-import { MarkdownMessage } from '@/components/chat/MarkdownMessage';
+const SITE_URL = 'https://luisfaria.dev';
 
-interface ProjectDetailPageProps {
-  params: Promise<{ id: string }>; // Using [id] as slug for now
+interface Props {
+  params: Promise<{ id: string }>;
 }
 
-// Format date safely with fallback
-const formatDateSafe = (dateString: string) => {
+async function getProject(slug: string): Promise<Project | null> {
   try {
-    // First try to parse the ISO string
-    const date = parseISO(dateString);
-    
-    // Check if the result is a valid date
-    if (isValid(date)) {
-      return `${formatDistanceToNow(date)} ago`;
-    }
-    
-    // If it's not a valid ISO date, try direct Date constructor
-    const fallbackDate = new Date(dateString);
-    if (isValid(fallbackDate)) {
-      return `${formatDistanceToNow(fallbackDate)} ago`;
-    }
-    
-    // If all parsing fails, return a fallback
-    return 'recently';
-  } catch (error) {
-    logger.warn('Date formatting error', { error: String(error) });
-    return 'recently';
+    const data = await fetchGql<{ projectBySlug: Project }>(
+      PROJECT_BY_SLUG_QUERY,
+      { variables: { slug } },
+    );
+    return data.projectBySlug ?? null;
+  } catch {
+    return null;
   }
-};
+}
 
-export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
-  // Properly unwrap params with React.use() for Next.js 15
-  const resolvedParams = React.use(params);
-  const { id } = resolvedParams; // treat id as slug
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const project = await getProject(id);
 
-  const { project, loading, error, notFound: projectNotFound } = useProjectBySlug(id);
-  
-  // If project not found, show 404
-  if (projectNotFound) {
+  if (!project) {
+    return { title: 'Project Not Found' };
+  }
+
+  const description =
+    project.description.slice(0, 160).replace(/[#*_`\n]/g, '') + '...';
+  const ogImage = project.imageUrl || `${SITE_URL}/og-default.png`;
+
+  return {
+    title: `${project.title} | Luis Faria`,
+    description,
+    alternates: { canonical: `${SITE_URL}/projects/${project.slug}` },
+    openGraph: {
+      title: project.title,
+      description,
+      url: `${SITE_URL}/projects/${project.slug}`,
+      siteName: 'Luis Faria',
+      type: 'website',
+      images: [{ url: ogImage, width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: project.title,
+      description,
+      images: [ogImage],
+    },
+  };
+}
+
+export default async function ProjectDetailPage({ params }: Props) {
+  const { id } = await params;
+  const project = await getProject(id);
+
+  if (!project) {
     notFound();
   }
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: project.title,
+    description:
+      project.description.slice(0, 160).replace(/[#*_`\n]/g, ''),
+    image: project.imageUrl || `${SITE_URL}/og-default.png`,
+    url: `${SITE_URL}/projects/${project.slug}`,
+    applicationCategory: 'WebApplication',
+    operatingSystem: 'Any',
+    author: {
+      '@type': 'Person',
+      name: 'Luis Faria',
+      url: SITE_URL,
+    },
+  };
+
+  const breadcrumbLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: SITE_URL,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Projects',
+        item: `${SITE_URL}/projects`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: project.title,
+        item: `${SITE_URL}/projects/${project.slug}`,
+      },
+    ],
+  };
+
   return (
     <MainLayout>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
+      />
       <div className="container py-16 mx-auto px-4">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center min-h-[400px]">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="mt-2 text-muted-foreground">Loading project...</p>
-          </div>
-        ) : error ? (
-          <Alert variant="destructive" className="my-8">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              Error loading project: {error}
-            </AlertDescription>
-          </Alert>
-        ) : project ? (
-          <div className="space-y-8 px-4">
-            <Button variant="outline" size="sm" asChild className="mb-4">
-              <Link href="/projects" className="flex items-center gap-1">
-                <ArrowLeft className="h-4 w-4" />
-                Back to Projects
-              </Link>
-            </Button>
-            
-            <div>
-              <h1 className="text-4xl font-bold tracking-tight">{project.title}</h1>
-              <p className="text-muted-foreground mt-2 flex items-center gap-1">
-                <Calendar className="h-4 w-4" />
-                Last updated {formatDateSafe(project.updatedAt)}
-              </p>
-            </div>
-            
-            {project.imageUrl && (
-              <div className="overflow-hidden rounded-lg border">
-                <img 
-                  src={project.imageUrl} 
-                  alt={project.title} 
-                  className="w-full h-auto object-cover max-h-[400px]"
-                />
-              </div>
-            )}
-            
-            <div className="space-y-4">
-              <h2 className="text-2xl font-semibold">About this project</h2>
-              <div className="prose prose-stone dark:prose-invert space-y-1">
-                <MarkdownMessage content={project.description} />
-              </div>
-            </div>
-            
-            {project.technologies && project.technologies.length > 0 && (
-              <div className="space-y-4">
-                <h2 className="text-2xl font-semibold">Technologies</h2>
-                <div className="flex flex-wrap gap-2">
-                  {project.technologies.map((tech, i) => (
-                    <div key={i} className="bg-secondary text-secondary-foreground px-3 py-1 rounded-full text-sm">
-                      {tech}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {project.githubUrl && (
-              <div className="pt-4">
-                <Button variant="outline" asChild>
-                  <a 
-                    href={project.githubUrl} 
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2"
-                  >
-                    <Github className="h-4 w-4" />
-                    View on GitHub
-                  </a>
-                </Button>
-              </div>
-            )}
-          </div>
-        ) : null}
+        <ProjectContent project={project} />
       </div>
     </MainLayout>
   );

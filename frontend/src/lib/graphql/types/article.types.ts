@@ -9,6 +9,8 @@ export interface Article {
   published: boolean;
   tags?: string[];
   excerpt?: string;
+  publishedAt?: string;
+  categories?: string[];
   createdAt: string;
   updatedAt: string;
 }

@@ -1,113 +1,135 @@
-'use client';
+import { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { MainLayout } from '@/components/layouts/MainLayout';
+import { ArticleContent } from '@/components/articles/ArticleContent';
+import { fetchGql } from '@/lib/graphql/fetchGql';
+import { ARTICLE_BY_SLUG_QUERY } from '@/lib/graphql/queries/server.queries';
+import type { Article } from '@/lib/graphql/types/article.types';
 
-import React from "react";
-import { MainLayout } from "@/components/layouts/MainLayout";
-import { useArticleBySlug } from "@/lib/hooks/useArticles";
-import { AlertCircle, ArrowLeft, Calendar, Loader2 } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import Link from "next/link";
-import { format, parseISO, isValid } from "date-fns";
-import { notFound } from "next/navigation";
-import { logger } from '@/lib/logger';
-import { MarkdownMessage } from '@/components/chat/MarkdownMessage';
+const SITE_URL = 'https://luisfaria.dev';
 
-interface ArticleDetailPageProps {
-  params: Promise<{ id: string }>; // Using [id] as slug for now
+interface Props {
+  params: Promise<{ id: string }>;
 }
 
-// Format date safely with fallback
-const formatDateSafe = (dateString: string) => {
+async function getArticle(slug: string): Promise<Article | null> {
   try {
-    const date = parseISO(dateString);
-    if (isValid(date)) {
-      return format(date, 'MMMM dd, yyyy');
-    }
-    return 'Recently';
-  } catch (error) {
-    logger.warn('Date formatting error', { error: String(error) });
-    return 'Recently';
+    const data = await fetchGql<{ articleBySlug: Article }>(
+      ARTICLE_BY_SLUG_QUERY,
+      { variables: { slug } },
+    );
+    return data.articleBySlug ?? null;
+  } catch {
+    return null;
   }
-};
+}
 
-export default function ArticleDetailPage({ params }: ArticleDetailPageProps) {
-  // Properly unwrap params with React.use() for Next.js 15
-  const resolvedParams = React.use(params);
-  const { id } = resolvedParams; // treat id as slug
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const article = await getArticle(id);
 
-  const { article, loading, error, notFound: articleNotFound } = useArticleBySlug(id);
-  
-  // If article not found, show 404
-  if (articleNotFound) {
+  if (!article) {
+    return { title: 'Article Not Found' };
+  }
+
+  const description =
+    article.excerpt ||
+    article.content.slice(0, 160).replace(/[#*_`\n]/g, '') + '...';
+  const ogImage = article.imageUrl || `${SITE_URL}/og-default.png`;
+
+  return {
+    title: `${article.title} | Luis Faria`,
+    description,
+    alternates: { canonical: `${SITE_URL}/articles/${article.slug}` },
+    openGraph: {
+      title: article.title,
+      description,
+      url: `${SITE_URL}/articles/${article.slug}`,
+      siteName: 'Luis Faria',
+      type: 'article',
+      publishedTime: article.createdAt,
+      modifiedTime: article.updatedAt,
+      tags: article.tags,
+      images: [{ url: ogImage, width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: article.title,
+      description,
+      images: [ogImage],
+    },
+  };
+}
+
+export default async function ArticleDetailPage({ params }: Props) {
+  const { id } = await params;
+  const article = await getArticle(id);
+
+  if (!article) {
     notFound();
   }
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: article.title,
+    description:
+      article.excerpt ||
+      article.content.slice(0, 160).replace(/[#*_`\n]/g, ''),
+    image: article.imageUrl || `${SITE_URL}/og-default.png`,
+    datePublished: article.createdAt,
+    dateModified: article.updatedAt,
+    author: {
+      '@type': 'Person',
+      name: 'Luis Faria',
+      url: SITE_URL,
+    },
+    publisher: {
+      '@type': 'Person',
+      name: 'Luis Faria',
+      url: SITE_URL,
+    },
+    mainEntityOfPage: `${SITE_URL}/articles/${article.slug}`,
+    keywords: article.tags?.join(', '),
+  };
+
+  const breadcrumbLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: SITE_URL,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Articles',
+        item: `${SITE_URL}/articles`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: article.title,
+        item: `${SITE_URL}/articles/${article.slug}`,
+      },
+    ],
+  };
+
   return (
     <MainLayout>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
+      />
       <div className="container py-16 mx-auto px-4">
-        {/* Loading state */}
-        {loading && (
-          <div className="flex justify-center items-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        )}
-
-        {/* Error state */}
-        {error && (
-          <Alert variant="destructive" className="my-8">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              Error loading article: {error}
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Article details */}
-        {!loading && !error && article && (
-          <>
-            <div className="mb-6 px-4">
-              <Link href="/articles" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Articles
-              </Link>
-              
-              <h1 className="text-4xl font-bold tracking-tight mt-2">{article.title}</h1>
-              
-              <div className="flex items-center mt-2 text-sm text-muted-foreground">
-                <Calendar className="h-4 w-4 mr-1" />
-                <span>Published {formatDateSafe(article.createdAt)}</span>
-              </div>
-            </div>
-
-            {/* Article image */}
-            {article.imageUrl && (
-              <div className="relative w-full rounded-lg overflow-hidden mb-8 px-4">
-                <div 
-                  className="aspect-video w-full bg-cover bg-center" 
-                  style={{ backgroundImage: `url(${article.imageUrl})` }}
-                />
-              </div>
-            )}
-
-            {/* Tags */}
-            {article.tags && article.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-6 px-4">
-                {article.tags.map((tag, index) => (
-                  <span 
-                    key={index}
-                    className="bg-secondary text-secondary-foreground px-3 py-1 rounded-full text-sm"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {/* Article content */}
-            <div className="prose dark:prose-invert max-w-none px-4 space-y-1">
-            <MarkdownMessage content={article.content} />
-            </div>
-          </>
-        )}
+        <ArticleContent article={article} />
       </div>
     </MainLayout>
   );

@@ -5,9 +5,39 @@ import { CORE_STACK } from "@/utils/data";
 import { MetricsSection } from "@/components/sections/MetricsSection";
 import { TimelineSection } from "@/components/sections/TimelineSection";
 
+const personLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: 'Luis Faria',
+  jobTitle: 'Senior Software Engineer & Project Lead',
+  url: 'https://luisfaria.dev',
+  sameAs: [
+    'https://github.com/lfariabr',
+    'https://linkedin.com/in/luisfariabr',
+    'https://x.com/luisfariabr',
+  ],
+};
+
+const websiteLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'Luis Faria',
+  url: 'https://luisfaria.dev',
+  description:
+    'Portfolio of Luis Faria — Senior Software Engineer building end-to-end systems that turn manual workflows into scalable products.',
+};
+
 export default function Home() {
   return (
     <MainLayout>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(personLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteLd) }}
+      />
       <div className="flex flex-col items-center justify-center min-h-[80vh] bg-gradient-to-b from-background to-slate-50 dark:from-background dark:to-slate-950">
         {/* Hero Section */}
         <div className="container max-w-4xl px-6 py-16 space-y-12">
