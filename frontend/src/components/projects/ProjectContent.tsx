@@ -2,24 +2,22 @@
 
 import Link from 'next/link';
 import { ArrowLeft, Calendar, Github } from 'lucide-react';
-import { formatDistanceToNow, parseISO, isValid } from 'date-fns';
+import { format, parseISO, isValid } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { MarkdownMessage } from '@/components/chat/MarkdownMessage';
 import type { Project } from '@/lib/graphql/types/project.types';
 
 function formatDateSafe(dateString: string) {
   try {
-    const date = parseISO(dateString);
+    const date = !isNaN(Number(dateString))
+      ? new Date(Number(dateString))
+      : parseISO(dateString);
     if (isValid(date)) {
-      return `${formatDistanceToNow(date)} ago`;
+      return format(date, 'MMMM dd, yyyy');
     }
-    const fallbackDate = new Date(dateString);
-    if (isValid(fallbackDate)) {
-      return `${formatDistanceToNow(fallbackDate)} ago`;
-    }
-    return 'recently';
+    return 'Recently';
   } catch {
-    return 'recently';
+    return 'Recently';
   }
 }
 
@@ -41,7 +39,7 @@ export function ProjectContent({ project }: ProjectContentProps) {
         <h1 className="text-4xl font-bold tracking-tight">{project.title}</h1>
         <p className="text-muted-foreground mt-2 flex items-center gap-1">
           <Calendar className="h-4 w-4" />
-          Last updated {formatDateSafe(project.updatedAt)}
+          Published on {formatDateSafe(project.createdAt)}
         </p>
       </div>
 
