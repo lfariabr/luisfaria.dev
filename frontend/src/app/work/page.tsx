@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { MainLayout } from '@/components/layouts/MainLayout';
 import { useProjects } from '@/lib/hooks/useProjects';
 import { usePublishedArticles } from '@/lib/hooks/useArticles';
@@ -18,27 +18,39 @@ type WorkItem =
   | { type: 'project'; data: Project }
   | { type: 'article'; data: Article };
 
+// Module-level helper — no re-creation on each render
+const toMs = (s: string) => (!isNaN(Number(s)) ? Number(s) : new Date(s).getTime());
+
 export default function WorkPage() {
   const [activeTab, setActiveTab] = useState<Tab>('all');
   const { projects, loading: loadingProjects, error: projectsError } = useProjects();
   const { articles, loading: loadingArticles, error: articlesError } = usePublishedArticles();
 
   const loading = loadingProjects || loadingArticles;
-  const error = projectsError || articlesError;
 
-  const toMs = (s: string) => (!isNaN(Number(s)) ? Number(s) : new Date(s).getTime());
+  const allItems = useMemo<WorkItem[]>(
+    () =>
+      [
+        ...projects.map((p): WorkItem => ({ type: 'project', data: p })),
+        ...articles.map((a): WorkItem => ({ type: 'article', data: a })),
+      ].sort((a, b) => toMs(b.data.createdAt) - toMs(a.data.createdAt)),
+    [projects, articles],
+  );
 
-  const allItems: WorkItem[] = [
-    ...projects.map((p): WorkItem => ({ type: 'project', data: p })),
-    ...articles.map((a): WorkItem => ({ type: 'article', data: a })),
-  ].sort((a, b) => toMs(b.data.createdAt) - toMs(a.data.createdAt));
+  const visibleItems = useMemo(
+    () =>
+      activeTab === 'projects'
+        ? allItems.filter((i) => i.type === 'project')
+        : activeTab === 'articles'
+        ? allItems.filter((i) => i.type === 'article')
+        : allItems,
+    [allItems, activeTab],
+  );
 
-  const visibleItems =
-    activeTab === 'projects'
-      ? allItems.filter((i) => i.type === 'project')
-      : activeTab === 'articles'
-      ? allItems.filter((i) => i.type === 'article')
-      : allItems;
+  const bothEmpty =
+    !loadingProjects && !loadingArticles &&
+    !projectsError && !articlesError &&
+    projects.length === 0 && articles.length === 0;
 
   return (
     <MainLayout>
@@ -93,31 +105,37 @@ export default function WorkPage() {
           </a>
         </div>
 
-        {/* Loading */}
+        {/* Global loading spinner — only while both are still fetching */}
         {loading && (
           <div className="flex justify-center items-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         )}
 
-        {/* Error */}
-        {error && (
-          <Alert variant="destructive" className="my-8">
+        {/* Per-section error banners — each independent */}
+        {projectsError && (
+          <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>Error loading content: {error}</AlertDescription>
+            <AlertDescription>Could not load projects: {projectsError}</AlertDescription>
+          </Alert>
+        )}
+        {articlesError && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>Could not load articles: {articlesError}</AlertDescription>
           </Alert>
         )}
 
-        {/* Empty */}
-        {!loading && !error && visibleItems.length === 0 && (
+        {/* Global empty state — only when both sections have no data */}
+        {bothEmpty && visibleItems.length === 0 && (
           <div className="text-center py-20">
             <h3 className="text-lg font-semibold mb-2">Nothing here yet</h3>
             <p className="text-muted-foreground">Content will appear once it is published.</p>
           </div>
         )}
 
-        {/* Grid */}
-        {!loading && !error && visibleItems.length > 0 && (
+        {/* Grid — renders whatever is available regardless of partial errors */}
+        {!loading && visibleItems.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 px-4">
             {visibleItems.map((item) =>
               item.type === 'project' ? (
@@ -182,9 +200,15 @@ function ProjectCard({ project }: { project: Project }) {
           <div className="flex gap-3">
             {project.githubUrl && (
               <span
+                role="link"
+                tabIndex={0}
                 onClick={(e) => {
                   e.preventDefault();
                   window.open(project.githubUrl, '_blank', 'noopener,noreferrer');
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ')
+                    window.open(project.githubUrl, '_blank', 'noopener,noreferrer');
                 }}
                 className="text-sm font-medium hover:underline z-20 cursor-pointer"
               >

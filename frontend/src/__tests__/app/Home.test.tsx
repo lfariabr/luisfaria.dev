@@ -34,7 +34,7 @@ describe('Home Page', () => {
     const projectsButton = screen.getByRole('link', { name: /view featured work/i });
     const chatbotButton = screen.getByRole('link', { name: /try my ai assistant/i });
     
-    expect(projectsButton).toHaveAttribute('href', '/projects');
+    expect(projectsButton).toHaveAttribute('href', '/work');
     expect(chatbotButton).toHaveAttribute('href', '/chatbot');
   });
 
