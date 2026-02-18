@@ -16,6 +16,7 @@ function safeDate(value: string): Date {
 
 const staticRoutes: MetadataRoute.Sitemap = [
   { url: BASE_URL, lastModified: new Date(), changeFrequency: 'daily', priority: 1 },
+  { url: `${BASE_URL}/work`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.9 },
   { url: `${BASE_URL}/projects`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
   { url: `${BASE_URL}/articles`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
   { url: `${BASE_URL}/chatbot`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },

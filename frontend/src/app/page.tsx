@@ -67,7 +67,7 @@ export default function Home() {
             {/* Primary CTAs */}
             <div className="flex flex-wrap justify-center gap-3">
               <Button asChild className="rounded-full px-6">
-                <Link href="/projects">View featured work</Link>
+                <Link href="/work">View featured work</Link>
               </Button>
               <Button asChild variant="outline" className="rounded-full px-6">
                 <Link href="/chatbot">Try my AI assistant</Link>
