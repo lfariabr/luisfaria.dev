@@ -2,11 +2,9 @@
 
 import { MainLayout } from "@/components/layouts/MainLayout";
 import { useProjects } from "@/lib/hooks/useProjects";
-import { Project } from "@/lib/graphql/types/project.types";
-import { AlertCircle, Loader2, Calendar } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import Link from "next/link";
-import { formatDateSafe } from "@/utils/dateHandler";
+import { ProjectCard } from "@/components/work/ProjectCard";
 
 export default function ProjectsPage() {
   const { projects, loading, error } = useProjects();
@@ -58,90 +56,5 @@ export default function ProjectsPage() {
         )}
       </div>
     </MainLayout>
-  );
-}
-
-export function ProjectCard({ project }: { project: Project }) {
-  return (
-    <Link href={`/projects/${project.slug}`} className="relative block group">
-      <div className="group rounded-lg border overflow-hidden bg-card text-card-foreground shadow hover:shadow-lg transition-all hover:scale-[1.02] h-full">
-        <div className="aspect-video w-full bg-muted relative overflow-hidden">
-          {project.imageUrl ? (
-            <div
-              className="absolute inset-0 bg-cover bg-center"
-              style={{ backgroundImage: `url(${project.imageUrl})` }}
-            />
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-background/80 flex items-center justify-center text-2xl font-bold">
-              {project.title}
-            </div>
-          )}
-        </div>
-
-        <div className="p-5 sm:p-7 flex flex-col h-full relative z-10">
-          <h2 className="text-xl font-semibold mb-2">{project.title}</h2>
-          <p className="text-muted-foreground mb-2 text-sm line-clamp-3">
-            {project.description.length > 150
-              ? `${project.description.substring(0, 150)}...`
-              : project.description}
-          </p>
-
-          {/* Display tags if available */}
-          <div className="mt-4">
-          {/* Tags */}
-          {project.technologies?.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-3">
-              {project.technologies.map((tech, index) => (
-                <span 
-                  key={index}
-                  className="bg-black text-gray-300 font-mono px-3 py-1.5 rounded-md text-xs border border-gray-800 shadow-[0_0_3px_#848884]"
-                >
-                  {tech}
-                </span>
-              ))}
-            </div>
-          )}
-
-          {/* Date */}
-          <div className="flex items-center text-sm text-muted-foreground">
-            <Calendar className="h-4 w-4 mr-1" />
-            <span>Published {formatDateSafe(project.createdAt)}</span>
-          </div>
-        </div>
-
-          <div className="flex gap-3 mb-2">
-            {project.githubUrl && (
-              <span 
-                onClick={(e) => {
-                  e.preventDefault();
-                  window.open(project.githubUrl, '_blank', 'noopener,noreferrer');
-                }}
-                className="text-sm font-medium hover:underline z-20 cursor-pointer"
-              >
-                GitHub
-              </span>
-            )}
-            <span className="text-sm font-medium text-primary hover:underline z-20">
-              View Details
-            </span>
-          </div>
-
-          {project.technologies?.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-auto pt-4 border-t">
-              {project.technologies.map((tech, i) => (
-                <span
-                  key={i}
-                  className="bg-secondary text-secondary-foreground px-2 py-1 rounded-full text-xs"
-                >
-                  {tech}
-                </span>
-              ))}
-            </div>
-          )}
-
-          <span className="absolute inset-0 z-10" aria-hidden="true" />
-        </div>
-      </div>
-    </Link>
   );
 }
