@@ -171,6 +171,7 @@ export function ApodDialog({ open, onOpenChange }: ApodDialogProps) {
     if (!open) {
       setRateLimitInfo(null);
       setSecondsUntilReset(null);
+      setPreviousDate(null);
     }
   }, [open]);
 
