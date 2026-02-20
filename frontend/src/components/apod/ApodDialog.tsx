@@ -59,6 +59,7 @@ export function ApodDialog({ open, onOpenChange }: ApodDialogProps) {
     resetTime: string;
   } | null>(null);
   const [secondsUntilReset, setSecondsUntilReset] = useState<number | null>(null);
+  const [previousDate, setPreviousDate] = useState<string | null>(null);
   
   useEffect(() => {
     if (!isAuthenticated) {
@@ -203,11 +204,19 @@ export function ApodDialog({ open, onOpenChange }: ApodDialogProps) {
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    setPreviousDate(selectedDate);
     setSelectedDate(value || null);
 
     trackClientEvent('apod_date_changed', {
       date: value || null,
     });
+  };
+
+  const handleRestorePreviousDate = () => {
+    setSelectedDate(previousDate);
+    setPreviousDate(null);
+    setRateLimitInfo(null);
+    setSecondsUntilReset(null);
   };
 
   const handleResetToToday = () => {
@@ -350,6 +359,14 @@ export function ApodDialog({ open, onOpenChange }: ApodDialogProps) {
                         <p className="text-xs text-zinc-400 dark:text-white/50">
                           Try again in {formatCountdown(secondsUntilReset ?? 0)}
                         </p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleRestorePreviousDate}
+                          className="gap-2 border-amber-300 dark:border-amber-500/40 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/30"
+                        >
+                          Oops, you&apos;ve hit your limit... view previous image?
+                        </Button>
                       </>
                     ) : (
                       <>
