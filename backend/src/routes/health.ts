@@ -2,6 +2,8 @@ import { Router, Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { getRedisClient } from '../services/redis';
 import os from 'os';
+import { logger } from '../utils/logger';
+import { rateLimiter } from '../services/rateLimiter';
 
 const router = Router();
 
@@ -18,6 +20,7 @@ const TRUSTED_PREFIXES = [
 
 function isTrusted(req: Request): boolean {
   // req.ip honours Express 'trust proxy' — resolves real client IP from X-Forwarded-For
+  // Future: handle IPV4-mapped 192.168.x ranges (if you ran this locally with Docker Desktop and hit /health/details, you'll get 403)
   const ip = req.ip || req.socket?.remoteAddress || '';
   if (TRUSTED_EXACT.has(ip)) return true;
   return TRUSTED_PREFIXES.some((prefix) => ip.startsWith(prefix));
@@ -47,55 +50,52 @@ interface CheckResult {
   detail?: string;
 }
 
+async function checkMongo(): Promise<CheckResult> {
+  const start = Date.now();
+  const mongoState = mongoose.connection.readyState;
+  // 0 = disconnected, 1 = connected, 2 = connecting, 3 = disconnecting
+  if (mongoState !== 1) {
+    throw new Error(`readyState=${mongoState}`);
+  }
+  const db = mongoose.connection.db;
+  if (!db) {
+    throw new Error('db is undefined');
+  }
+  await withTimeout(db.admin().ping(), PING_TIMEOUT_MS, 'MongoDB ping');
+  return { status: 'ok', latency: `${Date.now() - start}ms` };
+}
+
+async function checkRedis(): Promise<CheckResult> {
+  const start = Date.now();
+  const redis = getRedisClient();
+  const pong = await withTimeout(redis.ping(), PING_TIMEOUT_MS, 'Redis ping');
+  if (pong !== 'PONG') {
+    throw new Error(`unexpected response: ${pong}`);
+  }
+  return { status: 'ok', latency: `${Date.now() - start}ms` };
+}
+
 async function runChecks(): Promise<{ healthy: boolean; checks: Record<string, CheckResult> }> {
-  const checks: Record<string, CheckResult> = {};
-  let healthy = true;
+  const [mongoResult, redisResult] = await Promise.allSettled([
+    checkMongo(),
+    checkRedis(),
+  ]);
 
-  // MongoDB check
-  try {
-    const start = Date.now();
-    const mongoState = mongoose.connection.readyState;
-    // 0 = disconnected, 1 = connected, 2 = connecting, 3 = disconnecting
-    if (mongoState === 1) {
-      const db = mongoose.connection.db;
-      if (db) {
-        await withTimeout(db.admin().ping(), PING_TIMEOUT_MS, 'MongoDB ping');
-        checks.mongodb = { status: 'ok', latency: `${Date.now() - start}ms` };
-      } else {
-        checks.mongodb = { status: 'error', detail: 'db is undefined' };
-        healthy = false;
-      }
-    } else {
-      checks.mongodb = { status: 'error', detail: `readyState=${mongoState}` };
-      healthy = false;
-    }
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-    checks.mongodb = { status: 'error', detail: message };
-    healthy = false;
-  }
+  const checks: Record<string, CheckResult> = {
+    mongodb: mongoResult.status === 'fulfilled'
+      ? mongoResult.value
+      : { status: 'error', detail: mongoResult.reason?.message },
+    redis: redisResult.status === 'fulfilled'
+      ? redisResult.value
+      : { status: 'error', detail: redisResult.reason?.message },
+  };
 
-  // Redis check
-  try {
-    const start = Date.now();
-    const redis = getRedisClient();
-    const pong = await withTimeout(redis.ping(), PING_TIMEOUT_MS, 'Redis ping');
-    if (pong === 'PONG') {
-      checks.redis = { status: 'ok', latency: `${Date.now() - start}ms` };
-    } else {
-      checks.redis = { status: 'error', detail: `unexpected response: ${pong}` };
-      healthy = false;
-    }
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-    checks.redis = { status: 'error', detail: message };
-    healthy = false;
-  }
-
+  const healthy = Object.values(checks).every(c => c.status === 'ok');
   return { healthy, checks };
 }
 
 function getSystemInfo() {
+  // Future: this fn is synchronous but lives in an async handler. 
   const totalMem = os.totalmem();
   const freeMem = os.freemem();
   const usedMemPct = Math.round(((totalMem - freeMem) / totalMem) * 100);
@@ -124,13 +124,24 @@ router.get('/health', (_req: Request, res: Response) => {
 // Returns 200 when healthy, 503 when degraded.
 // Pulsetic / uptime monitors should target this endpoint.
 // ---------------------------------------------------------------------------
-router.get('/health/ready', async (_req: Request, res: Response) => {
+router.get('/health/ready', async (req: Request, res: Response) => {
+  const rl = await rateLimiter.limit(`health:ready:${req.ip}`, 30, 60);
+  if (!rl.success) {
+    logger.warn('Health endpoint rate limited', { endpoint: '/health/ready', ip: req.ip });
+    res.status(429).json({ error: 'Too Many Requests', resetTime: rl.resetTime });
+    return;
+  }
+
   const { healthy, checks } = await runChecks();
 
   // Strip latency and detail — expose only coarse status per dependency
   const coarseChecks: Record<string, { status: string }> = {};
   for (const [key, val] of Object.entries(checks)) {
     coarseChecks[key] = { status: val.status };
+  }
+
+  if (!healthy) {
+    logger.warn('Health readiness check degraded', { endpoint: '/health/ready', checks: coarseChecks });
   }
 
   const statusCode = healthy ? 200 : 503;
@@ -153,6 +164,10 @@ router.get('/health/details', async (req: Request, res: Response) => {
 
   const { healthy, checks } = await runChecks();
   const system = getSystemInfo();
+
+  if (!healthy) {
+    logger.warn('Health details check degraded', { endpoint: '/health/details', checks });
+  }
 
   const statusCode = healthy ? 200 : 503;
   res.status(statusCode).json({
