@@ -28,6 +28,8 @@ jobs:
       - name: Install backend dependencies
         working-directory: backend
         run: npm ci
+        env:
+          MONGOMS_DISABLE_POSTINSTALL: '1'
 
       - name: Run SEO audit (Discord report)
         working-directory: backend
