@@ -86,13 +86,7 @@ export function TimelineSection() {
             <p className="mt-1">
               Joined St Catherine's School Sydney as a Data Analyst, building SQL Server pipelines 
               and reporting workflows in a regulated educational environment. Established data 
-              foundations for analytics and ML initiatives while continuing Master's studies.{" "}
-              <Link
-                href="/projects/learning-sql-server-the-hard-way-16-days-of-real-world-database-work"
-                className="font-semibold underline underline-offset-4 hover:text-emerald-500"
-              >
-                Read the preparation story →
-              </Link>
+              foundations for analytics and ML initiatives while continuing Master's studies.
             </p>
           </li>
 
