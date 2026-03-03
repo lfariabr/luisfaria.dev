@@ -54,7 +54,9 @@ export const PROJECTS_QUERY = `
       title
       description
       imageUrl
+      githubUrl
       technologies
+      createdAt
       updatedAt
     }
   }
