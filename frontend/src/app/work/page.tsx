@@ -11,8 +11,6 @@ import type { Article } from '@/lib/graphql/types/article.types';
 import type { Project } from '@/lib/graphql/types/project.types';
 import { sanitizeJsonLd } from '@/lib/seo/metadata';
 
-export const dynamic = 'force-dynamic';
-
 export default async function WorkPage() {
   let projects: Project[] = [];
   let articles: Article[] = [];

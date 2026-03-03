@@ -7,8 +7,6 @@ import { PROJECTS_QUERY } from '@/lib/graphql/queries/server.queries';
 import type { Project } from '@/lib/graphql/types/project.types';
 import { sanitizeJsonLd } from '@/lib/seo/metadata';
 
-export const dynamic = 'force-dynamic';
-
 export default async function ProjectsPage() {
   let projects: Project[] = [];
   let errorMessage: string | null = null;

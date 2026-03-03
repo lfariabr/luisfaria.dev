@@ -9,8 +9,6 @@ import type { Article } from '@/lib/graphql/types/article.types';
 import { sanitizeJsonLd } from '@/lib/seo/metadata';
 import { formatDateSafe } from '@/utils/dateHandler';
 
-export const dynamic = 'force-dynamic';
-
 export default async function ArticlesPage() {
   let articles: Article[] = [];
   let errorMessage: string | null = null;
