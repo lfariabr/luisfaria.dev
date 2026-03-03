@@ -48,8 +48,31 @@ export default async function WorkPage() {
     ...articles.map((article): WorkItem => ({ type: 'article', data: article })),
   ].sort((a, b) => toMs(b.data.createdAt) - toMs(a.data.createdAt));
 
+  const itemListLd = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: 'Work | Luis Faria',
+    url: 'https://luisfaria.dev/work',
+    mainEntity: {
+      '@type': 'ItemList',
+      itemListElement: allItems.map((item, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        url:
+          item.type === 'project'
+            ? `https://luisfaria.dev/projects/${item.data.slug}`
+            : `https://luisfaria.dev/articles/${item.data.slug}`,
+        name: item.data.title,
+      })),
+    },
+  };
+
   return (
     <MainLayout>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListLd) }}
+      />
       <div className="container py-12 max-w-6xl">
         <div className="space-y-2 mb-8 px-4">
           <h1 className="text-3xl font-bold tracking-tight">Work</h1>

@@ -19,8 +19,28 @@ export default async function ArticlesPage() {
     errorMessage = error instanceof Error ? error.message : 'Unknown error';
   }
 
+  const itemListLd = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: 'Articles | Luis Faria',
+    url: 'https://luisfaria.dev/articles',
+    mainEntity: {
+      '@type': 'ItemList',
+      itemListElement: articles.map((article, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        url: `https://luisfaria.dev/articles/${article.slug}`,
+        name: article.title,
+      })),
+    },
+  };
+
   return (
     <MainLayout>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListLd) }}
+      />
       <div className="container py-12 max-w-6xl">
         <div className="space-y-2 mb-10 px-4">
           <h1 className="text-3xl font-bold tracking-tight">Articles</h1>

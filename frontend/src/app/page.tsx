@@ -27,6 +27,19 @@ const websiteLd = {
     'Portfolio of Luis Faria — Senior Software Engineer building end-to-end systems that turn manual workflows into scalable products.',
 };
 
+const organizationLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'Luis Faria',
+  url: 'https://luisfaria.dev',
+  logo: 'https://luisfaria.dev/og-default.png',
+  sameAs: [
+    'https://github.com/lfariabr',
+    'https://linkedin.com/in/luisfariabr',
+    'https://x.com/luisfariabr',
+  ],
+};
+
 export default function Home() {
   return (
     <MainLayout>
@@ -37,6 +50,10 @@ export default function Home() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationLd) }}
       />
       <div className="flex flex-col items-center justify-center min-h-[80vh] bg-gradient-to-b from-background to-slate-50 dark:from-background dark:to-slate-950">
         {/* Hero Section */}
