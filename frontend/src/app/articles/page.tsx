@@ -7,6 +7,8 @@ import { PUBLISHED_ARTICLES_QUERY } from '@/lib/graphql/queries/server.queries';
 import type { Article } from '@/lib/graphql/types/article.types';
 import { sanitizeJsonLd } from '@/lib/seo/metadata';
 
+export const dynamic = 'force-dynamic';
+
 export default async function ArticlesPage() {
   let articles: Article[] = [];
   let errorMessage: string | null = null;

@@ -13,6 +13,8 @@ import type { Project } from '@/lib/graphql/types/project.types';
 import type { Article } from '@/lib/graphql/types/article.types';
 import { sanitizeJsonLd } from '@/lib/seo/metadata';
 
+export const dynamic = 'force-dynamic';
+
 type WorkItem =
   | { type: 'project'; data: Project }
   | { type: 'article'; data: Article };
