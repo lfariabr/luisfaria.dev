@@ -1,22 +1,30 @@
 # LinkedIn Post — Observability on a Portfolio Site
 
-The email from @Sentry landed on a Sunday morning.
+Sentry pinged me on a Sunday morning.
 
-23 errors. 1,721 transactions. Stack traces, breadcrumbs, session replays on my side project - my own portfolio site.
+23 errors. 1,721 transactions. Stack traces, breadcrumbs, and session replays on my side project: my own portfolio site.
 
-I read it twice, not because something was on fire, but because there were real numbers. A true view into what's happening after the code ships.
+I read it twice, not because production was burning, but because I had signal. Real numbers. A clear view of what happened after shipping.
 
-Before: errors were abstract. I knew they might exist.
-After: 17 backend errors with call stacks. 6 frontend errors with session replays. 1.4k frontend transactions. I knew exactly what happened, when, and what the user was doing.
+Before: errors were abstract.
+After: 17 backend errors with call stacks, 6 frontend errors with replays, and 1.4k frontend transactions tied to actual user flows.
 
-That's the difference between guessing and knowing.
+To get here I layered observability in 4 parts:
+1) health endpoints + uptime checks (Pulsetic),
+2) Sentry on Express (backend),
+3) Sentry on Next.js (frontend),
+4) a cron-based server monitor that posts CPU/memory/disk alerts to Discord with cooldowns.
 
-To get here I built 4 layers: health endpoints for Pulsetic to ping (so I'd know if MongoDB went down, not just if the site went dark), Sentry on both the Express backend and Next.js frontend, and a cron script that watches CPU, memory, and disk and fires a Discord alert with a 30-minute cooldown so I'm not muted before breakfast.
+Recent example: during an SEO rollout, observability surfaced two important regressions fast:
+- server/client boundary violation in a card component after moving pages to SSR,
+- GraphQL endpoint mismatch causing build/runtime fetch failures.
 
-The whole stack costs $0.
+Because errors were instrumented, fixes were straightforward and verifiable instead of guesswork.
 
-Moments like this remind me why building in public matters. You ship something, instrument it properly, and suddenly the code starts talking back. We stop guessing and start knowing.
+The full stack costs $0.
 
-Full article on the comments.
+This is why I build in public: instrument first, ship, listen, iterate.
+
+Full walk-through in the comments.
 
 #observability #sentry #webdev #pulsetic #buildinpublic

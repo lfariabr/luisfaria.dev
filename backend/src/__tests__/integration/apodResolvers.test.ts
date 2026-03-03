@@ -90,7 +90,7 @@ describe('APOD Resolvers Integration Tests', () => {
     jest.clearAllMocks();
     // Clear rate limit keys before each test
     const redisClient = getRedisClient();
-    const keys = await redisClient.keys('apod:*');
+    const keys = await redisClient.keys('rate-limit:apod:*');
     if (keys.length > 0) {
       await redisClient.del(keys);
     }

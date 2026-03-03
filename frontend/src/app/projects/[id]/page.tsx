@@ -5,6 +5,7 @@ import { ProjectContent } from '@/components/projects/ProjectContent';
 import { fetchGql } from '@/lib/graphql/fetchGql';
 import { PROJECT_BY_SLUG_QUERY } from '@/lib/graphql/queries/server.queries';
 import type { Project } from '@/lib/graphql/types/project.types';
+import { buildDescription, resolveOgImage, sanitizeJsonLd } from '@/lib/seo/metadata';
 
 const SITE_URL = 'https://luisfaria.dev';
 
@@ -32,9 +33,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: 'Project Not Found' };
   }
 
-  const description =
-    project.description.slice(0, 160).replace(/[#*_`\n]/g, '') + '...';
-  const ogImage = project.imageUrl || `${SITE_URL}/og-default.png`;
+  const description = buildDescription(undefined, project.description, 160);
+  const ogImage = resolveOgImage(project.imageUrl);
 
   return {
     title: `${project.title} | Luis Faria`,
@@ -70,8 +70,8 @@ export default async function ProjectDetailPage({ params }: Props) {
     '@type': 'SoftwareApplication',
     name: project.title,
     description:
-      project.description.slice(0, 160).replace(/[#*_`\n]/g, ''),
-    image: project.imageUrl || `${SITE_URL}/og-default.png`,
+      buildDescription(undefined, project.description, 160),
+    image: resolveOgImage(project.imageUrl),
     url: `${SITE_URL}/projects/${project.slug}`,
     applicationCategory: 'WebApplication',
     operatingSystem: 'Any',
@@ -111,11 +111,11 @@ export default async function ProjectDetailPage({ params }: Props) {
     <MainLayout>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: sanitizeJsonLd(jsonLd) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
+        dangerouslySetInnerHTML={{ __html: sanitizeJsonLd(breadcrumbLd) }}
       />
       <div className="container py-16 mx-auto px-4">
         <ProjectContent project={project} />

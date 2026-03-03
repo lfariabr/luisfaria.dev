@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowLeft, Calendar } from 'lucide-react';
 import { format, parseISO, isValid } from 'date-fns';
 import { MarkdownMessage } from '@/components/chat/MarkdownMessage';
@@ -48,10 +49,15 @@ export function ArticleContent({ article }: ArticleContentProps) {
 
       {article.imageUrl && (
         <div className="relative w-full rounded-lg overflow-hidden mb-8 px-4">
-          <div
-            className="aspect-video w-full bg-cover bg-center"
-            style={{ backgroundImage: `url(${article.imageUrl})` }}
-          />
+          <div className="relative aspect-video w-full">
+            <Image
+              src={article.imageUrl}
+              alt={`${article.title} cover image`}
+              fill
+              className="object-cover"
+              sizes="100vw"
+            />
+          </div>
         </div>
       )}
 

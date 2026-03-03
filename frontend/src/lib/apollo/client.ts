@@ -3,10 +3,19 @@ import { onError } from '@apollo/client/link/error';
 import { RetryLink } from '@apollo/client/link/retry';
 import { logger } from '@/lib/logger';
 
+function toErrorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  try {
+    return JSON.stringify(err);
+  } catch {
+    return String(err);
+  }
+}
+
 // Create a function to build Apollo Client with proper error handling and retry logic
 export function createApolloClient(): ApolloClient<NormalizedCacheObject> {
   // Error handling link for better debugging
-  const errorLink = onError(({ graphQLErrors, networkError }) => {
+  const errorLink = onError(({ graphQLErrors, networkError, operation }) => {
     if (graphQLErrors) {
       graphQLErrors.forEach(({ message, locations, path, extensions }) => {
         logger.error('GraphQL error', { message, locations, path, extensions });
@@ -14,7 +23,18 @@ export function createApolloClient(): ApolloClient<NormalizedCacheObject> {
     }
 
     if (networkError) {
-      logger.error('Network error', { error: String(networkError) });
+      const operationName = operation?.operationName || 'unknown';
+      const meta = {
+        operation: operationName,
+        error: toErrorMessage(networkError),
+      };
+
+      // 'Me' runs on app bootstrap and can fail locally when backend isn't up.
+      if (operationName === 'Me') {
+        logger.debug('Network error during auth bootstrap', meta);
+      } else {
+        logger.warn('Network error', meta);
+      }
     }
   });
 

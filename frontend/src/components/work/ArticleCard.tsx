@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Calendar } from 'lucide-react';
 import { Article } from '@/lib/graphql/types/article.types';
 import { formatDateSafe } from '@/utils/dateHandler';
@@ -10,10 +11,13 @@ export function ArticleCard({ article }: { article: Article }) {
     <Link href={`/articles/${article.slug}`} className="relative block group">
       <div className="rounded-lg border overflow-hidden bg-card text-card-foreground shadow hover:shadow-lg transition-all hover:scale-[1.02] h-full">
         {article.imageUrl && (
-          <div className="aspect-video w-full bg-muted overflow-hidden">
-            <div
-              className="w-full h-full bg-cover bg-center"
-              style={{ backgroundImage: `url(${article.imageUrl})` }}
+          <div className="aspect-video w-full bg-muted overflow-hidden relative">
+            <Image
+              src={article.imageUrl}
+              alt={`${article.title} cover image`}
+              fill
+              className="object-cover"
+              sizes="(min-width: 768px) 50vw, 100vw"
             />
           </div>
         )}

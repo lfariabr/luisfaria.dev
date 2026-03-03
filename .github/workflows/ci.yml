@@ -187,12 +187,43 @@ jobs:
         run: echo "✅ All builds completed successfully!"
 
   # ============================================
+  # SEO Audit Gate
+  # ============================================
+  seo-audit:
+    name: SEO Audit Gate
+    runs-on: ubuntu-latest
+    needs: [build-check]
+    if: github.event_name == 'push'
+    timeout-minutes: 12
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+        env:
+          MONGOMS_DISABLE_POSTINSTALL: '1'
+
+      - name: Run SEO audit
+        working-directory: backend
+        run: npx ts-node scripts/seo-audit.ts
+
+  # ============================================
   # Docker Image Build & Push to GHCR
   # ============================================
   docker-build:
     name: Build & Push Docker Images
     runs-on: ubuntu-latest
-    needs: [backend-test, frontend-test]
+    needs: [backend-test, frontend-test, seo-audit]
     # Only build images on pushes to main/master (not PRs)
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     

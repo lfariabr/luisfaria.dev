@@ -20,6 +20,20 @@ const SITEMAP_URL = `${SITE_URL}/sitemap.xml`;
 const DOCS_ROOT = path.resolve(__dirname, '../../_docs/devTo');
 const PASS_THRESHOLD = 0.8; // 80% pass rate required
 const CONCURRENCY = 5;
+const RESTRICTED_URLS = [
+  `${SITE_URL}/login`,
+  `${SITE_URL}/register`,
+  `${SITE_URL}/admin`,
+];
+const KEY_INTERNAL_LINKS = [
+  `${SITE_URL}/`,
+  `${SITE_URL}/work`,
+  `${SITE_URL}/projects`,
+  `${SITE_URL}/articles`,
+  `${SITE_URL}/chatbot`,
+  `${SITE_URL}/privacy`,
+  `${SITE_URL}/terms`,
+];
 
 const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL ?? '';
 const USE_DISCORD = process.argv.includes('--discord');
@@ -34,8 +48,25 @@ interface PageResult {
     ogTitle: boolean;
     ogImage: boolean;
     jsonLd: boolean;
+    canonical: boolean;
   };
   passing: boolean;
+  error?: string;
+}
+
+interface RestrictedPageResult {
+  url: string;
+  checks: {
+    noindex: boolean;
+    nofollow: boolean;
+  };
+  passing: boolean;
+  error?: string;
+}
+
+interface LinkResult {
+  url: string;
+  reachable: boolean;
   error?: string;
 }
 
@@ -61,6 +92,18 @@ interface AuditReport {
   };
   markdownAudit: {
     results: MarkdownResult[];
+    passed: number;
+    total: number;
+    score: number;
+  };
+  restrictionAudit: {
+    results: RestrictedPageResult[];
+    passed: number;
+    total: number;
+    score: number;
+  };
+  internalLinkAudit: {
+    results: LinkResult[];
     passed: number;
     total: number;
     score: number;
@@ -116,6 +159,29 @@ function checkJsonLd(html: string): boolean {
   return /<script\s[^>]*type=["']application\/ld\+json["']/i.test(html);
 }
 
+function checkCanonical(html: string, expectedUrl: string): boolean {
+  const canonicalMatch = html.match(
+    /<link\s[^>]*rel=["']canonical["'][^>]*href=["']([^"']+)["'][^>]*>/i,
+  ) || html.match(
+    /<link\s[^>]*href=["']([^"']+)["'][^>]*rel=["']canonical["'][^>]*>/i,
+  );
+
+  if (!canonicalMatch?.[1]) return false;
+  const canonical = canonicalMatch[1].replace(/\/$/, '');
+  const expected = expectedUrl.replace(/\/$/, '');
+  return canonical === expected;
+}
+
+function checkNoIndex(html: string): boolean {
+  return /<meta\s[^>]*name=["']robots["'][^>]*content=["'][^"']*noindex[^"']*["']/i.test(html) ||
+    /<meta\s[^>]*content=["'][^"']*noindex[^"']*["'][^>]*name=["']robots["']/i.test(html);
+}
+
+function checkNoFollow(html: string): boolean {
+  return /<meta\s[^>]*name=["']robots["'][^>]*content=["'][^"']*nofollow[^"']*["']/i.test(html) ||
+    /<meta\s[^>]*content=["'][^"']*nofollow[^"']*["'][^>]*name=["']robots["']/i.test(html);
+}
+
 async function auditPage(url: string): Promise<PageResult> {
   try {
     const res = await fetch(url, {
@@ -126,7 +192,14 @@ async function auditPage(url: string): Promise<PageResult> {
     if (!res.ok) {
       return {
         url,
-        checks: { title: false, description: false, ogTitle: false, ogImage: false, jsonLd: false },
+        checks: {
+          title: false,
+          description: false,
+          ogTitle: false,
+          ogImage: false,
+          jsonLd: false,
+          canonical: false,
+        },
         passing: false,
         error: `HTTP ${res.status}`,
       };
@@ -139,21 +212,87 @@ async function auditPage(url: string): Promise<PageResult> {
       ogTitle: checkOgTitle(html),
       ogImage: checkOgImage(html),
       jsonLd: checkJsonLd(html),
+      canonical: checkCanonical(html, url),
     };
     const passing = Object.values(checks).every(Boolean);
     return { url, checks, passing };
   } catch (err) {
     return {
       url,
-      checks: { title: false, description: false, ogTitle: false, ogImage: false, jsonLd: false },
+      checks: {
+        title: false,
+        description: false,
+        ogTitle: false,
+        ogImage: false,
+        jsonLd: false,
+        canonical: false,
+      },
       passing: false,
       error: err instanceof Error ? err.message : String(err),
     };
   }
 }
 
-async function runBatched<T>(items: T[], fn: (item: T) => Promise<PageResult>, concurrency: number): Promise<PageResult[]> {
-  const results: PageResult[] = [];
+async function auditRestrictedPage(url: string): Promise<RestrictedPageResult> {
+  try {
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'SEO-Audit-Bot/1.0 (+https://luisfaria.dev)' },
+      signal: AbortSignal.timeout(15_000),
+    });
+
+    if (!res.ok) {
+      return {
+        url,
+        checks: { noindex: false, nofollow: false },
+        passing: false,
+        error: `HTTP ${res.status}`,
+      };
+    }
+
+    const html = await res.text();
+    const checks = {
+      noindex: checkNoIndex(html),
+      nofollow: checkNoFollow(html),
+    };
+    const passing = Object.values(checks).every(Boolean);
+    return { url, checks, passing };
+  } catch (err) {
+    return {
+      url,
+      checks: { noindex: false, nofollow: false },
+      passing: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+async function auditInternalLink(url: string): Promise<LinkResult> {
+  try {
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'SEO-Audit-Bot/1.0 (+https://luisfaria.dev)' },
+      signal: AbortSignal.timeout(15_000),
+    });
+
+    if (!res.ok) {
+      return { url, reachable: false, error: `HTTP ${res.status}` };
+    }
+
+    return { url, reachable: true };
+  } catch (err) {
+    return {
+      url,
+      reachable: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+async function runBatched<T, R>(
+  items: T[],
+  fn: (item: T) => Promise<R>,
+  concurrency: number,
+): Promise<R[]> {
+  const results: R[] = [];
   for (let i = 0; i < items.length; i += concurrency) {
     const batch = items.slice(i, i + concurrency);
     const batchResults = await Promise.all(batch.map(fn));
@@ -250,7 +389,14 @@ function scanMarkdownFiles(): MarkdownResult[] {
 // ─── Report Formatting ────────────────────────────────────────────────────────
 
 function formatStdout(report: AuditReport): void {
-  const { pageAudit, markdownAudit, overallScore, overallPassing } = report;
+  const {
+    pageAudit,
+    markdownAudit,
+    restrictionAudit,
+    internalLinkAudit,
+    overallScore,
+    overallPassing,
+  } = report;
 
   console.log('\n═══════════════════════════════════════════');
   console.log('  SEO Audit Report');
@@ -283,6 +429,41 @@ function formatStdout(report: AuditReport): void {
   }
   console.log(`\n  Score: ${markdownAudit.passed}/${markdownAudit.total} files passing (${Math.round(markdownAudit.score * 100)}%)\n`);
 
+  // Check C: Restricted routes
+  console.log('── CHECK C: Restricted Route Noindex Audit ─');
+  for (const r of restrictionAudit.results) {
+    const icon = r.passing ? '✅' : '❌';
+    const shortUrl = r.url.replace(SITE_URL, '');
+    if (r.error) {
+      console.log(`  ${icon} ${shortUrl}  [ERROR: ${r.error}]`);
+    } else {
+      const failedChecks = Object.entries(r.checks)
+        .filter(([, v]) => !v)
+        .map(([k]) => k);
+      const detail = failedChecks.length ? `  → missing: ${failedChecks.join(', ')}` : '';
+      console.log(`  ${icon} ${shortUrl}${detail}`);
+    }
+  }
+  console.log(
+    `\n  Score: ${restrictionAudit.passed}/${restrictionAudit.total} routes passing (${Math.round(
+      restrictionAudit.score * 100,
+    )}%)\n`,
+  );
+
+  // Check D: Internal links
+  console.log('── CHECK D: Internal Link Health ───────────');
+  for (const r of internalLinkAudit.results) {
+    const icon = r.reachable ? '✅' : '❌';
+    const shortUrl = r.url.replace(SITE_URL, '');
+    const detail = r.error ? `  [ERROR: ${r.error}]` : '';
+    console.log(`  ${icon} ${shortUrl}${detail}`);
+  }
+  console.log(
+    `\n  Score: ${internalLinkAudit.passed}/${internalLinkAudit.total} links reachable (${Math.round(
+      internalLinkAudit.score * 100,
+    )}%)\n`,
+  );
+
   // Overall
   const overallIcon = overallPassing ? '✅' : '❌';
   console.log('── Overall ─────────────────────────────────');
@@ -296,7 +477,14 @@ async function postDiscord(report: AuditReport): Promise<void> {
     return;
   }
 
-  const { pageAudit, markdownAudit, overallScore, overallPassing } = report;
+  const {
+    pageAudit,
+    markdownAudit,
+    restrictionAudit,
+    internalLinkAudit,
+    overallScore,
+    overallPassing,
+  } = report;
   const color = overallPassing ? 0x00c853 : 0xff1744;
   const statusIcon = overallPassing ? '✅' : '❌';
 
@@ -316,6 +504,22 @@ async function postDiscord(report: AuditReport): Promise<void> {
     return r.details.length
       ? `${icon} \`${r.file}\` — ${r.details.join('; ')}`
       : `${icon} \`${r.file}\``;
+  });
+
+  const restrictionLines = restrictionAudit.results.map((r) => {
+    const icon = r.passing ? '✅' : '❌';
+    const shortUrl = r.url.replace(SITE_URL, '') || '/';
+    if (r.error) return `${icon} \`${shortUrl}\` — ${r.error}`;
+    const failed = Object.entries(r.checks).filter(([, v]) => !v).map(([k]) => k);
+    return failed.length
+      ? `${icon} \`${shortUrl}\` — missing: ${failed.join(', ')}`
+      : `${icon} \`${shortUrl}\``;
+  });
+
+  const linkLines = internalLinkAudit.results.map((r) => {
+    const icon = r.reachable ? '✅' : '❌';
+    const shortUrl = r.url.replace(SITE_URL, '') || '/';
+    return r.error ? `${icon} \`${shortUrl}\` — ${r.error}` : `${icon} \`${shortUrl}\``;
   });
 
   // Truncate to fit Discord limits
@@ -339,6 +543,16 @@ async function postDiscord(report: AuditReport): Promise<void> {
           {
             name: `Markdown Files  (${markdownAudit.passed}/${markdownAudit.total})`,
             value: truncate(mdLines),
+            inline: false,
+          },
+          {
+            name: `Restricted Routes  (${restrictionAudit.passed}/${restrictionAudit.total})`,
+            value: truncate(restrictionLines),
+            inline: false,
+          },
+          {
+            name: `Internal Links  (${internalLinkAudit.passed}/${internalLinkAudit.total})`,
+            value: truncate(linkLines),
             inline: false,
           },
         ],
@@ -379,13 +593,30 @@ async function main(): Promise<void> {
   console.error('Scanning markdown files...');
   const mdResults = scanMarkdownFiles();
 
+  // Check C: Restricted routes (must be noindex/nofollow)
+  console.error('Auditing restricted route index controls...');
+  const restrictionResults = await runBatched(RESTRICTED_URLS, auditRestrictedPage, CONCURRENCY);
+
+  // Check D: Internal link health
+  console.error('Checking key internal links...');
+  const internalLinkResults = await runBatched(KEY_INTERNAL_LINKS, auditInternalLink, CONCURRENCY);
+
   // Scores
   const pagePassed = pageResults.filter((r) => r.passing).length;
   const mdPassed = mdResults.filter((r) => r.passing).length;
+  const restrictionPassed = restrictionResults.filter((r) => r.passing).length;
+  const internalLinkPassed = internalLinkResults.filter((r) => r.reachable).length;
   const pageScore = pageResults.length > 0 ? pagePassed / pageResults.length : 1;
   const mdScore = mdResults.length > 0 ? mdPassed / mdResults.length : 1;
-  const overallScore = pageResults.length + mdResults.length > 0
-    ? (pagePassed + mdPassed) / (pageResults.length + mdResults.length)
+  const restrictionScore =
+    restrictionResults.length > 0 ? restrictionPassed / restrictionResults.length : 1;
+  const internalLinkScore =
+    internalLinkResults.length > 0 ? internalLinkPassed / internalLinkResults.length : 1;
+  const overallTotal =
+    pageResults.length + mdResults.length + restrictionResults.length + internalLinkResults.length;
+  const overallPassedCount = pagePassed + mdPassed + restrictionPassed + internalLinkPassed;
+  const overallScore = overallTotal > 0
+    ? overallPassedCount / overallTotal
     : 1;
   const overallPassing = overallScore >= PASS_THRESHOLD;
 
@@ -393,6 +624,18 @@ async function main(): Promise<void> {
     timestamp,
     pageAudit: { results: pageResults, passed: pagePassed, total: pageResults.length, score: pageScore },
     markdownAudit: { results: mdResults, passed: mdPassed, total: mdResults.length, score: mdScore },
+    restrictionAudit: {
+      results: restrictionResults,
+      passed: restrictionPassed,
+      total: restrictionResults.length,
+      score: restrictionScore,
+    },
+    internalLinkAudit: {
+      results: internalLinkResults,
+      passed: internalLinkPassed,
+      total: internalLinkResults.length,
+      score: internalLinkScore,
+    },
     overallScore,
     overallPassing,
   };

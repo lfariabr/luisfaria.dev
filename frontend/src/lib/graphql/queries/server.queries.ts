@@ -21,6 +21,7 @@ export const PUBLISHED_ARTICLES_QUERY = `
       id
       slug
       title
+      content
       excerpt
       imageUrl
       tags
@@ -54,7 +55,9 @@ export const PROJECTS_QUERY = `
       title
       description
       imageUrl
+      githubUrl
       technologies
+      createdAt
       updatedAt
     }
   }

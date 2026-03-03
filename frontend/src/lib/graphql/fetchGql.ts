@@ -1,7 +1,16 @@
 import { cache } from 'react';
 
-const GRAPHQL_URL =
+const RAW_GRAPHQL_URL =
   process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:4000/graphql';
+const SITE_ORIGIN = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+
+function resolveGraphqlUrl(rawUrl: string): string {
+  if (/^https?:\/\//i.test(rawUrl)) return rawUrl;
+  if (rawUrl.startsWith('/')) return new URL(rawUrl, SITE_ORIGIN).toString();
+  return `http://${rawUrl}`;
+}
+
+const GRAPHQL_URL = resolveGraphqlUrl(RAW_GRAPHQL_URL);
 
 interface FetchGqlOptions {
   variables?: Record<string, unknown>;

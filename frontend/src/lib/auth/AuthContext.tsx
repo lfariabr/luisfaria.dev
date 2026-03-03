@@ -163,7 +163,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       await logoutMutation();
     } catch (err) {
       // Even if mutation fails, clear local state
-      logger.error('Logout failed', { error: String(err) });
+      logger.warn('Logout failed', { error: String(err) });
     } finally {
       setUser(null);
       router.push('/login');

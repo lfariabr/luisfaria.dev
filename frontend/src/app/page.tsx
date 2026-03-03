@@ -1,9 +1,15 @@
+import type { Metadata } from 'next';
 import Link from "next/link";
 import { MainLayout } from "@/components/layouts/MainLayout";
 import { Button } from "@/components/ui/button";
 import { CORE_STACK } from "@/utils/data";
 import { MetricsSection } from "@/components/sections/MetricsSection";
 import { TimelineSection } from "@/components/sections/TimelineSection";
+import { sanitizeJsonLd } from '@/lib/seo/metadata';
+
+export const metadata: Metadata = {
+  alternates: { canonical: 'https://luisfaria.dev' },
+};
 
 const personLd = {
   '@context': 'https://schema.org',
@@ -27,16 +33,33 @@ const websiteLd = {
     'Portfolio of Luis Faria — Senior Software Engineer building end-to-end systems that turn manual workflows into scalable products.',
 };
 
+const organizationLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'Luis Faria',
+  url: 'https://luisfaria.dev',
+  logo: 'https://luisfaria.dev/og-default.png',
+  sameAs: [
+    'https://github.com/lfariabr',
+    'https://linkedin.com/in/luisfariabr',
+    'https://x.com/luisfariabr',
+  ],
+};
+
 export default function Home() {
   return (
     <MainLayout>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(personLd) }}
+        dangerouslySetInnerHTML={{ __html: sanitizeJsonLd(personLd) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteLd) }}
+        dangerouslySetInnerHTML={{ __html: sanitizeJsonLd(websiteLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: sanitizeJsonLd(organizationLd) }}
       />
       <div className="flex flex-col items-center justify-center min-h-[80vh] bg-gradient-to-b from-background to-slate-50 dark:from-background dark:to-slate-950">
         {/* Hero Section */}
