@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Calendar } from 'lucide-react';
 import { Project } from '@/lib/graphql/types/project.types';
 import { formatDateSafe } from '@/utils/dateHandler';
@@ -9,9 +10,12 @@ export function ProjectCard({ project }: { project: Project }) {
       <div className="group rounded-lg border overflow-hidden bg-card text-card-foreground shadow hover:shadow-lg transition-all hover:scale-[1.02] h-full">
         <div className="aspect-video w-full bg-muted relative overflow-hidden">
           {project.imageUrl ? (
-            <div
-              className="absolute inset-0 bg-cover bg-center"
-              style={{ backgroundImage: `url(${project.imageUrl})` }}
+            <Image
+              src={project.imageUrl}
+              alt={`${project.title} preview`}
+              fill
+              className="object-cover"
+              sizes="(min-width: 768px) 50vw, 100vw"
             />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-background/80 flex items-center justify-center text-2xl font-bold">
