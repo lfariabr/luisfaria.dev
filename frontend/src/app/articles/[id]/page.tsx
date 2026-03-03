@@ -5,6 +5,7 @@ import { ArticleContent } from '@/components/articles/ArticleContent';
 import { fetchGql } from '@/lib/graphql/fetchGql';
 import { ARTICLE_BY_SLUG_QUERY } from '@/lib/graphql/queries/server.queries';
 import type { Article } from '@/lib/graphql/types/article.types';
+import { buildDescription, resolveOgImage } from '@/lib/seo/metadata';
 
 const SITE_URL = 'https://luisfaria.dev';
 
@@ -32,10 +33,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: 'Article Not Found' };
   }
 
-  const description =
-    article.excerpt ||
-    article.content.slice(0, 160).replace(/[#*_`\n]/g, '') + '...';
-  const ogImage = article.imageUrl || `${SITE_URL}/og-default.png`;
+  const description = buildDescription(article.excerpt, article.content, 160);
+  const ogImage = resolveOgImage(article.imageUrl);
 
   return {
     title: `${article.title} | Luis Faria`,
@@ -74,9 +73,8 @@ export default async function ArticleDetailPage({ params }: Props) {
     '@type': 'Article',
     headline: article.title,
     description:
-      article.excerpt ||
-      article.content.slice(0, 160).replace(/[#*_`\n]/g, ''),
-    image: article.imageUrl || `${SITE_URL}/og-default.png`,
+      buildDescription(article.excerpt, article.content, 160),
+    image: resolveOgImage(article.imageUrl),
     datePublished: article.createdAt,
     dateModified: article.updatedAt,
     author: {
