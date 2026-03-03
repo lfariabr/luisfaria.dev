@@ -116,4 +116,4 @@ After:
 
 ---
 
-**Full Changelog**: https://github.com/lfariabr/luisfaria.dev/compare/v2.91.0...v2.92.0
+**Full Changelog**: https://github.com/lfariabr/luisfaria.dev/compare/v2.9.0...v2.9.92

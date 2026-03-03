@@ -81,5 +81,8 @@
     "ts-jest": "^29.1.2",
     "tw-animate-css": "^1.3.0",
     "typescript": "^5"
+  },
+  "overrides": {
+    "serialize-javascript": "7.0.3"
   }
 }
