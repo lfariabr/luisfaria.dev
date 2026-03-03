@@ -21,6 +21,7 @@ export const PUBLISHED_ARTICLES_QUERY = `
       id
       slug
       title
+      content
       excerpt
       imageUrl
       tags
