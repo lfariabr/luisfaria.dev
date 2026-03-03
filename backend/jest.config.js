@@ -21,4 +21,5 @@ module.exports = {
   ],
   coverageDirectory: 'coverage',
   clearMocks: true,
+  maxWorkers: 1,
 };
