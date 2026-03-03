@@ -1,0 +1,67 @@
+import React from "react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { StripeFab } from "@/components/stripe/StripeFab";
+
+const mockStartCheckout = jest.fn();
+const mockTrackClientEvent = jest.fn();
+
+jest.mock("@/lib/hooks/useStripeCheckout", () => ({
+  useStripeCheckout: () => ({
+    startCheckout: (...args: unknown[]) => mockStartCheckout(...args),
+    loading: false,
+  }),
+}));
+
+jest.mock("@/utils/analytics", () => ({
+  trackClientEvent: (...args: unknown[]) => mockTrackClientEvent(...args),
+}));
+
+jest.mock("@/components/ui/tooltip", () => ({
+  TooltipProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  TooltipTrigger: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  TooltipContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}));
+
+describe("StripeFab", () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("renders support checkout button", () => {
+    render(<StripeFab />);
+    expect(
+      screen.getByRole("button", { name: /open support checkout options/i })
+    ).toBeInTheDocument();
+  });
+
+  it("opens dialog and starts checkout after selecting item", async () => {
+    const user = userEvent.setup();
+    render(<StripeFab />);
+
+    await user.click(
+      screen.getByRole("button", { name: /open support checkout options/i })
+    );
+
+    expect(
+      screen.getByText(/choose one option and continue to stripe secure checkout/i)
+    ).toBeInTheDocument();
+
+    const continueButton = screen.getByRole("button", {
+      name: /continue to secure checkout/i,
+    });
+    expect(continueButton).toBeDisabled();
+
+    await user.click(screen.getByRole("button", { name: /buy me a coffee/i }));
+    expect(continueButton).toBeEnabled();
+
+    await user.click(continueButton);
+
+    expect(mockStartCheckout).toHaveBeenCalledWith("coffee", "");
+    expect(mockTrackClientEvent).toHaveBeenCalledWith("stripe_fab_opened");
+    expect(mockTrackClientEvent).toHaveBeenCalledWith("stripe_item_selected", {
+      productKey: "coffee",
+    });
+  });
+});

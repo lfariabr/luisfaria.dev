@@ -104,6 +104,7 @@ export const permissions = shield(
       // Public mutations
       register: validateRegister,
       login: validateLogin,
+      createCheckoutSession: allow,
       
       // Admin-only mutations
       createProject: and(isAdmin, validateProjectInput),

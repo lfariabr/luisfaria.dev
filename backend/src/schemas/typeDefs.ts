@@ -5,6 +5,7 @@ import { rateTestTypes } from './types/rateTestTypes';
 import { chatbotTypes } from './types/chatbotTypes';
 import { screamTypes } from './types/screamTypes';
 import { apodTypes } from './types/apodTypes';
+import { stripeTypes } from './types/stripeTypes';
 
 export const typeDefs = `#graphql
   ${projectTypes}
@@ -14,6 +15,7 @@ export const typeDefs = `#graphql
   ${chatbotTypes}
   ${screamTypes}
   ${apodTypes}
+  ${stripeTypes}
 
   type Query {
     # Test query
