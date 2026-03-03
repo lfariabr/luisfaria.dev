@@ -5,6 +5,7 @@ import { ArticleCard } from '@/components/work/ArticleCard';
 import { fetchGql } from '@/lib/graphql/fetchGql';
 import { PUBLISHED_ARTICLES_QUERY } from '@/lib/graphql/queries/server.queries';
 import type { Article } from '@/lib/graphql/types/article.types';
+import { sanitizeJsonLd } from '@/lib/seo/metadata';
 
 export default async function ArticlesPage() {
   let articles: Article[] = [];
@@ -16,7 +17,8 @@ export default async function ArticlesPage() {
     });
     articles = data.publishedArticles ?? [];
   } catch (error) {
-    errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Failed to fetch articles page data', error);
+    errorMessage = 'An unexpected error occurred. Please try again later.';
   }
 
   const itemListLd = {
@@ -39,7 +41,7 @@ export default async function ArticlesPage() {
     <MainLayout>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListLd) }}
+        dangerouslySetInnerHTML={{ __html: sanitizeJsonLd(itemListLd) }}
       />
       <div className="container py-12 max-w-6xl">
         <div className="space-y-2 mb-10 px-4">
@@ -50,7 +52,7 @@ export default async function ArticlesPage() {
         {errorMessage && (
           <Alert variant="destructive" className="my-8">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>Error loading articles: {errorMessage}</AlertDescription>
+            <AlertDescription>{errorMessage}</AlertDescription>
           </Alert>
         )}
 

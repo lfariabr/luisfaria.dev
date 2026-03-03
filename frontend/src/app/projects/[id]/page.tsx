@@ -5,7 +5,7 @@ import { ProjectContent } from '@/components/projects/ProjectContent';
 import { fetchGql } from '@/lib/graphql/fetchGql';
 import { PROJECT_BY_SLUG_QUERY } from '@/lib/graphql/queries/server.queries';
 import type { Project } from '@/lib/graphql/types/project.types';
-import { buildDescription, resolveOgImage } from '@/lib/seo/metadata';
+import { buildDescription, resolveOgImage, sanitizeJsonLd } from '@/lib/seo/metadata';
 
 const SITE_URL = 'https://luisfaria.dev';
 
@@ -111,11 +111,11 @@ export default async function ProjectDetailPage({ params }: Props) {
     <MainLayout>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: sanitizeJsonLd(jsonLd) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
+        dangerouslySetInnerHTML={{ __html: sanitizeJsonLd(breadcrumbLd) }}
       />
       <div className="container py-16 mx-auto px-4">
         <ProjectContent project={project} />

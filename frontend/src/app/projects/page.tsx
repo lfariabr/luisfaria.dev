@@ -5,6 +5,7 @@ import { ProjectCard } from '@/components/work/ProjectCard';
 import { fetchGql } from '@/lib/graphql/fetchGql';
 import { PROJECTS_QUERY } from '@/lib/graphql/queries/server.queries';
 import type { Project } from '@/lib/graphql/types/project.types';
+import { sanitizeJsonLd } from '@/lib/seo/metadata';
 
 export default async function ProjectsPage() {
   let projects: Project[] = [];
@@ -16,7 +17,8 @@ export default async function ProjectsPage() {
     });
     projects = data.projects ?? [];
   } catch (error) {
-    errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Failed to fetch projects page data', error);
+    errorMessage = 'An unexpected error occurred. Please try again later.';
   }
 
   const itemListLd = {
@@ -39,7 +41,7 @@ export default async function ProjectsPage() {
     <MainLayout>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListLd) }}
+        dangerouslySetInnerHTML={{ __html: sanitizeJsonLd(itemListLd) }}
       />
       <div className="container py-12 max-w-6xl">
         <div className="space-y-2 mb-10 px-4">
@@ -52,7 +54,7 @@ export default async function ProjectsPage() {
         {errorMessage && (
           <Alert variant="destructive" className="my-8">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>Error loading projects: {errorMessage}</AlertDescription>
+            <AlertDescription>{errorMessage}</AlertDescription>
           </Alert>
         )}
 

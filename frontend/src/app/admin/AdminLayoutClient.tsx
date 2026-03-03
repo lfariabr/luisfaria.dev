@@ -1,7 +1,7 @@
 'use client';
 
 import { ReactNode, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useIsAdmin } from '@/lib/auth/isAdmin';
 import {
@@ -23,6 +23,7 @@ export default function AdminLayoutClient({ children }: AdminLayoutClientProps) 
   const { isAuthenticated, loading, logout } = useAuth();
   const isAdmin = useIsAdmin();
   const router = useRouter();
+  const pathname = usePathname() ?? '';
 
   useEffect(() => {
     if (!loading) {
@@ -34,7 +35,7 @@ export default function AdminLayoutClient({ children }: AdminLayoutClientProps) 
     }
   }, [loading, isAuthenticated, isAdmin, router]);
 
-  if (loading || !isAuthenticated) {
+  if (loading || !isAuthenticated || !isAdmin) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
@@ -62,26 +63,29 @@ export default function AdminLayoutClient({ children }: AdminLayoutClientProps) 
 
         <nav className="p-4">
           <ul className="space-y-2">
-            {navItems.map((item) => (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className={cn(
-                    'flex items-center gap-3 rounded-md px-4 py-3 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors',
-                    {
-                      'bg-accent text-accent-foreground':
-                        (typeof window !== 'undefined' && window.location.pathname === item.href) ||
-                        (item.href !== '/admin' &&
-                          typeof window !== 'undefined' &&
-                          window.location.pathname.startsWith(item.href)),
-                    },
-                  )}
-                >
-                  <item.icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
-              </li>
-            ))}
+            {navItems.map((item) => {
+              const isActive =
+                item.href === '/admin'
+                  ? pathname === item.href
+                  : pathname.startsWith(item.href);
+
+              return (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    className={cn(
+                      'flex items-center gap-3 rounded-md px-4 py-3 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors',
+                      {
+                        'bg-accent text-accent-foreground': isActive,
+                      },
+                    )}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    {item.label}
+                  </Link>
+                </li>
+              );
+            })}
 
             <li className="mt-8 pt-6 border-t">
               <button

@@ -15,3 +15,10 @@ export function resolveOgImage(imageUrl?: string): string {
   if (imageUrl && imageUrl.trim().length > 0) return imageUrl;
   return DEFAULT_OG_IMAGE;
 }
+
+export function sanitizeJsonLd(data: unknown): string {
+  return JSON.stringify(data)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026');
+}

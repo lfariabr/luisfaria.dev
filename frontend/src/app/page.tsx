@@ -1,9 +1,15 @@
+import type { Metadata } from 'next';
 import Link from "next/link";
 import { MainLayout } from "@/components/layouts/MainLayout";
 import { Button } from "@/components/ui/button";
 import { CORE_STACK } from "@/utils/data";
 import { MetricsSection } from "@/components/sections/MetricsSection";
 import { TimelineSection } from "@/components/sections/TimelineSection";
+import { sanitizeJsonLd } from '@/lib/seo/metadata';
+
+export const metadata: Metadata = {
+  alternates: { canonical: 'https://luisfaria.dev' },
+};
 
 const personLd = {
   '@context': 'https://schema.org',
@@ -45,15 +51,15 @@ export default function Home() {
     <MainLayout>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(personLd) }}
+        dangerouslySetInnerHTML={{ __html: sanitizeJsonLd(personLd) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteLd) }}
+        dangerouslySetInnerHTML={{ __html: sanitizeJsonLd(websiteLd) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationLd) }}
+        dangerouslySetInnerHTML={{ __html: sanitizeJsonLd(organizationLd) }}
       />
       <div className="flex flex-col items-center justify-center min-h-[80vh] bg-gradient-to-b from-background to-slate-50 dark:from-background dark:to-slate-950">
         {/* Hero Section */}

@@ -11,6 +11,7 @@ import {
 } from '@/lib/graphql/queries/server.queries';
 import type { Project } from '@/lib/graphql/types/project.types';
 import type { Article } from '@/lib/graphql/types/article.types';
+import { sanitizeJsonLd } from '@/lib/seo/metadata';
 
 type WorkItem =
   | { type: 'project'; data: Project }
@@ -31,7 +32,8 @@ export default async function WorkPage() {
     });
     projects = data.projects ?? [];
   } catch (error) {
-    projectsError = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Failed to fetch work page projects data', error);
+    projectsError = 'An unexpected error occurred. Please try again later.';
   }
 
   try {
@@ -40,7 +42,8 @@ export default async function WorkPage() {
     });
     articles = data.publishedArticles ?? [];
   } catch (error) {
-    articlesError = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Failed to fetch work page articles data', error);
+    articlesError = 'An unexpected error occurred. Please try again later.';
   }
 
   const allItems: WorkItem[] = [
@@ -71,7 +74,7 @@ export default async function WorkPage() {
     <MainLayout>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListLd) }}
+        dangerouslySetInnerHTML={{ __html: sanitizeJsonLd(itemListLd) }}
       />
       <div className="container py-12 max-w-6xl">
         <div className="space-y-2 mb-8 px-4">
@@ -96,14 +99,14 @@ export default async function WorkPage() {
         {projectsError && (
           <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>Could not load projects: {projectsError}</AlertDescription>
+            <AlertDescription>{projectsError}</AlertDescription>
           </Alert>
         )}
 
         {articlesError && (
           <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>Could not load articles: {articlesError}</AlertDescription>
+            <AlertDescription>{articlesError}</AlertDescription>
           </Alert>
         )}
 
