@@ -1,26 +1,17 @@
 import { MainLayout } from '@/components/layouts/MainLayout';
-import { AlertCircle, ExternalLink } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { ProjectCard } from '@/components/work/ProjectCard';
-import { ArticleCard } from '@/components/work/ArticleCard';
+import { WorkTabsContent } from '@/components/work/WorkTabsContent';
 import { fetchGql } from '@/lib/graphql/fetchGql';
 import {
   PUBLISHED_ARTICLES_QUERY,
   PROJECTS_QUERY,
 } from '@/lib/graphql/queries/server.queries';
-import type { Project } from '@/lib/graphql/types/project.types';
 import type { Article } from '@/lib/graphql/types/article.types';
+import type { Project } from '@/lib/graphql/types/project.types';
 import { sanitizeJsonLd } from '@/lib/seo/metadata';
 
 export const dynamic = 'force-dynamic';
-
-type WorkItem =
-  | { type: 'project'; data: Project }
-  | { type: 'article'; data: Article };
-
-const toMs = (value: string) =>
-  !isNaN(Number(value)) ? Number(value) : new Date(value).getTime();
 
 export default async function WorkPage() {
   let projects: Project[] = [];
@@ -48,11 +39,6 @@ export default async function WorkPage() {
     articlesError = 'An unexpected error occurred. Please try again later.';
   }
 
-  const allItems: WorkItem[] = [
-    ...projects.map((project): WorkItem => ({ type: 'project', data: project })),
-    ...articles.map((article): WorkItem => ({ type: 'article', data: article })),
-  ].sort((a, b) => toMs(b.data.createdAt) - toMs(a.data.createdAt));
-
   const itemListLd = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
@@ -60,7 +46,10 @@ export default async function WorkPage() {
     url: 'https://luisfaria.dev/work',
     mainEntity: {
       '@type': 'ItemList',
-      itemListElement: allItems.map((item, index) => ({
+      itemListElement: [
+        ...projects.map((project) => ({ type: 'project' as const, data: project })),
+        ...articles.map((article) => ({ type: 'article' as const, data: article })),
+      ].map((item, index) => ({
         '@type': 'ListItem',
         position: index + 1,
         url:
@@ -84,20 +73,6 @@ export default async function WorkPage() {
           <p className="text-muted-foreground">Featured projects and writing.</p>
         </div>
 
-        <div className="flex items-center gap-2 mb-10 px-4">
-          <a
-            href="https://www.linkedin.com/in/lfariabr/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ml-auto"
-          >
-            <Button variant="outline" size="sm" className="gap-1.5">
-              LinkedIn
-              <ExternalLink className="h-3.5 w-3.5" />
-            </Button>
-          </a>
-        </div>
-
         {projectsError && (
           <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4" />
@@ -112,24 +87,7 @@ export default async function WorkPage() {
           </Alert>
         )}
 
-        {allItems.length === 0 && !(projectsError || articlesError) && (
-          <div className="text-center py-20">
-            <h3 className="text-lg font-semibold mb-2">Nothing here yet</h3>
-            <p className="text-muted-foreground">Content will appear once it is published.</p>
-          </div>
-        )}
-
-        {allItems.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 px-4">
-            {allItems.map((item) =>
-              item.type === 'project' ? (
-                <ProjectCard key={`project-${item.data.id}`} project={item.data} />
-              ) : (
-                <ArticleCard key={`article-${item.data.id}`} article={item.data} />
-              ),
-            )}
-          </div>
-        )}
+        <WorkTabsContent projects={projects} articles={articles} />
       </div>
     </MainLayout>
   );
