@@ -15,10 +15,16 @@ describe('Home Page', () => {
 
   it('renders the hero badge with credentials', () => {
     renderWithProviders(<HomePage />);
-    
-    const badge = screen.getByText(/Senior Software Engineer & Project Lead/i);
+
+    const badge = screen.getByText((_, element) => {
+      const text = element?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+      return (
+        element?.tagName.toLowerCase() === 'p' &&
+        text.includes('Senior Software Engineer') &&
+        text.includes("Master's SWE & AI")
+      );
+    });
     expect(badge).toBeInTheDocument();
-    expect(badge).toHaveTextContent(/Master's SWE & AI/i);
   });
 
   it('renders the hero description', () => {

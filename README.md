@@ -144,6 +144,11 @@ docker-compose up --build
 | `RESEND_API_KEY` | Transactional email |
 | `NASA_API_KEY` | APOD feature |
 | `DISCORD_WEBHOOK_URL` | Notifications |
+| `FRONTEND_URL` | Backend redirect base URL for Stripe checkout |
+| `STRIPE_SECRET_KEY` | Stripe server secret key |
+| `STRIPE_COFFEE_PRICE_ID` | Stripe Price ID for coffee checkout item |
+| `STRIPE_MEETING_PRICE_ID` | Stripe Price ID for meeting checkout item |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signature secret *(reserved for phase 2)* |
 | `NEXT_PUBLIC_GRAPHQL_URL` | Frontend → API (defaults to `http://localhost:4000/graphql`) |
 
 ---

@@ -15,6 +15,11 @@ interface Config {
     openaiApiKey: string;
     resendApiKey: string;
     nasaApiKey: string;
+    frontendUrl: string;
+    stripeSecretKey: string;
+    stripeWebhookSecret: string;
+    stripeCoffeePriceId: string;
+    stripeMeetingPriceId: string;
 }
 
 // Validate required environment variables
@@ -49,6 +54,11 @@ const config: Config = {
     openaiApiKey: process.env.OPENAI_API_KEY || '',
     resendApiKey: process.env.RESEND_API_KEY || '',
     nasaApiKey: process.env.NASA_API_KEY || '',
+    frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
+    stripeSecretKey: process.env.STRIPE_SECRET_KEY || '',
+    stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
+    stripeCoffeePriceId: process.env.STRIPE_COFFEE_PRICE_ID || '',
+    stripeMeetingPriceId: process.env.STRIPE_MEETING_PRICE_ID || '',
   };
   
 export default config;

@@ -15,7 +15,7 @@ const personLd = {
   '@context': 'https://schema.org',
   '@type': 'Person',
   name: 'Luis Faria',
-  jobTitle: 'Senior Software Engineer & Project Lead',
+  jobTitle: 'Senior Software Engineer',
   url: 'https://luisfaria.dev',
   sameAs: [
     'https://github.com/lfariabr',
@@ -68,7 +68,7 @@ export default function Home() {
           <div className="space-y-8 sm:space-y-10 text-center">
             {/* Badge */}
             <p className="inline-flex items-center justify-center gap-2 rounded-full border border-border bg-muted/60 px-4 py-1 text-xs font-medium text-muted-foreground">
-              Senior Software Engineer & Project Lead · Master&apos;s SWE & AI
+              Senior Software Engineer · Master&apos;s SWE & AI
             </p>
 
             {/* Heading + subheading */}
