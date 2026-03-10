@@ -10,6 +10,11 @@ import type {
 } from '@/lib/graphql/types/stripe.types';
 import { trackClientEvent } from '@/utils/analytics';
 
+interface CheckoutStartResult {
+  ok: boolean;
+  errorMessage?: string;
+}
+
 function getCheckoutErrorMessage(error: unknown): string {
   if (!error || typeof error !== 'object') {
     return 'Unable to start checkout. Please try again.';
@@ -35,18 +40,26 @@ export function useStripeCheckout() {
     CreateCheckoutSessionVariables
   >(CREATE_CHECKOUT_SESSION);
 
-  const startCheckout = async (productKey: StripeProductKey, email?: string) => {
+  const startCheckout = async (
+    productKey: StripeProductKey,
+    email?: string
+  ): Promise<CheckoutStartResult> => {
     trackClientEvent('stripe_checkout_started', { productKey });
 
     try {
-      const { data } = await createSession({
+      const { data, errors } = await createSession({
         variables: {
           input: {
             productKey,
             email: email?.trim() || undefined,
           },
         },
+        errorPolicy: 'all',
       });
+
+      if (errors?.length) {
+        throw errors[0];
+      }
 
       const url = data?.createCheckoutSession?.url;
       if (!url) {
@@ -54,7 +67,7 @@ export function useStripeCheckout() {
       }
 
       window.location.assign(url);
-      return true;
+      return { ok: true };
     } catch (error) {
       const errorMessage = getCheckoutErrorMessage(error);
       trackClientEvent('stripe_checkout_error', {
@@ -62,7 +75,10 @@ export function useStripeCheckout() {
         message: errorMessage,
       });
       toast.error(errorMessage);
-      return false;
+      return {
+        ok: false,
+        errorMessage,
+      };
     }
   };
 

@@ -15,10 +15,9 @@ describe('Home Page', () => {
 
   it('renders the hero badge with credentials', () => {
     renderWithProviders(<HomePage />);
-    
-    const badge = screen.getByText(/Senior Software Engineer & Project Lead/i);
+
+    const badge = screen.getByText("Senior Software Engineer · Master's SWE & AI");
     expect(badge).toBeInTheDocument();
-    expect(badge).toHaveTextContent(/Master's SWE & AI/i);
   });
 
   it('renders the hero description', () => {

@@ -1,4 +1,9 @@
 export const stripeTypes = `#graphql
+  enum ProductKey {
+    coffee
+    meeting
+  }
+
   type StripeCheckoutSession {
     sessionId: String!
     url: String!
@@ -8,11 +13,10 @@ export const stripeTypes = `#graphql
     sessionId: String!
     paymentStatus: String!
     status: String
-    customerEmail: String
   }
 
   input CheckoutInput {
-    productKey: String!
+    productKey: ProductKey!
     email: String
   }
 

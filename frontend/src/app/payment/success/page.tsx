@@ -23,7 +23,6 @@ interface CheckoutSessionStatusData {
     sessionId: string;
     paymentStatus: string;
     status: string | null;
-    customerEmail: string | null;
   };
 }
 
@@ -84,11 +83,6 @@ export default async function PaymentSuccessPage({ searchParams }: SuccessPagePr
               No session ID was provided in the return URL.
             </p>
           )}
-          {isPaid && sessionStatus?.customerEmail ? (
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-              Receipt email: {sessionStatus.customerEmail}
-            </p>
-          ) : null}
           <div className="mt-8 flex flex-wrap gap-3">
             <Button asChild className="rounded-full px-6">
               <Link href="/">Back to home</Link>

@@ -1,6 +1,7 @@
 import Stripe from 'stripe';
 import config from '../config/config';
 import { ErrorCodes, type ErrorCode, type ServiceError } from '../utils/errors';
+import { logger } from '../utils/logger';
 
 const STRIPE_API_VERSION: Stripe.LatestApiVersion = '2026-02-25.clover';
 
@@ -74,7 +75,7 @@ export async function createCheckoutSession({
   productKey,
   email,
 }: CreateCheckoutSessionInput): Promise<CheckoutSessionResult> {
-  if (process.env.NODE_ENV === 'test') {
+  if (config.nodeEnv === 'test') {
     return {
       sessionId: `test_session_${productKey}`,
       url: `https://checkout.stripe.com/test-${productKey}`,
@@ -124,7 +125,7 @@ export async function createCheckoutSession({
 }
 
 export async function getCheckoutSessionStatus(sessionId: string): Promise<StripeSessionStatus> {
-  if (process.env.NODE_ENV === 'test') {
+  if (config.nodeEnv === 'test') {
     return {
       sessionId,
       paymentStatus: 'paid',
@@ -147,6 +148,7 @@ export async function getCheckoutSessionStatus(sessionId: string): Promise<Strip
     if (error instanceof Stripe.errors.StripeInvalidRequestError) {
       throw new StripeServiceError('SESSION_NOT_FOUND', 'Checkout session not found', 404, { sessionId });
     }
+    logger.error('Unexpected error retrieving checkout session', { error, sessionId });
     throw error;
   }
 }

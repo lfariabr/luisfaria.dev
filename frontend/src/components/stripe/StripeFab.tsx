@@ -28,9 +28,19 @@ export function StripeFab() {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="relative inline-flex">
+              <Button
+                onClick={handleOpen}
+                aria-label="Open support checkout options"
+                className="
+                  relative rounded-full h-20 w-20 p-0
+                  bg-white dark:bg-zinc-950
+                  hover:bg-zinc-100 dark:hover:bg-zinc-900
+                  shadow-xl
+                  border border-zinc-200 dark:border-white/10
+                "
+              >
                 <span
-                  className="absolute inset-0 rounded-full"
+                  className="pointer-events-none absolute inset-0 rounded-full"
                   style={{
                     background:
                       "linear-gradient(135deg, rgba(245,158,11,.9), rgba(245,158,11,.35))",
@@ -42,24 +52,12 @@ export function StripeFab() {
                   }}
                 />
 
-                <Button
-                  onClick={handleOpen}
-                  aria-label="Open support checkout options"
-                  className="
-                    rounded-full h-20 w-20 p-0
-                    bg-white dark:bg-zinc-950
-                    hover:bg-zinc-100 dark:hover:bg-zinc-900
-                    shadow-xl
-                    border border-zinc-200 dark:border-white/10
-                  "
-                >
-                  <span className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-zinc-100 dark:bg-black ring-1 ring-zinc-300 dark:ring-white/15">
-                    <HandCoins className="h-8 w-8 text-amber-500" />
-                  </span>
-                </Button>
+                <span className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-zinc-100 dark:bg-black ring-1 ring-zinc-300 dark:ring-white/15">
+                  <HandCoins className="h-8 w-8 text-amber-500" />
+                </span>
 
-                <span className="pointer-events-none animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-300 opacity-20" />
-              </span>
+                <span className="pointer-events-none animate-ping absolute inset-0 rounded-full bg-amber-300 opacity-20" />
+              </Button>
             </TooltipTrigger>
 
             <TooltipContent

@@ -100,7 +100,6 @@ describe('stripeQueries.checkoutSessionStatus', () => {
       sessionId: 'cs_test_1',
       paymentStatus: 'paid',
       status: 'complete',
-      customerEmail: 'paid@example.com',
     });
   });
 

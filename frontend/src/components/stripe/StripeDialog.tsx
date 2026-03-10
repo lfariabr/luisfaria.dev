@@ -11,10 +11,12 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useStripeCheckout } from "@/lib/hooks/useStripeCheckout";
 import type { StripeProductKey } from "@/lib/graphql/types/stripe.types";
 import { trackClientEvent } from "@/utils/analytics";
 import { toast } from "sonner";
+import { AlertCircle } from "lucide-react";
 
 export type StripeDialogProps = {
   open: boolean;
@@ -48,6 +50,7 @@ export function StripeDialog({ open, onOpenChange }: StripeDialogProps) {
   const [selected, setSelected] = React.useState<StripeProductKey | null>(null);
   const [email, setEmail] = React.useState("");
   const [isRedirecting, setIsRedirecting] = React.useState(false);
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const { startCheckout, loading } = useStripeCheckout();
 
   React.useEffect(() => {
@@ -55,30 +58,36 @@ export function StripeDialog({ open, onOpenChange }: StripeDialogProps) {
       setSelected(null);
       setEmail("");
       setIsRedirecting(false);
+      setErrorMessage(null);
     }
   }, [open]);
 
   const handleSelect = (productKey: StripeProductKey) => {
     setSelected(productKey);
+    setErrorMessage(null);
     trackClientEvent("stripe_item_selected", { productKey });
   };
 
   const handleContinue = async () => {
     if (!selected || loading || isRedirecting) return;
+    setErrorMessage(null);
 
     const trimmedEmail = email.trim();
     if (trimmedEmail) {
       const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail);
       if (!isValidEmail) {
-        toast.error("Enter a valid email or leave the field blank.");
+        const message = "Enter a valid email or leave the field blank.";
+        setErrorMessage(message);
+        toast.error(message);
         return;
       }
     }
 
     setIsRedirecting(true);
-    const didStartRedirect = await startCheckout(selected, trimmedEmail);
-    if (!didStartRedirect) {
+    const result = await startCheckout(selected, trimmedEmail);
+    if (!result.ok) {
       setIsRedirecting(false);
+      setErrorMessage(result.errorMessage ?? "Unable to start checkout.");
     }
   };
 
@@ -160,6 +169,13 @@ export function StripeDialog({ open, onOpenChange }: StripeDialogProps) {
               className="border-zinc-200 dark:border-white/15"
             />
           </div>
+
+          {errorMessage ? (
+            <Alert className="mt-4 border-amber-300/60 bg-amber-50/80 text-zinc-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-zinc-100">
+              <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              <AlertDescription>{errorMessage}</AlertDescription>
+            </Alert>
+          ) : null}
 
           <Button
             onClick={handleContinue}

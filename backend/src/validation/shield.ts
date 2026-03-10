@@ -100,7 +100,7 @@ export const permissions = shield(
       articlesByCategory: allow,
       articlesByTag: allow,
       checkoutSessionStatus: allow,
-      
+
       // Protected queries
       me: isAuthenticated,
       chatHistory: isAuthenticated,

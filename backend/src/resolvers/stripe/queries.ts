@@ -12,9 +12,16 @@ const withStripeErrorHandling = createErrorHandler(
 );
 
 export const stripeQueries = {
-  checkoutSessionStatus: async (_: unknown, { sessionId }: { sessionId: string }) =>
-    withStripeErrorHandling(
+  checkoutSessionStatus: async (_: unknown, { sessionId }: { sessionId: string }) => {
+    const session = await withStripeErrorHandling(
       () => getCheckoutSessionStatus(sessionId),
       'checkoutSessionStatus'
-    ),
+    );
+
+    return {
+      sessionId: session.sessionId,
+      paymentStatus: session.paymentStatus,
+      status: session.status,
+    };
+  },
 };

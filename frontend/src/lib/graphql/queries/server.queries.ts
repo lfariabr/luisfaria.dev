@@ -69,7 +69,6 @@ export const CHECKOUT_SESSION_STATUS_QUERY = `
       sessionId
       paymentStatus
       status
-      customerEmail
     }
   }
 `;

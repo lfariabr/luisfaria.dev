@@ -1,15 +1,15 @@
 import { z } from 'zod';
 
-const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-
 export const CheckoutInputSchema = z.object({
   productKey: z.enum(['coffee', 'meeting']),
-  email: z
-    .string()
-    .trim()
-    .regex(emailRegex, 'Invalid email format')
-    .optional()
-    .or(z.literal('')),
+  email: z.preprocess(
+    (value) => {
+      if (typeof value !== 'string') return value;
+      const trimmed = value.trim();
+      return trimmed.length > 0 ? trimmed : undefined;
+    },
+    z.string().email('Invalid email address').optional()
+  ),
 });
 
 export type CheckoutInput = z.infer<typeof CheckoutInputSchema>;

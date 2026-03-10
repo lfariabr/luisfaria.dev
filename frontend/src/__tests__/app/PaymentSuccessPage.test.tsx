@@ -23,7 +23,6 @@ describe("PaymentSuccessPage", () => {
         sessionId: "cs_paid",
         paymentStatus: "paid",
         status: "complete",
-        customerEmail: "paid@example.com",
       },
     });
 
@@ -35,7 +34,6 @@ describe("PaymentSuccessPage", () => {
 
     expect(screen.getByText(/payment complete/i)).toBeInTheDocument();
     expect(screen.getByText(/thank you for your support/i)).toBeInTheDocument();
-    expect(screen.getByText(/paid@example.com/i)).toBeInTheDocument();
   });
 
   it("renders recovery copy when the payment cannot be verified", async () => {

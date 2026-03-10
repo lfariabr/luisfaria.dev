@@ -13,12 +13,16 @@ function toErrorMessage(err: unknown): string {
 }
 
 function normalizeGraphQLError(error: unknown) {
+  const message =
+    error && typeof error === 'object' && 'message' in error
+      ? String((error as { message?: unknown }).message ?? '')
+      : '';
+
+  const fallbackMessage = toErrorMessage(error);
+
   if (!error || typeof error !== 'object') {
     return {
-      message: toErrorMessage(error),
-      locations: undefined,
-      path: undefined,
-      extensions: undefined,
+      message: fallbackMessage,
     };
   }
 
@@ -29,12 +33,15 @@ function normalizeGraphQLError(error: unknown) {
     extensions?: unknown;
   };
 
-  return {
-    message: gqlError.message ?? toErrorMessage(error),
-    locations: gqlError.locations,
-    path: gqlError.path,
-    extensions: gqlError.extensions,
+  const normalized: Record<string, unknown> = {
+    message: message || fallbackMessage,
   };
+
+  if (gqlError.locations !== undefined) normalized.locations = gqlError.locations;
+  if (gqlError.path !== undefined) normalized.path = gqlError.path;
+  if (gqlError.extensions !== undefined) normalized.extensions = gqlError.extensions;
+
+  return normalized;
 }
 
 // Create a function to build Apollo Client with proper error handling and retry logic
@@ -44,7 +51,10 @@ export function createApolloClient(): ApolloClient<NormalizedCacheObject> {
     if (graphQLErrors) {
       graphQLErrors.forEach((graphQLError) => {
         const normalized = normalizeGraphQLError(graphQLError);
-        logger.error('GraphQL error', normalized);
+        logger.error('GraphQL error', {
+          operation: operation?.operationName || 'unknown',
+          ...normalized,
+        });
       });
     }
 

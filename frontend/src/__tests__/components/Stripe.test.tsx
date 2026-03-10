@@ -45,7 +45,7 @@ describe("StripeFab", () => {
 
   it("opens dialog and starts checkout after selecting item", async () => {
     const user = userEvent.setup();
-    mockStartCheckout.mockResolvedValue(true);
+    mockStartCheckout.mockResolvedValue({ ok: true });
     render(<StripeFab />);
 
     await user.click(
