@@ -1,4 +1,4 @@
-From Groomzilla to Full-Stack Engineer: Building Wedstack
+# From Groomzilla to Full-Stack Engineer: Building Wedstack
 Tags: #nextjs #typescript #stripe #fullstack
 
 Have you ever imagined being a Software Engineer, Project Manager, Designer, Customer Support agent, and Husband of the main stakeholder (**aka the Bride**) — all at once?  

@@ -63,4 +63,4 @@ fix(ci): decouple seo-audit from deploy pipeline (continue-on-error + removed fr
 fix(stripe): forward Stripe env vars to backend container in docker-compose.yml
 ```
 
-**Full Changelog**: https://github.com/lfariabr/luisfaria.dev/compare/v2.92.1...v2.9.94
+**Full Changelog**: https://github.com/lfariabr/luisfaria.dev/compare/v2.9.92...v2.9.94
