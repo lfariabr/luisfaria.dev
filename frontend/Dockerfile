@@ -14,6 +14,7 @@ ENV NEXT_PUBLIC_GRAPHQL_URL=${NEXT_PUBLIC_GRAPHQL_URL}
 ARG NEXT_PUBLIC_SENTRY_DSN
 ENV NEXT_PUBLIC_SENTRY_DSN=${NEXT_PUBLIC_SENTRY_DSN}
 RUN npm run build
+RUN test -f .next/standalone/server.js || (echo "ERROR: Next.js standalone build failed - server.js not found" && exit 1)
 
 FROM node:20-alpine AS runner
 WORKDIR /app
