@@ -110,6 +110,12 @@ export function createErrorHandler<TCode extends string, TError extends ServiceE
   ): Promise<T> {
     return fn().catch((error) => {
       if (isServiceError(error)) {
+        logger.error(`Service error in ${operationName}`, {
+          code: error.code,
+          message: error.message,
+          statusCode: error.statusCode,
+          details: error.details,
+        });
         throw createGraphQLError(error.message, {
           code: mapErrorCode(error.code),
           statusCode: error.statusCode,

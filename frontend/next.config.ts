@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "path";
 import { withSentryConfig } from '@sentry/nextjs';
 
 const nextConfig: NextConfig = {
@@ -15,17 +16,14 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'media.istockphoto.com' },
     ],
   },
-  output: 'standalone', // Enable standalone output for Docker deployment
+  output: 'standalone',
 
-  // Disable ESLint in production builds
-  eslint: {
-    // Only run ESLint in development, not during builds
-    ignoreDuringBuilds: true,
+  turbopack: {
+    root: path.resolve(__dirname, '..'),
   },
 
   // Disable TypeScript type checking during builds for faster builds
   typescript: {
-    // Skip type checking during builds
     ignoreBuildErrors: true,
   },
 };

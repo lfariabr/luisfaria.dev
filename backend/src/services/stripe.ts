@@ -9,6 +9,10 @@ const stripeClient = config.stripeSecretKey
   ? new Stripe(config.stripeSecretKey, { apiVersion: STRIPE_API_VERSION })
   : null;
 
+if (!stripeClient) {
+  logger.warn('Stripe is not configured — STRIPE_SECRET_KEY is missing. Checkout will be unavailable.');
+}
+
 const PRODUCTS = {
   coffee: {
     priceId: config.stripeCoffeePriceId,
@@ -82,10 +86,16 @@ export async function createCheckoutSession({
     };
   }
 
+  if (!stripeClient) {
+    logger.error('createCheckoutSession failed: Stripe client not initialised (missing STRIPE_SECRET_KEY)');
+    throw new StripeServiceError('NOT_CONFIGURED', 'Stripe is not configured', 503);
+  }
+
   const client = getStripeClient();
 
   const product = PRODUCTS[productKey];
   if (!product?.priceId) {
+    logger.error('createCheckoutSession failed: price ID not configured', { productKey });
     throw new StripeServiceError(
       'MISSING_PRICE',
       `Stripe price is not configured for ${productKey}`,
@@ -96,32 +106,52 @@ export async function createCheckoutSession({
 
   const customerEmail = normalizeEmail(email);
 
-  const session = await client.checkout.sessions.create({
-    mode: 'payment',
-    line_items: [
-      {
-        price: product.priceId,
-        quantity: 1,
+  try {
+    const session = await client.checkout.sessions.create({
+      mode: 'payment',
+      line_items: [
+        {
+          price: product.priceId,
+          quantity: 1,
+        },
+      ],
+      success_url: `${config.frontendUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${config.frontendUrl}/payment/cancel`,
+      customer_email: customerEmail,
+      metadata: {
+        productKey,
+        productLabel: product.label,
+        source: 'luisfaria.dev',
       },
-    ],
-    success_url: `${config.frontendUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${config.frontendUrl}/payment/cancel`,
-    customer_email: customerEmail,
-    metadata: {
-      productKey,
-      productLabel: product.label,
-      source: 'luisfaria.dev',
-    },
-  });
+    });
 
-  if (!session.url) {
-    throw new StripeServiceError('NOT_CONFIGURED', 'Stripe did not return a checkout URL', 502);
+    if (!session.url) {
+      throw new StripeServiceError('NOT_CONFIGURED', 'Stripe did not return a checkout URL', 502);
+    }
+
+    return {
+      sessionId: session.id,
+      url: session.url,
+    };
+  } catch (error) {
+    if (error instanceof StripeServiceError) throw error;
+
+    if (error instanceof Stripe.errors.StripeError) {
+      logger.error('Stripe API error in createCheckoutSession', {
+        type: error.type,
+        code: error.code,
+        message: error.message,
+        statusCode: error.statusCode,
+      });
+      throw new StripeServiceError(
+        'NOT_CONFIGURED',
+        `Stripe error: ${error.message}`,
+        error.statusCode ?? 502
+      );
+    }
+
+    throw error;
   }
-
-  return {
-    sessionId: session.id,
-    url: session.url,
-  };
 }
 
 export async function getCheckoutSessionStatus(sessionId: string): Promise<StripeSessionStatus> {

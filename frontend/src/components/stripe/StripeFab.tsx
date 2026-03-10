@@ -8,7 +8,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { HandCoins } from "lucide-react";
+import { Coffee } from "lucide-react";
 import { StripeDialog } from "./StripeDialog";
 import { trackClientEvent } from "@/utils/analytics";
 
@@ -53,7 +53,7 @@ export function StripeFab() {
                 />
 
                 <span className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-zinc-100 dark:bg-black ring-1 ring-zinc-300 dark:ring-white/15">
-                  <HandCoins className="h-8 w-8 text-amber-500" />
+                  <Coffee className="h-8 w-8 text-amber-500" />
                 </span>
 
                 <span className="pointer-events-none animate-ping absolute inset-0 rounded-full bg-amber-300 opacity-20" />
