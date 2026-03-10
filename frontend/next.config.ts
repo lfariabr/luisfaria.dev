@@ -1,6 +1,4 @@
 import type { NextConfig } from "next";
-import path from "path";
-import { withSentryConfig } from '@sentry/nextjs';
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -18,30 +16,26 @@ const nextConfig: NextConfig = {
   },
   output: 'standalone',
 
-  turbopack: {
-    root: path.resolve(__dirname, '..'),
-  },
-
   // Disable TypeScript type checking during builds for faster builds
   typescript: {
     ignoreBuildErrors: true,
   },
 };
 
-// Wrap with Sentry only if DSN is configured
+// Wrap with Sentry only if DSN is configured.
+// Dynamic import prevents a broken @sentry/nextjs install from corrupting the config.
 const sentryEnabled = !!process.env.NEXT_PUBLIC_SENTRY_DSN;
 
 export default sentryEnabled
-  ? withSentryConfig(nextConfig, {
-      // Suppress source map upload logs during build
-      silent: true,
-      // Delete source maps after uploading to Sentry (keeps them out of client bundles)
-      sourcemaps: {
-        deleteSourcemapsAfterUpload: true,
-      },
-      // Tree-shake Sentry debug statements for smaller bundles
-      bundleSizeOptimizations: {
-        excludeDebugStatements: true,
-      },
-    })
+  ? await import('@sentry/nextjs').then(({ withSentryConfig }) =>
+      withSentryConfig(nextConfig, {
+        silent: true,
+        sourcemaps: {
+          deleteSourcemapsAfterUpload: true,
+        },
+        bundleSizeOptimizations: {
+          excludeDebugStatements: true,
+        },
+      })
+    )
   : nextConfig;
