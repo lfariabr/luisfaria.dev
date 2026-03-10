@@ -3,6 +3,8 @@ import config from '../config/config';
 import { ErrorCodes, type ErrorCode, type ServiceError } from '../utils/errors';
 import { logger } from '../utils/logger';
 
+// TODO: integrate with Discord
+// TODO: test assertion
 const STRIPE_API_VERSION: Stripe.LatestApiVersion = '2026-02-25.clover';
 
 const stripeClient = config.stripeSecretKey
