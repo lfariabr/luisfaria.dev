@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { MainLayout } from "@/components/layouts/MainLayout";
 import { Button } from "@/components/ui/button";
+import { fetchGql } from "@/lib/graphql/fetchGql";
+import { CHECKOUT_SESSION_STATUS_QUERY } from "@/lib/graphql/queries/server.queries";
 
 export const metadata: Metadata = {
   title: "Payment Successful",
@@ -16,26 +18,75 @@ interface SuccessPageProps {
   searchParams?: Promise<{ session_id?: string }>;
 }
 
+interface CheckoutSessionStatusData {
+  checkoutSessionStatus: {
+    sessionId: string;
+    paymentStatus: string;
+    status: string | null;
+    customerEmail: string | null;
+  };
+}
+
 export default async function PaymentSuccessPage({ searchParams }: SuccessPageProps) {
   const params = await searchParams;
   const sessionId = params?.session_id;
+  let sessionStatus: CheckoutSessionStatusData["checkoutSessionStatus"] | null = null;
+
+  if (sessionId) {
+    try {
+      const data = await fetchGql<CheckoutSessionStatusData>(CHECKOUT_SESSION_STATUS_QUERY, {
+        variables: { sessionId },
+        revalidate: 0,
+      });
+      sessionStatus = data.checkoutSessionStatus;
+    } catch {
+      sessionStatus = null;
+    }
+  }
+
+  const isPaid =
+    sessionStatus?.paymentStatus === "paid" &&
+    (sessionStatus.status === "complete" || sessionStatus.status === "open");
 
   return (
     <MainLayout>
       <section className="container mx-auto max-w-3xl px-6 py-20">
-        <div className="rounded-2xl border border-emerald-300/50 bg-emerald-50/70 p-8 dark:border-emerald-500/30 dark:bg-emerald-500/10">
-          <p className="text-sm font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
-            Payment complete
+        <div
+          className={`rounded-2xl border p-8 ${
+            isPaid
+              ? "border-emerald-300/50 bg-emerald-50/70 dark:border-emerald-500/30 dark:bg-emerald-500/10"
+              : "border-zinc-200 bg-zinc-50/80 dark:border-white/10 dark:bg-zinc-900/70"
+          }`}
+        >
+          <p
+            className={`text-sm font-semibold uppercase tracking-wide ${
+              isPaid
+                ? "text-emerald-700 dark:text-emerald-300"
+                : "text-zinc-600 dark:text-zinc-300"
+            }`}
+          >
+            {isPaid ? "Payment complete" : "Payment status unavailable"}
           </p>
           <h1 className="mt-2 text-3xl font-bold text-zinc-900 dark:text-white">
-            Thank you for your support.
+            {isPaid ? "Thank you for your support." : "We could not verify this payment yet."}
           </h1>
           <p className="mt-3 text-zinc-700 dark:text-zinc-300">
-            Your checkout was completed successfully. I appreciate your support.
+            {isPaid
+              ? "Your checkout was completed successfully. I appreciate your support."
+              : "If you just paid, wait a moment and refresh this page. If this keeps happening, contact me and include the session ID below."}
           </p>
           {sessionId ? (
             <p className="mt-4 text-xs text-zinc-600 dark:text-zinc-400">
               Session ID: <span className="font-mono">{sessionId}</span>
+            </p>
+          ) : (
+            <p className="mt-4 text-xs text-zinc-600 dark:text-zinc-400">
+              No session ID was provided in the return URL.
+            </p>
+          )}
+          {isPaid && sessionStatus?.customerEmail ? (
+            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+              Receipt email: {sessionStatus.customerEmail}
             </p>
           ) : null}
           <div className="mt-8 flex flex-wrap gap-3">

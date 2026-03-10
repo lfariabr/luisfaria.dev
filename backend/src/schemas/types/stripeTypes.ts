@@ -4,6 +4,13 @@ export const stripeTypes = `#graphql
     url: String!
   }
 
+  type StripeCheckoutSessionStatus {
+    sessionId: String!
+    paymentStatus: String!
+    status: String
+    customerEmail: String
+  }
+
   input CheckoutInput {
     productKey: String!
     email: String
@@ -11,5 +18,9 @@ export const stripeTypes = `#graphql
 
   extend type Mutation {
     createCheckoutSession(input: CheckoutInput!): StripeCheckoutSession!
+  }
+
+  extend type Query {
+    checkoutSessionStatus(sessionId: String!): StripeCheckoutSessionStatus!
   }
 `;

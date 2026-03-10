@@ -7,6 +7,7 @@ import { projectInputSchema, projectUpdateSchema } from './schemas/project.schem
 import { articleInputSchema, articleUpdateSchema } from './schemas/article.schema';
 import { chatbotInputSchema } from './schemas/chatbot.schema';
 import { screamInputSchema } from './schemas/scream.schema';
+import { CheckoutInputSchema } from './schemas/checkout.schema';
 
 // Authentication rules
 const isAuthenticated = rule({ cache: 'contextual' })(
@@ -68,6 +69,10 @@ const validateScreamInput = rule({ cache: 'no_cache' })(
   validateInput(screamInputSchema, 'input')
 );
 
+const validateCheckout = rule({ cache: 'no_cache' })(
+  validateInput(CheckoutInputSchema, 'input')
+);
+
 // Helper function to combine rules
 function and(...rules: any[]) {
   return rule({ cache: 'no_cache' })(async (parent: any, args: any, context: any, info: any) => {
@@ -94,6 +99,7 @@ export const permissions = shield(
       publishedArticles: allow,
       articlesByCategory: allow,
       articlesByTag: allow,
+      checkoutSessionStatus: allow,
       
       // Protected queries
       me: isAuthenticated,
@@ -104,7 +110,7 @@ export const permissions = shield(
       // Public mutations
       register: validateRegister,
       login: validateLogin,
-      createCheckoutSession: allow,
+      createCheckoutSession: validateCheckout,
       
       // Admin-only mutations
       createProject: and(isAdmin, validateProjectInput),

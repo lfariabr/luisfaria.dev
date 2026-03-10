@@ -10,6 +10,25 @@ import type {
 } from '@/lib/graphql/types/stripe.types';
 import { trackClientEvent } from '@/utils/analytics';
 
+function getCheckoutErrorMessage(error: unknown): string {
+  if (!error || typeof error !== 'object') {
+    return 'Unable to start checkout. Please try again.';
+  }
+
+  const apolloLikeError = error as {
+    graphQLErrors?: Array<{ message?: string }>;
+    networkError?: { message?: string };
+    message?: string;
+  };
+
+  return (
+    apolloLikeError.graphQLErrors?.[0]?.message ||
+    apolloLikeError.networkError?.message ||
+    apolloLikeError.message ||
+    'Unable to start checkout. Please try again.'
+  );
+}
+
 export function useStripeCheckout() {
   const [createSession, { loading }] = useMutation<
     CreateCheckoutSessionData,
@@ -35,12 +54,15 @@ export function useStripeCheckout() {
       }
 
       window.location.assign(url);
+      return true;
     } catch (error) {
+      const errorMessage = getCheckoutErrorMessage(error);
       trackClientEvent('stripe_checkout_error', {
         productKey,
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: errorMessage,
       });
-      toast.error('Unable to start checkout. Please try again.');
+      toast.error(errorMessage);
+      return false;
     }
   };
 

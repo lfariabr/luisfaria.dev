@@ -62,3 +62,14 @@ export const PROJECTS_QUERY = `
     }
   }
 `;
+
+export const CHECKOUT_SESSION_STATUS_QUERY = `
+  query CheckoutSessionStatus($sessionId: String!) {
+    checkoutSessionStatus(sessionId: $sessionId) {
+      sessionId
+      paymentStatus
+      status
+      customerEmail
+    }
+  }
+`;

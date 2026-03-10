@@ -5,6 +5,7 @@ import { StripeFab } from "@/components/stripe/StripeFab";
 
 const mockStartCheckout = jest.fn();
 const mockTrackClientEvent = jest.fn();
+const mockToastError = jest.fn();
 
 jest.mock("@/lib/hooks/useStripeCheckout", () => ({
   useStripeCheckout: () => ({
@@ -15,6 +16,12 @@ jest.mock("@/lib/hooks/useStripeCheckout", () => ({
 
 jest.mock("@/utils/analytics", () => ({
   trackClientEvent: (...args: unknown[]) => mockTrackClientEvent(...args),
+}));
+
+jest.mock("sonner", () => ({
+  toast: {
+    error: (...args: unknown[]) => mockToastError(...args),
+  },
 }));
 
 jest.mock("@/components/ui/tooltip", () => ({
@@ -38,6 +45,7 @@ describe("StripeFab", () => {
 
   it("opens dialog and starts checkout after selecting item", async () => {
     const user = userEvent.setup();
+    mockStartCheckout.mockResolvedValue(true);
     render(<StripeFab />);
 
     await user.click(
@@ -63,5 +71,22 @@ describe("StripeFab", () => {
     expect(mockTrackClientEvent).toHaveBeenCalledWith("stripe_item_selected", {
       productKey: "coffee",
     });
+  });
+
+  it("rejects invalid email before starting checkout", async () => {
+    const user = userEvent.setup();
+    render(<StripeFab />);
+
+    await user.click(
+      screen.getByRole("button", { name: /open support checkout options/i })
+    );
+    await user.click(screen.getByRole("button", { name: /buy me a coffee/i }));
+    await user.type(screen.getByLabelText(/email \(optional\)/i), "bad-email");
+    await user.click(screen.getByRole("button", { name: /continue to secure checkout/i }));
+
+    expect(mockStartCheckout).not.toHaveBeenCalled();
+    expect(mockToastError).toHaveBeenCalledWith(
+      "Enter a valid email or leave the field blank."
+    );
   });
 });

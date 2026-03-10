@@ -1,8 +1,17 @@
-import { createCheckoutSession, type StripeProductKey } from '../../services/stripe';
-import { Errors } from '../../utils/errors';
-import { logger } from '../../utils/logger';
+import {
+  createCheckoutSession,
+  isStripeServiceError,
+  mapStripeErrorCode,
+  type StripeProductKey,
+} from '../../services/stripe';
+import { createErrorHandler, Errors } from '../../utils/errors';
 
 const ALLOWED_PRODUCT_KEYS: StripeProductKey[] = ['coffee', 'meeting'];
+const withStripeErrorHandling = createErrorHandler(
+  mapStripeErrorCode,
+  isStripeServiceError,
+  'Unable to start checkout'
+);
 
 interface CheckoutInput {
   input: {
@@ -19,18 +28,13 @@ export const stripeMutations = {
       throw Errors.badInput('Invalid product key. Expected: coffee or meeting');
     }
 
-    try {
-      return await createCheckoutSession({
-        productKey: normalizedKey as StripeProductKey,
-        email: input.email?.trim() || undefined,
-      });
-    } catch (error) {
-      logger.error('Failed to create Stripe checkout session', {
-        resolver: 'createCheckoutSession',
-        productKey: normalizedKey,
-        error: String(error),
-      });
-      throw Errors.internal('Unable to start checkout');
-    }
+    return withStripeErrorHandling(
+      () =>
+        createCheckoutSession({
+          productKey: normalizedKey as StripeProductKey,
+          email: input.email,
+        }),
+      'createCheckoutSession'
+    );
   },
 };

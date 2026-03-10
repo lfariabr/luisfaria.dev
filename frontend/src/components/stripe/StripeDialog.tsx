@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { useStripeCheckout } from "@/lib/hooks/useStripeCheckout";
 import type { StripeProductKey } from "@/lib/graphql/types/stripe.types";
 import { trackClientEvent } from "@/utils/analytics";
+import { toast } from "sonner";
 
 export type StripeDialogProps = {
   open: boolean;
@@ -46,12 +47,14 @@ const PRODUCT_OPTIONS: Array<{
 export function StripeDialog({ open, onOpenChange }: StripeDialogProps) {
   const [selected, setSelected] = React.useState<StripeProductKey | null>(null);
   const [email, setEmail] = React.useState("");
+  const [isRedirecting, setIsRedirecting] = React.useState(false);
   const { startCheckout, loading } = useStripeCheckout();
 
   React.useEffect(() => {
     if (!open) {
       setSelected(null);
       setEmail("");
+      setIsRedirecting(false);
     }
   }, [open]);
 
@@ -61,8 +64,22 @@ export function StripeDialog({ open, onOpenChange }: StripeDialogProps) {
   };
 
   const handleContinue = async () => {
-    if (!selected || loading) return;
-    await startCheckout(selected, email);
+    if (!selected || loading || isRedirecting) return;
+
+    const trimmedEmail = email.trim();
+    if (trimmedEmail) {
+      const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail);
+      if (!isValidEmail) {
+        toast.error("Enter a valid email or leave the field blank.");
+        return;
+      }
+    }
+
+    setIsRedirecting(true);
+    const didStartRedirect = await startCheckout(selected, trimmedEmail);
+    if (!didStartRedirect) {
+      setIsRedirecting(false);
+    }
   };
 
   return (
@@ -146,10 +163,10 @@ export function StripeDialog({ open, onOpenChange }: StripeDialogProps) {
 
           <Button
             onClick={handleContinue}
-            disabled={!selected || loading}
+            disabled={!selected || loading || isRedirecting}
             className="mt-6 w-full rounded-xl bg-amber-500 text-zinc-950 hover:bg-amber-400 disabled:opacity-60"
           >
-            {loading ? "Redirecting..." : "Continue to secure checkout"}
+            {loading || isRedirecting ? "Redirecting..." : "Continue to secure checkout"}
           </Button>
         </div>
       </DialogContent>

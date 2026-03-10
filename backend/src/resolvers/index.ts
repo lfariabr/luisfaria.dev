@@ -11,6 +11,7 @@ import { screamMutations } from './screams/mutations';
 import { sendGogginsEmailMutation } from './resend/mutations';
 import { ApodQueries } from './apod/queries';
 import { stripeMutations } from './stripe/mutations';
+import { stripeQueries } from './stripe/queries';
 import Project from '../models/Project';
 import { slugify } from '../utils/slugUtils';
 import type { ApodResponse } from '../services/apod/';
@@ -24,6 +25,7 @@ export const resolvers = {
     ...rateTestQueries,
     ...chatbotQueries,
     ...ApodQueries,
+    ...stripeQueries,
   },
   
   Mutation: {

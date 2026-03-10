@@ -4,6 +4,7 @@ import { ApolloProvider } from "@/lib/apollo/ApolloProvider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/lib/auth/AuthContext";
 import { Toaster } from "@/components/ui/toaster";
+import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import { defaultMetadata } from "./metadata";
 import { GogginsFab } from "@/components/goggins/GogginsFab";
@@ -33,6 +34,7 @@ export default function RootLayout({
               <GoogleAnalytics />
               {children}
               <Toaster />
+              <SonnerToaster />
               {/* <GogginsFab /> */}
               <StripeFab />
               <ApodFab />
