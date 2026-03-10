@@ -25,12 +25,10 @@ jest.mock('../../services/cache/apodCache', () => ({
 }));
 
 // Mock logger to capture log calls
-const mockLoggerInfo = jest.fn();
-const mockLoggerWarn = jest.fn();
 jest.mock('../../utils/logger', () => ({
   logger: {
-    info: (...args: unknown[]) => mockLoggerInfo(...args),
-    warn: (...args: unknown[]) => mockLoggerWarn(...args),
+    info: jest.fn(),
+    warn: jest.fn(),
     error: jest.fn(),
     debug: jest.fn(),
   },
@@ -38,6 +36,8 @@ jest.mock('../../utils/logger', () => ({
 
 const { fetchApod } = require('../../services/apod/');
 const { apodCache } = require('../../services/cache/apodCache');
+const { logger } = require('../../utils/logger');
+const mockLoggerInfo = logger.info as jest.Mock;
 
 // GraphQL queries
 const GET_TODAYS_APOD = `
