@@ -99,6 +99,10 @@ jobs:
           RATE_LIMIT_ANONYMOUS_REQUESTS: 5
           RESEND_API_KEY: test-resend-key
           NASA_API_KEY: test-nasa-key
+          STRIPE_SECRET_KEY: test-stripe-key
+          STRIPE_WEBHOOK_SECRET: test-stripe-webhook-secret
+          STRIPE_COFFEE_PRICE_ID: price_test_coffee
+          STRIPE_MEETING_PRICE_ID: price_test_meeting
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
