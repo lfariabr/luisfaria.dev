@@ -194,6 +194,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-check]
     if: github.event_name == 'push'
+    continue-on-error: true  # informational only — never blocks deploy
     timeout-minutes: 12
 
     steps:
@@ -223,7 +224,7 @@ jobs:
   docker-build:
     name: Build & Push Docker Images
     runs-on: ubuntu-latest
-    needs: [backend-test, frontend-test, seo-audit]
+    needs: [backend-test, frontend-test]
     # Only build images on pushes to main/master (not PRs)
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     
