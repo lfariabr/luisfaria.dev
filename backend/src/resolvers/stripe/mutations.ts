@@ -18,6 +18,7 @@ interface CheckoutInput {
   input: {
     productKey: string;
     email?: string;
+    returnUrl?: string;
   };
 }
 
@@ -35,6 +36,7 @@ export const stripeMutations = {
         createCheckoutSession({
           productKey: normalizedKey as StripeProductKey,
           email: input.email,
+          returnUrl: input.returnUrl,
         }),
       'createCheckoutSession'
     );

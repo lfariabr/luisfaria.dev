@@ -10,6 +10,7 @@ export const CheckoutInputSchema = z.object({
     },
     z.string().email('Invalid email address').optional()
   ),
+  returnUrl: z.string().url('Invalid return URL').optional(),
 });
 
 export type CheckoutInput = z.infer<typeof CheckoutInputSchema>;

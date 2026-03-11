@@ -18,6 +18,7 @@ export const stripeTypes = `#graphql
   input CheckoutInput {
     productKey: ProductKey!
     email: String
+    returnUrl: String
   }
 
   extend type Mutation {
