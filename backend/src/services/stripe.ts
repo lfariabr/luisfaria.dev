@@ -135,7 +135,7 @@ export async function createCheckoutSession({
   }
 
   const safeReturnUrl = isSameOrigin(returnUrl) ? returnUrl : undefined;
-  const cancelUrl = safeReturnUrl ?? `${config.frontendUrl}/payment/cancel`;
+  const cancelUrl = `${config.frontendUrl}/payment/cancel`;
   const successUrl = safeReturnUrl
     ? `${config.frontendUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}&return_to=${encodeURIComponent(safeReturnUrl)}`
     : `${config.frontendUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`;
