@@ -1,15 +1,4 @@
 import { z } from 'zod';
-import config from '../../config/config';
-
-const isAllowedReturnUrlOrigin = (url: string): boolean => {
-  try {
-    const parsed = new URL(url);
-    const allowed = new URL(config.frontendUrl);
-    return parsed.origin === allowed.origin;
-  } catch {
-    return false;
-  }
-};
 
 export const CheckoutInputSchema = z.object({
   productKey: z.enum(['coffee', 'meeting']),
@@ -21,11 +10,7 @@ export const CheckoutInputSchema = z.object({
     },
     z.string().email('Invalid email address').optional()
   ),
-  returnUrl: z
-    .string()
-    .url('Invalid return URL')
-    .refine(isAllowedReturnUrlOrigin, { message: 'Return URL must match frontend origin' })
-    .optional(),
+  returnUrl: z.string().url('Invalid return URL').optional(),
 });
 
 export type CheckoutInput = z.infer<typeof CheckoutInputSchema>;
