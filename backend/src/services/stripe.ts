@@ -78,6 +78,17 @@ function normalizeEmail(email?: string): string | undefined {
   return trimmedEmail ? trimmedEmail : undefined;
 }
 
+function isSameOrigin(url: string | undefined): boolean {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    const allowed = new URL(config.frontendUrl);
+    return parsed.origin === allowed.origin;
+  } catch {
+    return false;
+  }
+}
+
 export async function createCheckoutSession({
   productKey,
   email,
@@ -109,9 +120,10 @@ export async function createCheckoutSession({
   }
 
   const customerEmail = normalizeEmail(email);
-  const cancelUrl = returnUrl ?? `${config.frontendUrl}/payment/cancel`;
-  const successUrl = returnUrl
-    ? `${config.frontendUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}&return_to=${encodeURIComponent(returnUrl)}`
+  const safeReturnUrl = isSameOrigin(returnUrl) ? returnUrl : undefined;
+  const cancelUrl = safeReturnUrl ?? `${config.frontendUrl}/payment/cancel`;
+  const successUrl = safeReturnUrl
+    ? `${config.frontendUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}&return_to=${encodeURIComponent(safeReturnUrl)}`
     : `${config.frontendUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`;
 
   try {

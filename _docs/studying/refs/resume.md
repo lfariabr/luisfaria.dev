@@ -53,27 +53,27 @@ Managed Paid Media, CRM, Landing Page, Websites, Apps, SEO, Social Media project
 Coordinated squads (3) using Agile and OKR frameworks
 
 # PROJECTS
-## luisfaria.dev Portfolio (github / website)
+## luisfaria.dev Portfolio (GitHub / website)
 Stack: Next.js · Node.js · TypeScript · GraphQL · MongoDB · Redis · OpenAI · Docker · GitHub Actions
 Full-stack portfolio with AI chatbot, NASA APOD integration, Stripe payments, httpOnly JWT auth,
 and a CI/CD pipeline (GitHub Actions → GHCR → DigitalOcean). Includes Sentry observability,
 Redis rate limiting (Lua), SSR SEO with JSON-LD structured data, and 192+ automated tests.
 
-## myRoster — Shift Automation Tool (github / website)
+## myRoster — Shift Automation Tool (GitHub / website)
 Stack: Python · Streamlit · Pandas · Gmail SMTP (GCP)
 Reduced shift availability submission from 15–20 minutes to 2 minutes for HR teams.
 Automated roster period calculation, CSV export, and email delivery. 90% time reduction.
 
-## Invoice Ledger Analytics (github / website)
+## Invoice Ledger Analytics (GitHub / website)
 Stack: Python · Streamlit · Pandas · openpyxl
 Interactive analytics dashboard for building management invoice data (4+ years of records).
 Replaced manual Excel pivot tables with self-service filtering, contractor heatmaps, and
 monthly trend charts. 80% faster than previous workflow.
 
-## Masters’ Degree in SWE & AI (github)
+## Masters’ Degree in SWE & AI (GitHub)
 7+ projects implemented and mapped on this Open Source repo, documenting my Master's degree SWE/AI. Notes, projects, insights & experiments in AI/ML, software dev & beyond. Apps in Python, C#, Typescript, Javascript. Term 2 of 8 to go.
 
-## Wedstack – Wedding Invitation Web App (github / website / dev.to)
+## Wedstack – Wedding Invitation Web App (GitHub / website / dev.to)
 Stack: Next.js · Node.js · TypeScript · GraphQL · MongoDB · Stripe · shadcn/ui
 Built a modern wedding invitation platform with real-time RSVP, guestbook, multilingual support (PT/EN), and a Stripe-powered gift store (Apple Pay, PayID, Pix). Designed playful and dynamic UI/UX with soft animations, SVG backgrounds and responsive layouts. End-to-end ownership, from design to deployment.
 

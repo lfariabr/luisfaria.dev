@@ -26,10 +26,24 @@ interface CheckoutSessionStatusData {
   };
 }
 
+function sanitizeReturnUrl(url: string | undefined): string | undefined {
+  if (!url) return undefined;
+  if (url.startsWith('/')) return url;
+  try {
+    const parsed = new URL(url);
+    const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000';
+    const allowed = new URL(frontendUrl);
+    if (parsed.origin === allowed.origin) return url;
+  } catch {
+    // fall through
+  }
+  return undefined;
+}
+
 export default async function PaymentSuccessPage({ searchParams }: SuccessPageProps) {
   const params = await searchParams;
   const sessionId = params?.session_id;
-  const returnTo = params?.return_to;
+  const returnTo = sanitizeReturnUrl(params?.return_to);
   let sessionStatus: CheckoutSessionStatusData["checkoutSessionStatus"] | null = null;
 
   if (sessionId) {
