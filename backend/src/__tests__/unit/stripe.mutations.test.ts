@@ -8,6 +8,7 @@ jest.mock('../../services/stripe', () => ({
   mapStripeErrorCode: (code: string) => {
     if (code === 'SESSION_NOT_FOUND') return 'NOT_FOUND';
     if (code === 'NOT_CONFIGURED' || code === 'MISSING_PRICE') return 'SERVICE_UNAVAILABLE';
+    if (code === 'INVALID_RETURN_URL') return 'BAD_USER_INPUT';
     return 'INTERNAL_SERVER_ERROR';
   },
 }));
@@ -33,6 +34,7 @@ describe('stripeMutations.createCheckoutSession', () => {
     expect(createCheckoutSession).toHaveBeenCalledWith({
       productKey: 'coffee',
       email: 'test@email.com',
+      returnUrl: undefined,
     });
     expect(result).toEqual({
       sessionId: 'cs_test_1',
@@ -117,6 +119,75 @@ describe('stripeQueries.checkoutSessionStatus', () => {
       extensions: {
         code: 'NOT_FOUND',
       },
+    });
+  });
+});
+
+describe('stripeMutations.createCheckoutSession — meeting product', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('creates a checkout session for the meeting product', async () => {
+    createCheckoutSession.mockResolvedValue({
+      sessionId: 'cs_test_meeting_1',
+      url: 'https://checkout.stripe.com/c/pay/cs_test_meeting_1',
+    });
+
+    const result = await stripeMutations.createCheckoutSession(
+      {},
+      { input: { productKey: 'meeting', email: 'user@example.com' } }
+    );
+
+    expect(createCheckoutSession).toHaveBeenCalledWith({
+      productKey: 'meeting',
+      email: 'user@example.com',
+      returnUrl: undefined,
+    });
+    expect(result).toEqual({
+      sessionId: 'cs_test_meeting_1',
+      url: 'https://checkout.stripe.com/c/pay/cs_test_meeting_1',
+    });
+  });
+});
+
+describe('stripeMutations.createCheckoutSession — returnUrl', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('passes returnUrl through to the service', async () => {
+    createCheckoutSession.mockResolvedValue({
+      sessionId: 'cs_test_2',
+      url: 'https://checkout.stripe.com/c/pay/cs_test_2',
+    });
+
+    await stripeMutations.createCheckoutSession(
+      {},
+      { input: { productKey: 'coffee', returnUrl: 'https://luisfaria.dev/projects' } }
+    );
+
+    expect(createCheckoutSession).toHaveBeenCalledWith(
+      expect.objectContaining({ returnUrl: 'https://luisfaria.dev/projects' })
+    );
+  });
+
+  it('maps INVALID_RETURN_URL service error to BAD_USER_INPUT', async () => {
+    createCheckoutSession.mockRejectedValue(
+      Object.assign(new Error('Return URL must belong to the frontend origin'), {
+        code: 'INVALID_RETURN_URL',
+        statusCode: 400,
+        details: { returnUrl: 'https://evil.com' },
+      })
+    );
+
+    await expect(
+      stripeMutations.createCheckoutSession(
+        {},
+        { input: { productKey: 'coffee', returnUrl: 'https://evil.com' } }
+      )
+    ).rejects.toMatchObject({
+      extensions: { code: 'BAD_USER_INPUT' },
     });
   });
 });
