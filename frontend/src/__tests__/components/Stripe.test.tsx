@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { StripeFab } from "@/components/stripe/StripeFab";
 
@@ -7,10 +7,12 @@ const mockStartCheckout = jest.fn();
 const mockTrackClientEvent = jest.fn();
 const mockToastError = jest.fn();
 
+let mockLoading = false;
+
 jest.mock("@/lib/hooks/useStripeCheckout", () => ({
   useStripeCheckout: () => ({
     startCheckout: (...args: unknown[]) => mockStartCheckout(...args),
-    loading: false,
+    loading: mockLoading,
   }),
 }));
 
@@ -32,6 +34,10 @@ jest.mock("@/components/ui/tooltip", () => ({
 }));
 
 describe("StripeFab", () => {
+  beforeEach(() => {
+    mockLoading = false;
+  });
+
   afterEach(() => {
     jest.clearAllMocks();
   });
@@ -88,5 +94,61 @@ describe("StripeFab", () => {
     expect(mockToastError).toHaveBeenCalledWith(
       "Enter a valid email or leave the field blank."
     );
+  });
+
+  it("selects meeting product and calls startCheckout with 'meeting'", async () => {
+    const user = userEvent.setup();
+    mockStartCheckout.mockResolvedValue({ ok: true });
+    render(<StripeFab />);
+
+    await user.click(
+      screen.getByRole("button", { name: /open support checkout options/i })
+    );
+    await user.click(screen.getByRole("button", { name: /book a meeting/i }));
+
+    const continueButton = screen.getByRole("button", {
+      name: /continue to secure checkout/i,
+    });
+    expect(continueButton).toBeEnabled();
+
+    await user.click(continueButton);
+    expect(mockStartCheckout).toHaveBeenCalledWith("meeting", "");
+  });
+
+  it("shows error alert when checkout fails", async () => {
+    const user = userEvent.setup();
+    mockStartCheckout.mockResolvedValue({
+      ok: false,
+      errorMessage: "Service unavailable",
+    });
+    render(<StripeFab />);
+
+    await user.click(
+      screen.getByRole("button", { name: /open support checkout options/i })
+    );
+    await user.click(screen.getByRole("button", { name: /buy me a coffee/i }));
+    await user.click(
+      screen.getByRole("button", { name: /continue to secure checkout/i })
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/service unavailable/i)).toBeInTheDocument();
+    });
+  });
+
+  it("disables continue button when loading", async () => {
+    const user = userEvent.setup();
+    mockLoading = true;
+    render(<StripeFab />);
+
+    await user.click(
+      screen.getByRole("button", { name: /open support checkout options/i })
+    );
+    await user.click(screen.getByRole("button", { name: /buy me a coffee/i }));
+
+    const continueButton = screen.getByRole("button", {
+      name: /redirecting/i,
+    });
+    expect(continueButton).toBeDisabled();
   });
 });
