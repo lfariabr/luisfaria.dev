@@ -122,18 +122,22 @@ export async function createCheckoutSession({
   const customerEmail = normalizeEmail(email);
 
   if (returnUrl !== undefined && !isSameOrigin(returnUrl)) {
-    logger.warn('createCheckoutSession rejected: returnUrl origin does not match frontend', { returnUrl });
-    throw new StripeServiceError(
-      'INVALID_RETURN_URL',
-      'Return URL must belong to the frontend origin',
-      400,
-      { returnUrl }
-    );
+    if (process.env.FRONTEND_URL) {
+      logger.warn('createCheckoutSession rejected: returnUrl origin does not match FRONTEND_URL', { returnUrl });
+      throw new StripeServiceError(
+        'INVALID_RETURN_URL',
+        'Return URL must belong to the frontend origin',
+        400,
+        { returnUrl }
+      );
+    }
+    logger.warn('createCheckoutSession: FRONTEND_URL not configured — skipping returnUrl origin check. Set FRONTEND_URL in production to enforce origin validation.', { returnUrl });
   }
 
-  const cancelUrl = returnUrl ?? `${config.frontendUrl}/payment/cancel`;
-  const successUrl = returnUrl
-    ? `${config.frontendUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}&return_to=${encodeURIComponent(returnUrl)}`
+  const safeReturnUrl = isSameOrigin(returnUrl) ? returnUrl : undefined;
+  const cancelUrl = safeReturnUrl ?? `${config.frontendUrl}/payment/cancel`;
+  const successUrl = safeReturnUrl
+    ? `${config.frontendUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}&return_to=${encodeURIComponent(safeReturnUrl)}`
     : `${config.frontendUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`;
 
   try {
