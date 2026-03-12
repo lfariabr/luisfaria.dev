@@ -1,6 +1,7 @@
 import React from 'react';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { MockedProvider, MockedResponse } from '@apollo/client/testing';
+import { GraphQLError } from 'graphql';
 import { useStripeCheckout } from '@/lib/hooks/useStripeCheckout';
 import { CREATE_CHECKOUT_SESSION } from '@/lib/graphql/mutations/stripe.mutations';
 
@@ -80,7 +81,7 @@ const graphqlErrorMock: MockedResponse = {
     },
   },
   result: {
-    errors: [{ message: 'Return URL must belong to the frontend origin' } as any],
+    errors: [new GraphQLError('Return URL must belong to the frontend origin')],
   },
 };
 
@@ -234,7 +235,7 @@ describe('useStripeCheckout', () => {
     expect(mockLocationAssign).not.toHaveBeenCalled();
   });
 
-  it('tracks checkout_started event before mutation', async () => {
+  it('tracks stripe_checkout_started event when checkout starts', async () => {
     const { result } = renderHook(() => useStripeCheckout(), {
       wrapper: wrapper([successMock]),
     });

@@ -34,6 +34,7 @@ describe('stripeMutations.createCheckoutSession', () => {
     expect(createCheckoutSession).toHaveBeenCalledWith({
       productKey: 'coffee',
       email: 'test@email.com',
+      returnUrl: undefined,
     });
     expect(result).toEqual({
       sessionId: 'cs_test_1',
