@@ -13,5 +13,6 @@ export interface CreateCheckoutSessionVariables {
   input: {
     productKey: StripeProductKey;
     email?: string;
+    returnUrl?: string;
   };
 }

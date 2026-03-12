@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 };
 
 interface SuccessPageProps {
-  searchParams?: Promise<{ session_id?: string }>;
+  searchParams?: Promise<{ session_id?: string; return_to?: string }>;
 }
 
 interface CheckoutSessionStatusData {
@@ -26,9 +26,24 @@ interface CheckoutSessionStatusData {
   };
 }
 
+function sanitizeReturnUrl(url: string | undefined): string | undefined {
+  if (!url) return undefined;
+  if (url.startsWith('/')) return url;
+  try {
+    const parsed = new URL(url);
+    const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000';
+    const allowed = new URL(frontendUrl);
+    if (parsed.origin === allowed.origin) return url;
+  } catch {
+    // fall through
+  }
+  return undefined;
+}
+
 export default async function PaymentSuccessPage({ searchParams }: SuccessPageProps) {
   const params = await searchParams;
   const sessionId = params?.session_id;
+  const returnTo = sanitizeReturnUrl(params?.return_to);
   let sessionStatus: CheckoutSessionStatusData["checkoutSessionStatus"] | null = null;
 
   if (sessionId) {
@@ -84,7 +99,12 @@ export default async function PaymentSuccessPage({ searchParams }: SuccessPagePr
             </p>
           )}
           <div className="mt-8 flex flex-wrap gap-3">
-            <Button asChild className="rounded-full px-6">
+            {returnTo && (
+              <Button asChild className="rounded-full px-6">
+                <Link href={returnTo}>Return to page</Link>
+              </Button>
+            )}
+            <Button asChild variant={returnTo ? "outline" : "default"} className="rounded-full px-6">
               <Link href="/">Back to home</Link>
             </Button>
             <Button asChild variant="outline" className="rounded-full px-6">

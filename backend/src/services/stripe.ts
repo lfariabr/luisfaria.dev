@@ -54,6 +54,7 @@ export class StripeServiceError extends Error implements ServiceError {
 interface CreateCheckoutSessionInput {
   productKey: StripeProductKey;
   email?: string;
+  returnUrl?: string;
 }
 
 interface CheckoutSessionResult {
@@ -77,9 +78,21 @@ function normalizeEmail(email?: string): string | undefined {
   return trimmedEmail ? trimmedEmail : undefined;
 }
 
+function isSameOrigin(url: string | undefined): boolean {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    const allowed = new URL(config.frontendUrl);
+    return parsed.origin === allowed.origin;
+  } catch {
+    return false;
+  }
+}
+
 export async function createCheckoutSession({
   productKey,
   email,
+  returnUrl,
 }: CreateCheckoutSessionInput): Promise<CheckoutSessionResult> {
   if (config.nodeEnv === 'test') {
     return {
@@ -107,6 +120,11 @@ export async function createCheckoutSession({
   }
 
   const customerEmail = normalizeEmail(email);
+  const safeReturnUrl = isSameOrigin(returnUrl) ? returnUrl : undefined;
+  const cancelUrl = safeReturnUrl ?? `${config.frontendUrl}/payment/cancel`;
+  const successUrl = safeReturnUrl
+    ? `${config.frontendUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}&return_to=${encodeURIComponent(safeReturnUrl)}`
+    : `${config.frontendUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`;
 
   try {
     const session = await client.checkout.sessions.create({
@@ -117,8 +135,8 @@ export async function createCheckoutSession({
           quantity: 1,
         },
       ],
-      success_url: `${config.frontendUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${config.frontendUrl}/payment/cancel`,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
       customer_email: customerEmail,
       metadata: {
         productKey,

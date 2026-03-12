@@ -46,12 +46,15 @@ export function useStripeCheckout() {
   ): Promise<CheckoutStartResult> => {
     trackClientEvent('stripe_checkout_started', { productKey });
 
+    const returnUrl = typeof window !== 'undefined' ? window.location.href : undefined;
+
     try {
       const { data, errors } = await createSession({
         variables: {
           input: {
             productKey,
             email: email?.trim() || undefined,
+            returnUrl,
           },
         },
         errorPolicy: 'all',
