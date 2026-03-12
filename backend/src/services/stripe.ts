@@ -35,7 +35,7 @@ export interface StripeSessionStatus {
   customerEmail: string | null;
 }
 
-type StripeServiceErrorCode = 'NOT_CONFIGURED' | 'MISSING_PRICE' | 'SESSION_NOT_FOUND';
+type StripeServiceErrorCode = 'NOT_CONFIGURED' | 'MISSING_PRICE' | 'SESSION_NOT_FOUND' | 'INVALID_RETURN_URL';
 
 export class StripeServiceError extends Error implements ServiceError {
   code: StripeServiceErrorCode;
@@ -120,10 +120,20 @@ export async function createCheckoutSession({
   }
 
   const customerEmail = normalizeEmail(email);
-  const safeReturnUrl = isSameOrigin(returnUrl) ? returnUrl : undefined;
-  const cancelUrl = safeReturnUrl ?? `${config.frontendUrl}/payment/cancel`;
-  const successUrl = safeReturnUrl
-    ? `${config.frontendUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}&return_to=${encodeURIComponent(safeReturnUrl)}`
+
+  if (returnUrl !== undefined && !isSameOrigin(returnUrl)) {
+    logger.warn('createCheckoutSession rejected: returnUrl origin does not match frontend', { returnUrl });
+    throw new StripeServiceError(
+      'INVALID_RETURN_URL',
+      'Return URL must belong to the frontend origin',
+      400,
+      { returnUrl }
+    );
+  }
+
+  const cancelUrl = returnUrl ?? `${config.frontendUrl}/payment/cancel`;
+  const successUrl = returnUrl
+    ? `${config.frontendUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}&return_to=${encodeURIComponent(returnUrl)}`
     : `${config.frontendUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`;
 
   try {
@@ -208,6 +218,7 @@ export function mapStripeErrorCode(code: StripeServiceErrorCode): ErrorCode {
     NOT_CONFIGURED: ErrorCodes.SERVICE_UNAVAILABLE,
     MISSING_PRICE: ErrorCodes.SERVICE_UNAVAILABLE,
     SESSION_NOT_FOUND: ErrorCodes.NOT_FOUND,
+    INVALID_RETURN_URL: ErrorCodes.BAD_USER_INPUT,
   };
 
   return mapping[code] ?? ErrorCodes.INTERNAL_SERVER_ERROR;
