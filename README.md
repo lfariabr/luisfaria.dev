@@ -151,6 +151,42 @@ docker-compose up --build
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook signature secret *(reserved for phase 2)* |
 | `NEXT_PUBLIC_GRAPHQL_URL` | Frontend → API (defaults to `http://localhost:4000/graphql`) |
 
+### Stripe Local Setup
+
+The Stripe checkout flow requires a few one-time steps to run locally.
+
+**1. Get test API keys**
+
+Log in to the [Stripe Dashboard](https://dashboard.stripe.com) and toggle to **Test mode**.
+Navigate to [Developers → API keys](https://dashboard.stripe.com/test/apikeys) and copy the **Secret key** (`sk_test_...`).
+
+**2. Create test products and prices**
+
+Go to [Products](https://dashboard.stripe.com/test/products) in Test mode and create two products:
+
+| Product | Suggested price | `backend/.env` variable |
+|---|---|---|
+| Coffee | AUD 5 one-time | `STRIPE_COFFEE_PRICE_ID` |
+| Meeting | AUD 150 one-time | `STRIPE_MEETING_PRICE_ID` |
+
+After saving each product, copy its **Price ID** (`price_...`) into your `backend/.env`.
+
+**3. Set `FRONTEND_URL`**
+
+```bash
+# backend/.env
+FRONTEND_URL=http://localhost:3000   # no trailing slash
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_COFFEE_PRICE_ID=price_...
+STRIPE_MEETING_PRICE_ID=price_...
+```
+
+`FRONTEND_URL` is used to build the `cancel_url` and `success_url` sent to Stripe, so it must match the URL the frontend is actually running on. A trailing slash or extra path will cause redirect failures.
+
+**4. `STRIPE_WEBHOOK_SECRET` — Phase 2 (deferred)**
+
+Webhook fulfillment (persisting payment results to the database, sending confirmation emails) is planned for a future release. `STRIPE_WEBHOOK_SECRET` is wired into the config but **not required** to run the checkout flow today — leave it blank locally. When webhook support is added, create a webhook endpoint in the [Stripe Dashboard](https://dashboard.stripe.com/test/webhooks) pointing to `/api/stripe/webhook` and paste the signing secret into this variable.
+
 ---
 
 ## Testing
