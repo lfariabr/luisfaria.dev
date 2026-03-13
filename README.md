@@ -39,7 +39,8 @@ Browser ─── Next.js (SSR/CSR) ─── Apollo Client ─── GraphQL AP
                                        (data)     (cache/rate)    APIs
                                                                   ├─ OpenAI
                                                                   ├─ Resend
-                                                                  └─ NASA
+                                                                  ├─ NASA
+                                                                  └─ Stripe
 ```
 
 ```
@@ -61,6 +62,7 @@ luisfaria/
 | **Validation** | Zod schemas for all GraphQL inputs |
 | **Error Handling** | Shared error factories (`createErrorHandler`) with standardized codes |
 | **CI/CD** | GitHub Actions with parallel test suites, Docker, minimal-downtime deploys |
+| **Payments** | Stripe hosted checkout — origin-validated return URLs, `trackClientEvent` analytics, phase-2 webhook fulfillment planned |
 
 ---
 
@@ -211,8 +213,8 @@ cd backend && npx jest path/to/test.ts
 cd frontend && npx jest path/to/test.tsx
 ```
 
-**Backend**: Jest + ts-jest, MongoDB Memory Server, mocked external services (OpenAI, Resend, NASA)
-**Frontend**: Jest + React Testing Library + jsdom, Apollo Client mocks
+**Backend**: Jest + ts-jest, MongoDB Memory Server, mocked external services (OpenAI, Resend, NASA, Stripe)
+**Frontend**: Jest + React Testing Library + jsdom, Apollo Client mocks, `trackClientEvent` utility tested in isolation
 
 ---
 
