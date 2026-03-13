@@ -113,6 +113,9 @@ describe("StripeFab", () => {
 
     await user.click(continueButton);
     expect(mockStartCheckout).toHaveBeenCalledWith("meeting", "");
+    expect(mockTrackClientEvent).toHaveBeenCalledWith("stripe_item_selected", {
+      productKey: "meeting",
+    });
   });
 
   it("shows error alert when checkout fails", async () => {

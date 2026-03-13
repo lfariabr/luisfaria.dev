@@ -39,7 +39,8 @@ Browser ─── Next.js (SSR/CSR) ─── Apollo Client ─── GraphQL AP
                                        (data)     (cache/rate)    APIs
                                                                   ├─ OpenAI
                                                                   ├─ Resend
-                                                                  └─ NASA
+                                                                  ├─ NASA
+                                                                  └─ Stripe
 ```
 
 ```
@@ -61,6 +62,7 @@ luisfaria/
 | **Validation** | Zod schemas for all GraphQL inputs |
 | **Error Handling** | Shared error factories (`createErrorHandler`) with standardized codes |
 | **CI/CD** | GitHub Actions with parallel test suites, Docker, minimal-downtime deploys |
+| **Payments** | Stripe hosted checkout — origin-validated return URLs, `trackClientEvent` analytics, phase-2 webhook fulfillment planned |
 
 ---
 
@@ -71,7 +73,7 @@ luisfaria/
 | **Frontend** | Next.js 14+, React 19, TypeScript, Apollo Client, TailwindCSS 4, shadcn/ui |
 | **Backend** | Node.js, Express, Apollo Server 5, GraphQL, Mongoose |
 | **Data** | MongoDB, Redis |
-| **Integrations** | OpenAI (chatbot), Resend (email), NASA API (APOD) |
+| **Integrations** | OpenAI (chatbot), Resend (email), NASA API (APOD), Stripe (payments) |
 | **Infrastructure** | Docker, GitHub Actions, Vercel |
 | **Testing** | Jest, React Testing Library, MongoDB Memory Server |
 
@@ -95,7 +97,9 @@ luisfaria/
 | v2.5 | Error Infrastructure | Shared GraphQL error handling with standardized codes |
 | v2.6 | CI/CD | GitHub Actions pipeline, Docker, minimal-downtime deployment |
 | v2.7 | Sentry Integration | Error tracking with source maps and release management |
+| v2.9 | Chatbot Knowledge Upgrade | Enriched AI knowledge base (20 articles), structured system prompt, career timeline |
 | ~~v3.0~~ | ~~Resend Integration~~ | ~~Transactional emails~~ |
+| v3.1 | Stripe Payments | Coffee & meeting checkout via Stripe — APOD-style FAB, hosted checkout, success/cancel pages |
 
 ---
 
@@ -209,8 +213,8 @@ cd backend && npx jest path/to/test.ts
 cd frontend && npx jest path/to/test.tsx
 ```
 
-**Backend**: Jest + ts-jest, MongoDB Memory Server, mocked external services (OpenAI, Resend, NASA)
-**Frontend**: Jest + React Testing Library + jsdom, Apollo Client mocks
+**Backend**: Jest + ts-jest, MongoDB Memory Server, mocked external services (OpenAI, Resend, NASA, Stripe)
+**Frontend**: Jest + React Testing Library + jsdom, Apollo Client mocks, `trackClientEvent` utility tested in isolation
 
 ---
 

@@ -249,7 +249,7 @@ describe('useStripeCheckout', () => {
     });
   });
 
-  it('tracks checkout_error event on failure', async () => {
+  it('tracks stripe_checkout_error event on failure', async () => {
     const { result } = renderHook(() => useStripeCheckout(), {
       wrapper: wrapper([graphqlErrorMock]),
     });
