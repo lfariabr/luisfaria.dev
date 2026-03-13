@@ -71,7 +71,7 @@ luisfaria/
 | **Frontend** | Next.js 14+, React 19, TypeScript, Apollo Client, TailwindCSS 4, shadcn/ui |
 | **Backend** | Node.js, Express, Apollo Server 5, GraphQL, Mongoose |
 | **Data** | MongoDB, Redis |
-| **Integrations** | OpenAI (chatbot), Resend (email), NASA API (APOD) |
+| **Integrations** | OpenAI (chatbot), Resend (email), NASA API (APOD), Stripe (payments) |
 | **Infrastructure** | Docker, GitHub Actions, Vercel |
 | **Testing** | Jest, React Testing Library, MongoDB Memory Server |
 
@@ -95,7 +95,9 @@ luisfaria/
 | v2.5 | Error Infrastructure | Shared GraphQL error handling with standardized codes |
 | v2.6 | CI/CD | GitHub Actions pipeline, Docker, minimal-downtime deployment |
 | v2.7 | Sentry Integration | Error tracking with source maps and release management |
+| v2.9 | Chatbot Knowledge Upgrade | Enriched AI knowledge base (20 articles), structured system prompt, career timeline |
 | ~~v3.0~~ | ~~Resend Integration~~ | ~~Transactional emails~~ |
+| v3.1 | Stripe Payments | Coffee & meeting checkout via Stripe — APOD-style FAB, hosted checkout, success/cancel pages |
 
 ---
 
