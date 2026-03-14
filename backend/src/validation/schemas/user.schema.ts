@@ -12,6 +12,7 @@ export const registerSchema = z.object({
     passwordRegex,
     'Password must be at least 4 characters, include uppercase, lowercase, number and special character'
   ),
+  captchaToken: z.string().min(1, 'Captcha token is required'),
 });
 
 // Login input validation

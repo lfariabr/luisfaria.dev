@@ -55,7 +55,8 @@ describe('Auth Resolvers', () => {
         input: {
           name: 'Test User',
           email: 'test@example.com',
-          password: 'Test1234!'
+          password: 'Test1234!',
+          captchaToken: 'test-turnstile-pass',
         }
       };
 
@@ -93,7 +94,8 @@ describe('Auth Resolvers', () => {
         input: {
           name: 'Test User',
           email: 'invalid-email',
-          password: 'Test1234!'
+          password: 'Test1234!',
+          captchaToken: 'test-turnstile-pass',
         }
       };
 
@@ -105,6 +107,26 @@ describe('Auth Resolvers', () => {
         expect(response.body.singleResult.errors).toBeTruthy();
         const errorMessage = response.body.singleResult.errors?.[0].message;
         expect(errorMessage).toContain('Permission denied');
+      }
+    });
+
+    it('should fail when captcha token is invalid', async () => {
+      const variables = {
+        input: {
+          name: 'Test User',
+          email: 'captcha-fail@example.com',
+          password: 'Test1234!',
+          captchaToken: 'invalid-token',
+        }
+      };
+
+      const response = await executeOperation(REGISTER_MUTATION, variables);
+      expect(response.body.kind).toBe('single');
+
+      if (response.body.kind === 'single') {
+        expect(response.body.singleResult.errors).toBeTruthy();
+        const errorMessage = response.body.singleResult.errors?.[0].message;
+        expect(errorMessage).toContain('Captcha verification failed');
       }
     });
   });

@@ -2,14 +2,30 @@ import User, { UserRole } from '../../models/User';
 import { AUTH_COOKIE_BASE_OPTIONS, AUTH_COOKIE_MAX_AGE } from '../../utils/authUtils';
 import { Errors } from '../../utils/errors';
 import { logger } from '../../utils/logger';
+import { rateLimiter } from '../../services/rateLimiter';
+import { verifyTurnstileToken } from '../../services/turnstile';
 
 export const userMutations = {
   // Register a new user
   register: async (_: any, { input }: any, context: any) => {
-    const { name, email, password } = input;
+    const { name, email, password, captchaToken } = input;
+    const normalizedEmail = email.trim().toLowerCase();
+    const clientIp = context?.clientIp || 'unknown';
+
+    const ipRateLimit = await rateLimiter.limit(`register:${clientIp}`, 5, 3600);
+    if (!ipRateLimit.success) {
+      throw Errors.badInput('Too many registration attempts. Please try again later.');
+    }
+
+    const emailRateLimit = await rateLimiter.limit(`register-email:${normalizedEmail}`, 3, 3600);
+    if (!emailRateLimit.success) {
+      throw Errors.badInput('Too many registration attempts. Please try again later.');
+    }
+
+    await verifyTurnstileToken(captchaToken, clientIp);
     
     // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
       throw Errors.badInput('Email already in use');
     }
@@ -17,7 +33,7 @@ export const userMutations = {
     // Create new user
     const user = new User({
       name,
-      email,
+      email: normalizedEmail,
       password,
       role: UserRole.USER, // Use enum value
     });

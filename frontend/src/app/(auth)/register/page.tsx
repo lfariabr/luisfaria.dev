@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import Script from 'next/script';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,14 +13,51 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { sendDiscordWebhook } from '@/utils/discord';
 import { logger } from '@/lib/logger';
 
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (
+        container: string | HTMLElement,
+        options: {
+          sitekey: string;
+          callback: (token: string) => void;
+          'expired-callback'?: () => void;
+          'error-callback'?: () => void;
+        }
+      ) => string;
+    };
+  }
+}
+
 export default function RegisterPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
-  
+  const turnstileContainerRef = useRef<HTMLDivElement | null>(null);
+  const turnstileWidgetRef = useRef<string | null>(null);
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+
   const { register, loading, error } = useAuth();
+
+  const renderTurnstileWidget = useCallback(() => {
+    if (!turnstileSiteKey || !window.turnstile || !turnstileContainerRef.current || turnstileWidgetRef.current) {
+      return;
+    }
+
+    turnstileWidgetRef.current = window.turnstile.render(turnstileContainerRef.current, {
+      sitekey: turnstileSiteKey,
+      callback: (token: string) => setCaptchaToken(token),
+      'expired-callback': () => setCaptchaToken(null),
+      'error-callback': () => setCaptchaToken(null),
+    });
+  }, [turnstileSiteKey]);
+
+  useEffect(() => {
+    renderTurnstileWidget();
+  }, [renderTurnstileWidget]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,16 +82,34 @@ export default function RegisterPage() {
       setFormError('Password must include at least 1x uppercase letter, 1x lowercase letter, 1x number and 1x special character (@$!%*?&)');
       return;
     }
+
+    if (!turnstileSiteKey) {
+      setFormError('Registration security is not configured. Please try again later.');
+      return;
+    }
+
+    if (!captchaToken) {
+      setFormError('Please complete captcha verification.');
+      return;
+    }
     
     await register({
       name,
       email,
       password,
+      captchaToken,
     });
   };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
+      {turnstileSiteKey && (
+        <Script
+          src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+          strategy="afterInteractive"
+          onLoad={renderTurnstileWidget}
+        />
+      )}
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
@@ -116,6 +172,17 @@ export default function RegisterPage() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
               />
+            </div>
+
+            <div className="space-y-2 mb-2">
+              <Label>Security verification</Label>
+              {turnstileSiteKey ? (
+                <div ref={turnstileContainerRef} data-testid="turnstile-container" />
+              ) : (
+                <p className="text-xs text-destructive">
+                  Registration protection is unavailable at the moment.
+                </p>
+              )}
             </div>
           </CardContent>
           

@@ -20,6 +20,7 @@ interface Config {
     stripeWebhookSecret: string;
     stripeCoffeePriceId: string;
     stripeMeetingPriceId: string;
+    turnstileSecretKey: string;
 }
 
 // Validate required environment variables
@@ -59,6 +60,7 @@ const config: Config = {
     stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
     stripeCoffeePriceId: process.env.STRIPE_COFFEE_PRICE_ID || '',
     stripeMeetingPriceId: process.env.STRIPE_MEETING_PRICE_ID || '',
+    turnstileSecretKey: process.env.TURNSTILE_SECRET_KEY || '',
   };
   
 export default config;
