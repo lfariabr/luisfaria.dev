@@ -4,6 +4,7 @@ import User, { UserRole } from '../../models/User';
 import jwt from 'jsonwebtoken';
 import config from '../../config/config';
 import bcrypt from 'bcryptjs';
+import { rateLimiter } from '../../services/rateLimiter';
 
 // Define test queries and mutations
 const REGISTER_MUTATION = `
@@ -42,6 +43,7 @@ describe('Auth Resolvers', () => {
   // Clear database between tests
   afterEach(async () => {
     await dbHandler.clearDatabase();
+    jest.restoreAllMocks();
   });
 
   // Disconnect after all tests
@@ -127,6 +129,64 @@ describe('Auth Resolvers', () => {
         expect(response.body.singleResult.errors).toBeTruthy();
         const errorMessage = response.body.singleResult.errors?.[0].message;
         expect(errorMessage).toContain('Captcha verification failed');
+      }
+    });
+
+    it('should fail when email rate limit is exceeded', async () => {
+      jest
+        .spyOn(rateLimiter, 'limit')
+        .mockResolvedValueOnce({
+          success: true,
+          limit: 5,
+          remaining: 4,
+          resetTime: new Date(Date.now() + 3600 * 1000),
+        })
+        .mockResolvedValueOnce({
+          success: false,
+          limit: 3,
+          remaining: 0,
+          resetTime: new Date(Date.now() + 3600 * 1000),
+        });
+
+      const variables = {
+        input: {
+          name: 'Test User',
+          email: 'throttle@example.com',
+          password: 'Test1234!',
+          captchaToken: 'test-turnstile-pass',
+        },
+      };
+
+      const response = await executeOperation(REGISTER_MUTATION, variables, { clientIp: '203.0.113.10' });
+      expect(response.body.kind).toBe('single');
+      if (response.body.kind === 'single') {
+        const errorMessage = response.body.singleResult.errors?.[0].message;
+        expect(errorMessage).toContain('Too many registration attempts');
+      }
+    });
+
+    it('should fail when ip rate limit is exceeded', async () => {
+      jest.spyOn(rateLimiter, 'limit').mockResolvedValueOnce({
+        success: false,
+        limit: 5,
+        remaining: 0,
+        resetTime: new Date(Date.now() + 3600 * 1000),
+      });
+
+      const variables = {
+        input: {
+          name: 'Test User',
+          email: 'ip-limit@example.com',
+          password: 'Test1234!',
+          captchaToken: 'test-turnstile-pass',
+        },
+      };
+
+      const response = await executeOperation(REGISTER_MUTATION, variables, { clientIp: '198.51.100.7' });
+      expect(response.body.kind).toBe('single');
+      if (response.body.kind === 'single') {
+        const errorMessage = response.body.singleResult.errors?.[0].message;
+        expect(errorMessage).toContain('Too many registration attempts');
       }
     });
   });

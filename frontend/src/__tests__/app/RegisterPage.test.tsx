@@ -28,7 +28,7 @@ describe('RegisterPage captcha guardrails', () => {
     process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY = 'test-site-key';
   });
 
-  it('blocks submission when captcha token is missing', async () => {
+  it('keeps submit disabled when captcha token is missing', async () => {
     // @ts-expect-error test-only window mocking
     window.turnstile = { render: () => 'widget-id' };
 
@@ -38,11 +38,7 @@ describe('RegisterPage captcha guardrails', () => {
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'test@example.com' } });
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'Test1234!' } });
     fireEvent.change(screen.getByLabelText('Confirm Password'), { target: { value: 'Test1234!' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Create account' }));
-
-    await waitFor(() => {
-      expect(screen.getByText('Please complete captcha verification.')).toBeInTheDocument();
-    });
+    expect(screen.getByRole('button', { name: 'Create account' })).toBeDisabled();
 
     expect(mockRegister).not.toHaveBeenCalled();
   });

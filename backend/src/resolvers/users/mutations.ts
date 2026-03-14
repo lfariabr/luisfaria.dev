@@ -10,19 +10,21 @@ export const userMutations = {
   register: async (_: any, { input }: any, context: any) => {
     const { name, email, password, captchaToken } = input;
     const normalizedEmail = email.trim().toLowerCase();
-    const clientIp = context?.clientIp || 'unknown';
+    const clientIp = context?.clientIp;
 
-    const ipRateLimit = await rateLimiter.limit(`register:${clientIp}`, 5, 3600);
-    if (!ipRateLimit.success) {
-      throw Errors.badInput('Too many registration attempts. Please try again later.');
+    if (clientIp) {
+      const ipRateLimit = await rateLimiter.limit(`register:${clientIp}`, 5, 3600);
+      if (!ipRateLimit.success) {
+        throw Errors.badInput('Too many registration attempts. Please try again later.');
+      }
     }
+
+    await verifyTurnstileToken(captchaToken, clientIp);
 
     const emailRateLimit = await rateLimiter.limit(`register-email:${normalizedEmail}`, 3, 3600);
     if (!emailRateLimit.success) {
       throw Errors.badInput('Too many registration attempts. Please try again later.');
     }
-
-    await verifyTurnstileToken(captchaToken, clientIp);
     
     // Check if user already exists
     const existingUser = await User.findOne({ email: normalizedEmail });
@@ -65,9 +67,10 @@ export const userMutations = {
   // Login a user
   login: async (_: any, { input }: any, context: any) => {
     const { email, password } = input;
+    const normalizedEmail = email.trim().toLowerCase();
     
     // Find the user
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({ email: normalizedEmail }).select('+password');
     if (!user) {
       throw Errors.unauthenticated('Invalid email or password');
     }

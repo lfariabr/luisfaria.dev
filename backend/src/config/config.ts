@@ -37,6 +37,9 @@ const requiredEnvVars = [
   'RESEND_API_KEY',
   'NASA_API_KEY'
 ];
+if (process.env.NODE_ENV !== 'test') {
+  requiredEnvVars.push('TURNSTILE_SECRET_KEY');
+}
 const missingEnvVars = requiredEnvVars.filter(env => !process.env[env]);
 
 if (missingEnvVars.length > 0) {

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 // Common validation patterns
-const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{4,}$/;
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
 
 // Register input validation
@@ -10,7 +10,7 @@ export const registerSchema = z.object({
   email: z.string().regex(emailRegex, 'Invalid email format'),
   password: z.string().regex(
     passwordRegex,
-    'Password must be at least 4 characters, include uppercase, lowercase, number and special character'
+    'Password must be at least 8 characters, include uppercase, lowercase, number and special character'
   ),
   captchaToken: z.string().min(1, 'Captcha token is required'),
 });

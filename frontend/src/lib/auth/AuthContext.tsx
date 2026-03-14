@@ -153,6 +153,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         } else {
           setError(err.message);
         }
+      } else if (err instanceof Error) {
+        logger.error('Unexpected register error', { error: err.message });
+        setError(err.message);
+      } else {
+        logger.error('Unexpected register error', { error: String(err) });
+        setError('An unexpected error occurred. Please try again.');
       }
     }
   }, [registerMutation, router]);

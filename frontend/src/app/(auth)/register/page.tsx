@@ -25,6 +25,7 @@ declare global {
           'error-callback'?: () => void;
         }
       ) => string;
+      remove?: (widgetId: string) => void;
     };
   }
 }
@@ -57,6 +58,12 @@ export default function RegisterPage() {
 
   useEffect(() => {
     renderTurnstileWidget();
+    return () => {
+      if (turnstileWidgetRef.current && window.turnstile?.remove) {
+        window.turnstile.remove(turnstileWidgetRef.current);
+      }
+      turnstileWidgetRef.current = null;
+    };
   }, [renderTurnstileWidget]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -77,9 +84,9 @@ export default function RegisterPage() {
     }
     
     // Password complexity validation
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{4,}$/;
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     if (!passwordRegex.test(password)) {
-      setFormError('Password must include at least 1x uppercase letter, 1x lowercase letter, 1x number and 1x special character (@$!%*?&)');
+      setFormError('Password must be at least 8 characters and include uppercase, lowercase, number and special character (@$!%*?&)');
       return;
     }
 
@@ -190,7 +197,7 @@ export default function RegisterPage() {
             <Button 
               type="submit" 
               className="w-full" 
-              disabled={loading}
+              disabled={loading || (!!turnstileSiteKey && !captchaToken)}
             >
               {loading ? (
                 <>
