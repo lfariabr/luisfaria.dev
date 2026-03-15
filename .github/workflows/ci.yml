@@ -347,6 +347,12 @@ jobs:
             echo "📥 Pulling latest configuration..."
             git fetch --prune origin
             git reset --hard origin/master
+
+            # Fail fast if required production secret is missing in server .env
+            if ! grep -q '^TURNSTILE_SECRET_KEY=' .env || [ -z "$(grep '^TURNSTILE_SECRET_KEY=' .env | cut -d'=' -f2-)" ]; then
+              echo "❌ TURNSTILE_SECRET_KEY is missing or empty in /var/www/portfolio/.env"
+              exit 1
+            fi
             
             # Login to GHCR (to pull private images)
             echo "🔐 Logging into GHCR..."
@@ -428,7 +434,7 @@ jobs:
                 echo "🔄 Rolling back to commit: $PREV_COMMIT"
                 git reset --hard $PREV_COMMIT
                 docker compose down
-                docker compose build
+                docker compose pull
                 docker compose up -d --force-recreate --remove-orphans
                 
                 sleep 15

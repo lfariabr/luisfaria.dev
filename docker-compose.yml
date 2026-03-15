@@ -66,6 +66,7 @@ services:
       - STRIPE_COFFEE_PRICE_ID=${STRIPE_COFFEE_PRICE_ID}
       - STRIPE_MEETING_PRICE_ID=${STRIPE_MEETING_PRICE_ID}
       - FRONTEND_URL=${FRONTEND_URL:-https://luisfaria.dev}
+      - TURNSTILE_SECRET_KEY=${TURNSTILE_SECRET_KEY}
     ports:
       - "4000:4000"
     depends_on:
