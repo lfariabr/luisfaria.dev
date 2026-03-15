@@ -13,6 +13,8 @@ ARG NEXT_PUBLIC_GRAPHQL_URL=https://luisfaria.dev/graphql
 ENV NEXT_PUBLIC_GRAPHQL_URL=${NEXT_PUBLIC_GRAPHQL_URL}
 ARG NEXT_PUBLIC_SENTRY_DSN
 ENV NEXT_PUBLIC_SENTRY_DSN=${NEXT_PUBLIC_SENTRY_DSN}
+ARG NEXT_PUBLIC_TURNSTILE_SITE_KEY
+ENV NEXT_PUBLIC_TURNSTILE_SITE_KEY=${NEXT_PUBLIC_TURNSTILE_SITE_KEY}
 RUN npm run build
 RUN test -f .next/standalone/server.js || (echo "ERROR: Next.js standalone build failed - server.js not found" && exit 1)
 
@@ -21,6 +23,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 # Set the environment variable for runtime as well
 ENV NEXT_PUBLIC_GRAPHQL_URL=https://luisfaria.dev/graphql
+ENV NEXT_PUBLIC_TURNSTILE_SITE_KEY=${NEXT_PUBLIC_TURNSTILE_SITE_KEY}
 
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 
