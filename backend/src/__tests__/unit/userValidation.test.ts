@@ -7,7 +7,8 @@ describe('User Validation Schemas', () => {
       const validData = {
         name: 'Test User',
         email: 'test@example.com',
-        password: 'Test1234!'
+        password: 'Test1234!',
+        captchaToken: 'test-turnstile-pass',
       };
       
       const result = registerSchema.safeParse(validData);
@@ -18,7 +19,8 @@ describe('User Validation Schemas', () => {
       const invalidData = {
         name: 'T',
         email: 'test@example.com',
-        password: 'Test1234!'
+        password: 'Test1234!',
+        captchaToken: 'test-turnstile-pass',
       };
       
       const result = registerSchema.safeParse(invalidData);
@@ -32,7 +34,8 @@ describe('User Validation Schemas', () => {
       const invalidData = {
         name: 'Test User',
         email: 'invalid-email',
-        password: 'Test1234!'
+        password: 'Test1234!',
+        captchaToken: 'test-turnstile-pass',
       };
       
       const result = registerSchema.safeParse(invalidData);
@@ -46,7 +49,8 @@ describe('User Validation Schemas', () => {
       const invalidData = {
         name: 'Test User',
         email: 'test@example.com',
-        password: 'weak'
+        password: 'weak',
+        captchaToken: 'test-turnstile-pass',
       };
       
       const result = registerSchema.safeParse(invalidData);

@@ -2,14 +2,48 @@ import User, { UserRole } from '../../models/User';
 import { AUTH_COOKIE_BASE_OPTIONS, AUTH_COOKIE_MAX_AGE } from '../../utils/authUtils';
 import { Errors } from '../../utils/errors';
 import { logger } from '../../utils/logger';
+import { rateLimiter } from '../../services/rateLimiter';
+import { verifyTurnstileToken } from '../../services/turnstile';
+import type { LoginInput, RegisterInput } from '../../validation/schemas/user.schema';
+
+type ResolverContext = {
+  user?: {
+    id: string;
+    role: UserRole;
+  } | null;
+  clientIp?: string;
+  res?: {
+    cookie?: (name: string, value: string, options: Record<string, unknown>) => void;
+    clearCookie?: (name: string, options?: Record<string, unknown>) => void;
+  };
+};
+
+type RegisterArgs = { input: RegisterInput };
+type LoginArgs = { input: LoginInput };
 
 export const userMutations = {
   // Register a new user
-  register: async (_: any, { input }: any, context: any) => {
-    const { name, email, password } = input;
+  register: async (_: unknown, { input }: RegisterArgs, context: ResolverContext) => {
+    const { name, email, password, captchaToken } = input;
+    const normalizedEmail = email.trim().toLowerCase();
+    const clientIp = context?.clientIp;
+
+    if (clientIp) {
+      const ipRateLimit = await rateLimiter.limit(`register:${clientIp}`, 5, 3600);
+      if (!ipRateLimit.success) {
+        throw Errors.badInput('Too many registration attempts. Please try again later.');
+      }
+    }
+
+    await verifyTurnstileToken(captchaToken, clientIp);
+
+    const emailRateLimit = await rateLimiter.limit(`register-email:${normalizedEmail}`, 3, 3600);
+    if (!emailRateLimit.success) {
+      throw Errors.badInput('Too many registration attempts. Please try again later.');
+    }
     
     // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
       throw Errors.badInput('Email already in use');
     }
@@ -17,7 +51,7 @@ export const userMutations = {
     // Create new user
     const user = new User({
       name,
-      email,
+      email: normalizedEmail,
       password,
       role: UserRole.USER, // Use enum value
     });
@@ -47,11 +81,12 @@ export const userMutations = {
   },
   
   // Login a user
-  login: async (_: any, { input }: any, context: any) => {
+  login: async (_: unknown, { input }: LoginArgs, context: ResolverContext) => {
     const { email, password } = input;
+    const normalizedEmail = email.trim().toLowerCase();
     
     // Find the user
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({ email: normalizedEmail }).select('+password');
     if (!user) {
       throw Errors.unauthenticated('Invalid email or password');
     }
@@ -84,7 +119,7 @@ export const userMutations = {
   },
   
   // Logout - clear auth cookie
-  logout: async (_: any, __: any, context: any) => {
+  logout: async (_: unknown, __: unknown, context: ResolverContext) => {
     if (context?.res?.clearCookie) {
       context.res.clearCookie('token', {
         ...AUTH_COOKIE_BASE_OPTIONS
@@ -97,9 +132,9 @@ export const userMutations = {
    * Update user role - handles both case formats for roles
    */
   updateUserRole: async (
-    _: any,
+    _: unknown,
     { id, role }: { id: string; role: string },
-    context: any
+    context: ResolverContext
   ) => {
     // Verify permissions
     if (!context.user || context.user.role !== UserRole.ADMIN) {
@@ -132,7 +167,7 @@ export const userMutations = {
   },
   
   // Delete user (admin only)
-  deleteUser: async (_: any, { id }: { id: string }, context: any) => {
+  deleteUser: async (_: unknown, { id }: { id: string }, context: ResolverContext) => {
     // Check if user is authenticated and is an admin
     if (!context.user) {
       throw Errors.unauthenticated();

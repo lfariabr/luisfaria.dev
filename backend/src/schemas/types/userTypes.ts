@@ -24,6 +24,7 @@ export const userTypes = `#graphql
     name: String!
     email: String!
     password: String!
+    captchaToken: String!
   }
 
   input LoginInput {

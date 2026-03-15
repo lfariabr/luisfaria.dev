@@ -20,6 +20,7 @@ interface Config {
     stripeWebhookSecret: string;
     stripeCoffeePriceId: string;
     stripeMeetingPriceId: string;
+    turnstileSecretKey: string;
 }
 
 // Validate required environment variables
@@ -36,6 +37,9 @@ const requiredEnvVars = [
   'RESEND_API_KEY',
   'NASA_API_KEY'
 ];
+if (process.env.NODE_ENV !== 'test') {
+  requiredEnvVars.push('TURNSTILE_SECRET_KEY');
+}
 const missingEnvVars = requiredEnvVars.filter(env => !process.env[env]);
 
 if (missingEnvVars.length > 0) {
@@ -59,6 +63,7 @@ const config: Config = {
     stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
     stripeCoffeePriceId: process.env.STRIPE_COFFEE_PRICE_ID || '',
     stripeMeetingPriceId: process.env.STRIPE_MEETING_PRICE_ID || '',
+    turnstileSecretKey: process.env.TURNSTILE_SECRET_KEY || '',
   };
   
 export default config;

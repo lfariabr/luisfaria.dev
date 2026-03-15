@@ -27,7 +27,7 @@ interface AuthContextType {
   loading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (credentials: { name: string, email: string, password: string }) => Promise<void>;
+  register: (credentials: { name: string, email: string, password: string, captchaToken: string }) => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
   refetchUser: () => void;
@@ -127,14 +127,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [loginMutation, router]);
 
-  const register = useCallback(async (credentials: { name: string; email: string; password: string }) => {
-    const { name, email, password } = credentials;
+  const register = useCallback(async (credentials: { name: string; email: string; password: string; captchaToken: string }) => {
+    const { name, email, password, captchaToken } = credentials;
     setError(null);
     
     try {
       const { data } = await registerMutation({
         variables: { 
-          input: { name, email, password }
+          input: { name, email, password, captchaToken }
         },
       }); 
       
@@ -153,6 +153,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         } else {
           setError(err.message);
         }
+      } else if (err instanceof Error) {
+        logger.error('Unexpected register error', { error: err.message });
+        setError(err.message);
+      } else {
+        logger.error('Unexpected register error', { error: String(err) });
+        setError('An unexpected error occurred. Please try again.');
       }
     }
   }, [registerMutation, router]);
