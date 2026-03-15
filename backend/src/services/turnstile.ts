@@ -5,7 +5,10 @@ import { logger } from '../utils/logger';
 
 const TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 const TEST_BYPASS_TOKEN = 'test-turnstile-pass';
-const TURNSTILE_TIMEOUT_MS = Number(process.env.TURNSTILE_TIMEOUT_MS || 5000);
+const TURNSTILE_TIMEOUT_MS = (() => {
+  const parsed = Number(process.env.TURNSTILE_TIMEOUT_MS);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 5000;
+})();
 
 const turnstileVerificationSchema = z.object({
   success: z.boolean(),

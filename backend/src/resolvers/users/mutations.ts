@@ -4,10 +4,26 @@ import { Errors } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 import { rateLimiter } from '../../services/rateLimiter';
 import { verifyTurnstileToken } from '../../services/turnstile';
+import type { LoginInput, RegisterInput } from '../../validation/schemas/user.schema';
+
+type ResolverContext = {
+  user?: {
+    id: string;
+    role: UserRole;
+  } | null;
+  clientIp?: string;
+  res?: {
+    cookie?: (name: string, value: string, options: Record<string, unknown>) => void;
+    clearCookie?: (name: string, options?: Record<string, unknown>) => void;
+  };
+};
+
+type RegisterArgs = { input: RegisterInput };
+type LoginArgs = { input: LoginInput };
 
 export const userMutations = {
   // Register a new user
-  register: async (_: any, { input }: any, context: any) => {
+  register: async (_: unknown, { input }: RegisterArgs, context: ResolverContext) => {
     const { name, email, password, captchaToken } = input;
     const normalizedEmail = email.trim().toLowerCase();
     const clientIp = context?.clientIp;
@@ -65,7 +81,7 @@ export const userMutations = {
   },
   
   // Login a user
-  login: async (_: any, { input }: any, context: any) => {
+  login: async (_: unknown, { input }: LoginArgs, context: ResolverContext) => {
     const { email, password } = input;
     const normalizedEmail = email.trim().toLowerCase();
     
@@ -103,7 +119,7 @@ export const userMutations = {
   },
   
   // Logout - clear auth cookie
-  logout: async (_: any, __: any, context: any) => {
+  logout: async (_: unknown, __: unknown, context: ResolverContext) => {
     if (context?.res?.clearCookie) {
       context.res.clearCookie('token', {
         ...AUTH_COOKIE_BASE_OPTIONS
@@ -116,9 +132,9 @@ export const userMutations = {
    * Update user role - handles both case formats for roles
    */
   updateUserRole: async (
-    _: any,
+    _: unknown,
     { id, role }: { id: string; role: string },
-    context: any
+    context: ResolverContext
   ) => {
     // Verify permissions
     if (!context.user || context.user.role !== UserRole.ADMIN) {
@@ -151,7 +167,7 @@ export const userMutations = {
   },
   
   // Delete user (admin only)
-  deleteUser: async (_: any, { id }: { id: string }, context: any) => {
+  deleteUser: async (_: unknown, { id }: { id: string }, context: ResolverContext) => {
     // Check if user is authenticated and is an admin
     if (!context.user) {
       throw Errors.unauthenticated();
