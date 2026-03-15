@@ -231,7 +231,7 @@ jobs:
     needs: [backend-test, frontend-test]
     # Only build images on pushes to main/master (not PRs)
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-    environment: production
+    environment: prod
     
     permissions:
       contents: read
