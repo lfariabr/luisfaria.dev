@@ -3,7 +3,7 @@ import { MockedProvider, MockedResponse } from '@apollo/client/testing';
 import { GraphQLError } from 'graphql';
 import { AuthProvider, useAuth } from '@/lib/auth/AuthContext';
 import { ME_QUERY } from '@/lib/graphql/queries/auth.queries';
-import { LOGIN_MUTATION, LOGOUT_MUTATION } from '@/lib/graphql/mutations/auth.mutations';
+import { LOGIN_MUTATION, LOGOUT_MUTATION, REGISTER_MUTATION } from '@/lib/graphql/mutations/auth.mutations';
 
 // Mock next/navigation
 const mockPush = jest.fn();
@@ -267,6 +267,133 @@ describe('AuthContext - Login Flow', () => {
     expect(result.current.user).toBeNull();
     expect(result.current.isAuthenticated).toBe(false);
     expect(result.current.error).toBeTruthy();
+  });
+});
+
+describe('AuthContext - Register Flow', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('sends captchaToken, sets user, and redirects after successful register', async () => {
+    const mocks: MockedResponse[] = [
+      {
+        request: {
+          query: ME_QUERY,
+        },
+        result: {
+          errors: [
+            new GraphQLError('Not authenticated', {
+              extensions: { code: 'UNAUTHENTICATED' },
+            }),
+          ],
+        },
+      },
+      {
+        request: {
+          query: REGISTER_MUTATION,
+          variables: {
+            input: {
+              name: 'Test User',
+              email: 'test@example.com',
+              password: 'Test1234!',
+              captchaToken: 'turnstile-test-token',
+            },
+          },
+        },
+        result: {
+          data: {
+            register: {
+              user: mockUser,
+            },
+          },
+        },
+      },
+    ];
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <MockedProvider mocks={mocks} addTypename={false}>
+        <AuthProvider>{children}</AuthProvider>
+      </MockedProvider>
+    );
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.user).toBeNull();
+
+    await act(async () => {
+      await result.current.register({
+        name: 'Test User',
+        email: 'test@example.com',
+        password: 'Test1234!',
+        captchaToken: 'turnstile-test-token',
+      });
+    });
+
+    expect(result.current.user).toEqual(mockUser);
+    expect(result.current.isAuthenticated).toBe(true);
+    expect(mockPush).toHaveBeenCalledWith('/');
+  });
+
+  it('sets error when register mutation fails', async () => {
+    const mocks: MockedResponse[] = [
+      {
+        request: {
+          query: ME_QUERY,
+        },
+        result: {
+          errors: [
+            new GraphQLError('Not authenticated', {
+              extensions: { code: 'UNAUTHENTICATED' },
+            }),
+          ],
+        },
+      },
+      {
+        request: {
+          query: REGISTER_MUTATION,
+          variables: {
+            input: {
+              name: 'Test User',
+              email: 'test@example.com',
+              password: 'Test1234!',
+              captchaToken: 'turnstile-test-token',
+            },
+          },
+        },
+        result: {
+          errors: [
+            new GraphQLError('Captcha verification failed', {
+              extensions: { code: 'BAD_USER_INPUT' },
+            }),
+          ],
+        },
+      },
+    ];
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <MockedProvider mocks={mocks} addTypename={false}>
+        <AuthProvider>{children}</AuthProvider>
+      </MockedProvider>
+    );
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      await result.current.register({
+        name: 'Test User',
+        email: 'test@example.com',
+        password: 'Test1234!',
+        captchaToken: 'turnstile-test-token',
+      });
+    });
+
+    expect(result.current.user).toBeNull();
+    expect(result.current.isAuthenticated).toBe(false);
+    expect(result.current.error).toBe('Captcha verification failed');
   });
 });
 

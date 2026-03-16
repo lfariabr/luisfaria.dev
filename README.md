@@ -56,7 +56,7 @@ luisfaria/
 | Concern | Approach |
 |---|---|
 | **API** | GraphQL with modular schema composition and resolver-level error handling |
-| **Auth** | JWT in httpOnly cookies, role-based access (ADMIN / EDITOR / USER), GraphQL Shield |
+| **Auth** | JWT in httpOnly cookies, role-based access (ADMIN / EDITOR / USER), GraphQL Shield, Turnstile-protected registration |
 | **Rate Limiting** | Redis + atomic Lua scripts — sliding window per user per feature |
 | **Caching** | Multi-layer: Redis (server), Apollo Client cache (client) |
 | **Validation** | Zod schemas for all GraphQL inputs |
@@ -73,7 +73,7 @@ luisfaria/
 | **Frontend** | Next.js 14+, React 19, TypeScript, Apollo Client, TailwindCSS 4, shadcn/ui |
 | **Backend** | Node.js, Express, Apollo Server 5, GraphQL, Mongoose |
 | **Data** | MongoDB, Redis |
-| **Integrations** | OpenAI (chatbot), Resend (email), NASA API (APOD), Stripe (payments) |
+| **Integrations** | OpenAI (chatbot), Resend (email), NASA API (APOD), Stripe (payments), Cloudflare Turnstile |
 | **Infrastructure** | Docker, GitHub Actions, Vercel |
 | **Testing** | Jest, React Testing Library, MongoDB Memory Server |
 
@@ -100,6 +100,7 @@ luisfaria/
 | v2.9 | Chatbot Knowledge Upgrade | Enriched AI knowledge base (20 articles), structured system prompt, career timeline |
 | ~~v3.0~~ | ~~Resend Integration~~ | ~~Transactional emails~~ |
 | v3.1 | Stripe Payments | Coffee & meeting checkout via Stripe — APOD-style FAB, hosted checkout, success/cancel pages |
+| v3.2 | Registration Security Hardening | Cloudflare Turnstile on `register`, IP/email throttling, fail-fast Turnstile config validation |
 
 ---
 
@@ -153,7 +154,9 @@ docker-compose up --build
 | `STRIPE_COFFEE_PRICE_ID` | Stripe Price ID for coffee checkout item |
 | `STRIPE_MEETING_PRICE_ID` | Stripe Price ID for meeting checkout item |
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook signature secret *(reserved for phase 2)* |
+| `TURNSTILE_SECRET_KEY` | Backend secret for Cloudflare Turnstile verification |
 | `NEXT_PUBLIC_GRAPHQL_URL` | Frontend → API (defaults to `http://localhost:4000/graphql`) |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Public Turnstile site key for the register page |
 
 ### Stripe Local Setup
 
@@ -190,6 +193,24 @@ STRIPE_MEETING_PRICE_ID=price_...
 **4. `STRIPE_WEBHOOK_SECRET` — Phase 2 (deferred)**
 
 Webhook fulfillment (persisting payment results to the database, sending confirmation emails) is planned for a future release. `STRIPE_WEBHOOK_SECRET` is wired into the config but **not required** to run the checkout flow today — leave it blank locally. When webhook support is added, create a webhook endpoint in the [Stripe Dashboard](https://dashboard.stripe.com/test/webhooks) pointing to `/api/stripe/webhook` and paste the signing secret into this variable.
+
+---
+
+### Turnstile Local Setup
+
+The register flow in v3.2 requires both a backend Turnstile secret and a frontend site key.
+
+```bash
+# backend/.env
+TURNSTILE_SECRET_KEY=your_cloudflare_turnstile_secret_key
+
+# frontend/.env.local
+NEXT_PUBLIC_TURNSTILE_SITE_KEY=your_cloudflare_turnstile_site_key
+```
+
+- `TURNSTILE_SECRET_KEY` stays server-side and is used by the GraphQL API to verify the captcha token with Cloudflare
+- `NEXT_PUBLIC_TURNSTILE_SITE_KEY` is the browser-safe key used to render the widget on `/register`
+- On localhost, Turnstile may auto-complete quickly for low-risk traffic; backend verification remains authoritative
 
 ---
 

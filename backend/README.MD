@@ -191,15 +191,15 @@ Authentication flow:
 1. User registers with name, email, and password
 2. Password is hashed before saving to the database
 3. User logs in with email and password
-4. Server verifies credentials and returns a JWT token
-5. Client includes the token in the Authorization header for authenticated requests
-6. Server verifies the token and adds the user to the context
+4. Register now requires a Turnstile `captchaToken`, which is verified server-side before account creation
+5. Server verifies credentials and returns a JWT token while also setting a secure httpOnly cookie
+6. Client uses the cookie-based session for authenticated requests
 7. Resolvers check the context for authentication and permissions
 
 Testing authentication:
-- Register a user: mutation { register(input: { name: "Admin User", email: "luis@luis.com", password: "xxxxxxx" }) { token user { id name email } } }
+- Register a user: mutation { register(input: { name: "Admin User", email: "luis@luis.com", password: "Xxxxxxx1!", captchaToken: "turnstile-token" }) { token user { id name email } } }
 - Login: mutation { login(input: { email: "test@test.com", password: "test" }) { token user { id name email } } }
-- Use the token in the HTTP headers: { "Authorization": "Bearer YOUR_TOKEN_HERE" }
+- After login/register, rely on the httpOnly cookie session for browser requests
 
 
 ## 8. Testing endpoints and auth
@@ -209,7 +209,8 @@ mutation RegisterAdmin {
   register(input: {
     name: "Admin User"
     email: "admin@example.com"
-    password: "securePassword123"
+    password: "SecurePass123!"
+    captchaToken: "turnstile-token"
   }) {
     token
     user {
@@ -229,7 +230,8 @@ mutation RegisterUser {
   register(input: {
     name: "Regular User"
     email: "user@example.com"
-    password: "userPassword123"
+    password: "UserPass123!"
+    captchaToken: "turnstile-token"
   }) {
     token
     user {
@@ -262,12 +264,7 @@ query Me {
 }
 ```
 
-Then, in Apollo Explorer:
-Click on "Headers" at the bottom of the screen
-Add a header:
-```
-{ "Authorization": "Bearer YOUR_TOKEN_HERE" }
-```
+Then, in the browser app, authenticated requests use the secure httpOnly auth cookie set by `login` or `register`.
 
 ## 9. Implement Redis and Rate Limiting
 
