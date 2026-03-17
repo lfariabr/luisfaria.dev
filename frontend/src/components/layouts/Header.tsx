@@ -99,6 +99,9 @@ export function Header() {
                 <DropdownMenuItem asChild>
                   <Link href="/profile">Profile</Link>
                 </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/notes">My Notes</Link>
+                </DropdownMenuItem>
                 {user?.role === 'ADMIN' && (
                   <DropdownMenuItem asChild>
                     <Link href="/admin">Admin Dashboard</Link>
@@ -166,6 +169,15 @@ export function Header() {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Sign Up
+              </Link>
+            )}
+            {isAuthenticated && (
+              <Link
+                href="/notes"
+                className="text-sm font-medium py-1"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                My Notes
               </Link>
             )}
           </nav>

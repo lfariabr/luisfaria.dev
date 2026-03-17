@@ -12,6 +12,8 @@ import { sendGogginsEmailMutation } from './resend/mutations';
 import { ApodQueries } from './apod/queries';
 import { stripeMutations } from './stripe/mutations';
 import { stripeQueries } from './stripe/queries';
+import { noteQueries } from './notes/queries';
+import { noteMutations } from './notes/mutations';
 import Project from '../models/Project';
 import { slugify } from '../utils/slugUtils';
 import type { ApodResponse } from '../services/apod/';
@@ -26,6 +28,7 @@ export const resolvers = {
     ...chatbotQueries,
     ...ApodQueries,
     ...stripeQueries,
+    ...noteQueries,
   },
   
   Mutation: {
@@ -35,6 +38,7 @@ export const resolvers = {
     ...chatbotMutations,
     ...screamMutations,
     ...stripeMutations,
+    ...noteMutations,
     // Wire Resend mutation
     sendGogginsEmail: sendGogginsEmailMutation,
   },

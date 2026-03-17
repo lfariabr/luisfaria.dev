@@ -95,6 +95,15 @@ describe('Middleware - Admin Route Protection', () => {
 
       expect(response.status).toBe(200);
     });
+
+    it('redirects to /login when no token cookie is present on notes route', () => {
+      const request = createMockRequest('/notes');
+      const response = middleware(request);
+
+      expect(response.status).toBe(307);
+      expect(response.headers.get('location')).toContain('/login');
+      expect(response.headers.get('location')).toContain('redirect=%2Fnotes');
+    });
   });
 
   describe('Valid admin token scenarios', () => {
@@ -152,6 +161,19 @@ describe('Middleware - Admin Route Protection', () => {
 
       expect(response.status).toBe(307);
       expect(response.headers.get('location')).toBe('http://localhost:3000/');
+    });
+
+    it('allows access to notes route with USER role token', () => {
+      const token = createMockToken({
+        id: '2',
+        email: 'user@test.com',
+        role: 'USER',
+        exp: futureExp,
+      });
+      const request = createMockRequest('/notes', token);
+      const response = middleware(request);
+
+      expect(response.status).toBe(200);
     });
   });
 

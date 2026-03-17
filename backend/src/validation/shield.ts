@@ -8,6 +8,7 @@ import { articleInputSchema, articleUpdateSchema } from './schemas/article.schem
 import { chatbotInputSchema } from './schemas/chatbot.schema';
 import { screamInputSchema } from './schemas/scream.schema';
 import { CheckoutInputSchema } from './schemas/checkout.schema';
+import { noteInputSchema, noteUpdateSchema } from './schemas/notes.schema';
 
 // Authentication rules
 const isAuthenticated = rule({ cache: 'contextual' })(
@@ -73,6 +74,14 @@ const validateCheckout = rule({ cache: 'no_cache' })(
   validateInput(CheckoutInputSchema, 'input')
 );
 
+const validateNoteInput = rule({ cache: 'no_cache' })(
+  validateInput(noteInputSchema)
+);
+
+const validateNoteUpdate = rule({ cache: 'no_cache' })(
+  validateInput(noteUpdateSchema, 'input')
+);
+
 // Helper function to combine rules
 function and(...rules: any[]) {
   return rule({ cache: 'no_cache' })(async (parent: any, args: any, context: any, info: any) => {
@@ -105,6 +114,8 @@ export const permissions = shield(
       me: isAuthenticated,
       chatHistory: isAuthenticated,
       testRateLimit: isAuthenticated,
+      myNotes: isAuthenticated,
+      note: isAuthenticated,
     },
     Mutation: {
       // Public mutations
@@ -127,6 +138,9 @@ export const permissions = shield(
       activateGogginsMode: validateScreamInput,
       logout: isAuthenticated,
       sendGogginsEmail: isAuthenticated,
+      createNote: and(isAuthenticated, validateNoteInput),
+      updateNote: and(isAuthenticated, validateNoteUpdate),
+      deleteNote: isAuthenticated,
     },
   },
   {
