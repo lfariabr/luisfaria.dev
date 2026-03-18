@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { MainLayout } from '@/components/layouts/MainLayout';
 import Link from 'next/link';
 import Image from 'next/image';

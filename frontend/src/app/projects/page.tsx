@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { MainLayout } from '@/components/layouts/MainLayout';
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
