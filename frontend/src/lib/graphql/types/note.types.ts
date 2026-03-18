@@ -3,8 +3,8 @@ export type NotePeriodType = 'WEEKLY' | 'MONTHLY';
 export interface Note {
   id: string;
   userId: string;
-  title?: string;
-  content?: string;
+  title: string | null;
+  content: string | null;
   date: string;
   periodType: NotePeriodType;
   accomplishments: string[];
@@ -24,15 +24,7 @@ export interface NoteInput {
   tags?: string[];
 }
 
-export interface NoteUpdateInput {
-  title?: string;
-  content?: string;
-  date?: string;
-  periodType?: NotePeriodType;
-  accomplishments?: string[];
-  nextPlans?: string[];
-  tags?: string[];
-}
+export type NoteUpdateInput = NoteInput;
 
 export interface MyNotesVars {
   periodType?: NotePeriodType;

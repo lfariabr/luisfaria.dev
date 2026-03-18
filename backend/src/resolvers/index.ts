@@ -44,9 +44,9 @@ export const resolvers = {
   },
   
   Note: {
-    date: (parent: { date: Date }) => parent.date?.toISOString() ?? new Date().toISOString(),
-    createdAt: (parent: { createdAt: Date }) => parent.createdAt?.toISOString() ?? new Date().toISOString(),
-    updatedAt: (parent: { updatedAt: Date }) => parent.updatedAt?.toISOString() ?? new Date().toISOString(),
+    date: (parent: { date?: Date }) => parent.date?.toISOString(),
+    createdAt: (parent: { createdAt?: Date }) => parent.createdAt?.toISOString(),
+    updatedAt: (parent: { updatedAt?: Date }) => parent.updatedAt?.toISOString(),
   },
 
   Project: {

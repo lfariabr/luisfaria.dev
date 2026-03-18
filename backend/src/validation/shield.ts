@@ -1,4 +1,4 @@
-import { shield, rule, allow } from 'graphql-shield';
+import { shield, rule, allow, and } from 'graphql-shield';
 import { GraphQLError } from 'graphql';
 import { checkAuth, checkRole } from '../utils/authUtils';
 import { validateInput } from './middleware';
@@ -8,7 +8,7 @@ import { articleInputSchema, articleUpdateSchema } from './schemas/article.schem
 import { chatbotInputSchema } from './schemas/chatbot.schema';
 import { screamInputSchema } from './schemas/scream.schema';
 import { CheckoutInputSchema } from './schemas/checkout.schema';
-import { noteInputSchema, noteUpdateSchema, noteIdSchema } from './schemas/notes.schema';
+import { noteInputSchema, noteUpdateSchema, noteIdSchema, noteFiltersSchema } from './schemas/notes.schema';
 // Authentication rules
 const isAuthenticated = rule({ cache: 'contextual' })(
   async (_parent: any, _args: any, context: any) => {
@@ -85,17 +85,17 @@ const validateNoteId = rule({ cache: 'no_cache' })(
   validateInput(noteIdSchema, 'id')
 );
 
-// Helper function to combine rules
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function and(...rules: any[]) {
-  return rule({ cache: 'no_cache' })(async (parent: unknown, args: unknown, context: unknown, info: unknown) => {
-    for (const r of rules) {
-      const result = await (r.resolve(parent, args, context, info) as Promise<boolean | string | Error>);
-      if (result !== true) return result as Error | string | false;
+const validateNoteFilters = rule({ cache: 'no_cache' })(
+  async (_parent: unknown, args: unknown) => {
+    const result = noteFiltersSchema.safeParse(args);
+    if (!result.success) {
+      return new GraphQLError(`Validation error: ${result.error.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ')}`, {
+        extensions: { code: 'BAD_USER_INPUT' },
+      });
     }
     return true;
-  });
-}
+  }
+);
 
 // Export shield middleware
 export const permissions = shield(
@@ -118,7 +118,7 @@ export const permissions = shield(
       me: isAuthenticated,
       chatHistory: isAuthenticated,
       testRateLimit: isAuthenticated,
-      myNotes: isAuthenticated,
+      myNotes: and(isAuthenticated, validateNoteFilters),
       note: and(isAuthenticated, validateNoteId),
     },
     Mutation: {

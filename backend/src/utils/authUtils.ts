@@ -25,7 +25,13 @@ export const AUTH_COOKIE_BASE_OPTIONS = {
   sameSite: 'strict' as const,
   path: '/',
   secure: process.env.NODE_ENV === 'production',
-  domain: process.env.NODE_ENV === 'production' ? process.env.COOKIE_DOMAIN : 'localhost',
 };
+
+if (process.env.NODE_ENV === 'production') {
+  if (!process.env.COOKIE_DOMAIN) {
+    throw new Error('COOKIE_DOMAIN environment variable is required in production');
+  }
+  (AUTH_COOKIE_BASE_OPTIONS as Record<string, unknown>).domain = process.env.COOKIE_DOMAIN;
+}
 
 export const AUTH_COOKIE_MAX_AGE = 7 * 24 * 60 * 60 * 1000; // 7 days
