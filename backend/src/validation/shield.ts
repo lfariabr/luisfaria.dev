@@ -1,4 +1,4 @@
-import { shield, rule, allow } from 'graphql-shield';
+import { shield, rule, allow, and } from 'graphql-shield';
 import { GraphQLError } from 'graphql';
 import { checkAuth, checkRole } from '../utils/authUtils';
 import { validateInput } from './middleware';
@@ -8,7 +8,7 @@ import { articleInputSchema, articleUpdateSchema } from './schemas/article.schem
 import { chatbotInputSchema } from './schemas/chatbot.schema';
 import { screamInputSchema } from './schemas/scream.schema';
 import { CheckoutInputSchema } from './schemas/checkout.schema';
-
+import { noteInputSchema, noteUpdateSchema, noteIdSchema, noteFiltersSchema } from './schemas/notes.schema';
 // Authentication rules
 const isAuthenticated = rule({ cache: 'contextual' })(
   async (_parent: any, _args: any, context: any) => {
@@ -73,16 +73,29 @@ const validateCheckout = rule({ cache: 'no_cache' })(
   validateInput(CheckoutInputSchema, 'input')
 );
 
-// Helper function to combine rules
-function and(...rules: any[]) {
-  return rule({ cache: 'no_cache' })(async (parent: any, args: any, context: any, info: any) => {
-    for (const r of rules) {
-      const result = await r.resolve(parent, args, context, info);
-      if (!result) return false;
+const validateNoteInput = rule({ cache: 'no_cache' })(
+  validateInput(noteInputSchema)
+);
+
+const validateNoteUpdate = rule({ cache: 'no_cache' })(
+  validateInput(noteUpdateSchema, 'input')
+);
+
+const validateNoteId = rule({ cache: 'no_cache' })(
+  validateInput(noteIdSchema, 'id')
+);
+
+const validateNoteFilters = rule({ cache: 'no_cache' })(
+  async (_parent: unknown, args: unknown) => {
+    const result = noteFiltersSchema.safeParse(args);
+    if (!result.success) {
+      return new GraphQLError(`Validation error: ${result.error.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ')}`, {
+        extensions: { code: 'BAD_USER_INPUT' },
+      });
     }
     return true;
-  });
-}
+  }
+);
 
 // Export shield middleware
 export const permissions = shield(
@@ -105,6 +118,8 @@ export const permissions = shield(
       me: isAuthenticated,
       chatHistory: isAuthenticated,
       testRateLimit: isAuthenticated,
+      myNotes: and(isAuthenticated, validateNoteFilters),
+      note: and(isAuthenticated, validateNoteId),
     },
     Mutation: {
       // Public mutations
@@ -127,6 +142,9 @@ export const permissions = shield(
       activateGogginsMode: validateScreamInput,
       logout: isAuthenticated,
       sendGogginsEmail: isAuthenticated,
+      createNote: and(isAuthenticated, validateNoteInput),
+      updateNote: and(isAuthenticated, validateNoteId, validateNoteUpdate),
+      deleteNote: and(isAuthenticated, validateNoteId),
     },
   },
   {

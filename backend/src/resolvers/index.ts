@@ -12,6 +12,8 @@ import { sendGogginsEmailMutation } from './resend/mutations';
 import { ApodQueries } from './apod/queries';
 import { stripeMutations } from './stripe/mutations';
 import { stripeQueries } from './stripe/queries';
+import { noteQueries } from './notes/queries';
+import { noteMutations } from './notes/mutations';
 import Project from '../models/Project';
 import { slugify } from '../utils/slugUtils';
 import type { ApodResponse } from '../services/apod/';
@@ -26,6 +28,7 @@ export const resolvers = {
     ...chatbotQueries,
     ...ApodQueries,
     ...stripeQueries,
+    ...noteQueries,
   },
   
   Mutation: {
@@ -35,10 +38,17 @@ export const resolvers = {
     ...chatbotMutations,
     ...screamMutations,
     ...stripeMutations,
+    ...noteMutations,
     // Wire Resend mutation
     sendGogginsEmail: sendGogginsEmailMutation,
   },
   
+  Note: {
+    date: (parent: { date?: Date }) => parent.date?.toISOString(),
+    createdAt: (parent: { createdAt?: Date }) => parent.createdAt?.toISOString(),
+    updatedAt: (parent: { updatedAt?: Date }) => parent.updatedAt?.toISOString(),
+  },
+
   Project: {
     // Ensure non-null slug by backfilling if missing
     async slug(parent: any) {

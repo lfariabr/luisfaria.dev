@@ -14,10 +14,12 @@ export function middleware(request: NextRequest) {
   // Get token from httpOnly cookie only (no more Authorization header)
   const token = request.cookies.get('token')?.value;
   
-  // Check if the path is an admin route
+  // Check if the path is a protected route
   const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
+  const isNotesRoute = request.nextUrl.pathname.startsWith('/notes');
+  const isProtectedRoute = isAdminRoute || isNotesRoute;
   
-  if (isAdminRoute) {
+  if (isProtectedRoute) {
     // No token - redirect to login
     if (!token) {
       const loginUrl = new URL('/login', request.url);
@@ -38,8 +40,8 @@ export function middleware(request: NextRequest) {
         return NextResponse.redirect(loginUrl);
       }
       
-      // Check for admin role - must be explicitly 'admin'
-      if (decoded.role !== 'ADMIN') {
+      // Admin route requires admin role
+      if (isAdminRoute && decoded.role !== 'ADMIN') {
         return NextResponse.redirect(new URL('/', request.url));
       }
       
@@ -59,5 +61,5 @@ export function middleware(request: NextRequest) {
 
 // Configure which paths this middleware applies to
 export const config = {
-  matcher: ['/admin/:path*']
+  matcher: ['/admin/:path*', '/notes/:path*']
 };
