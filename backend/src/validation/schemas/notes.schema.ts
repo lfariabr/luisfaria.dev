@@ -1,10 +1,10 @@
 import { z } from 'zod';
 
-const stringArray = z.array(z.string().min(1)).optional();
+const stringArray = z.array(z.string().trim().min(1)).optional();
 
 export const noteInputSchema = z.object({
-  title: z.string().min(1).max(160).optional(),
-  content: z.string().min(1, 'Content is required').max(5000, 'Content is too long'),
+  title: z.string().trim().min(1).max(160).optional(),
+  content: z.string().trim().min(1, 'Content is required').max(5000, 'Content is too long'),
   date: z.string().datetime().optional(),
   periodType: z.enum(['WEEKLY', 'MONTHLY']).optional(),
   accomplishments: stringArray,
@@ -14,8 +14,8 @@ export const noteInputSchema = z.object({
 
 export const noteUpdateSchema = z
   .object({
-    title: z.string().min(1).max(160).optional(),
-    content: z.string().min(1).max(5000).optional(),
+    title: z.string().trim().min(1).max(160).optional(),
+    content: z.string().trim().min(1).max(5000).optional(),
     date: z.string().datetime().optional(),
     periodType: z.enum(['WEEKLY', 'MONTHLY']).optional(),
     accomplishments: stringArray,

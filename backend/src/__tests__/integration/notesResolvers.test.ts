@@ -4,6 +4,38 @@ import User, { UserRole } from '../../models/User';
 import Note from '../../models/Note';
 import bcrypt from 'bcryptjs';
 
+const getDocId = (doc: { _id: unknown }) => String(doc._id);
+
+interface CreateNoteData {
+  createNote: {
+    id: string;
+    title: string;
+    content: string;
+    periodType: 'WEEKLY' | 'MONTHLY';
+    accomplishments: string[];
+    nextPlans: string[];
+    tags: string[];
+  };
+}
+
+interface UpdateNoteData {
+  updateNote: {
+    id: string;
+    title: string;
+    content: string;
+    periodType: 'WEEKLY' | 'MONTHLY';
+    tags: string[];
+  };
+}
+
+interface NotesQueryData {
+  myNotes: Array<{ id: string; title: string; content: string; tags: string[]; periodType: 'WEEKLY' | 'MONTHLY' }>;
+}
+
+interface DeleteNoteData {
+  deleteNote: boolean;
+}
+
 const CREATE_NOTE_MUTATION = `
   mutation CreateNote($input: NoteInput!) {
     createNote(input: $input) {
@@ -104,7 +136,9 @@ describe('Notes Resolvers', () => {
     expect(response.body.kind).toBe('single');
     if (response.body.kind === 'single') {
       expect(response.body.singleResult.errors).toBeUndefined();
-      const created = (response.body.singleResult.data as any)?.createNote;
+      const created = (response.body.singleResult.data as CreateNoteData | undefined)?.createNote;
+      expect(created).toBeDefined();
+      if (!created) return;
       expect(created.title).toBe('Weekly checkpoint');
       expect(created.periodType).toBe('WEEKLY');
       expect(created.tags).toContain('health');
@@ -136,7 +170,9 @@ describe('Notes Resolvers', () => {
     expect(response.body.kind).toBe('single');
     if (response.body.kind === 'single') {
       expect(response.body.singleResult.errors).toBeUndefined();
-      const updated = (response.body.singleResult.data as any)?.updateNote;
+      const updated = (response.body.singleResult.data as UpdateNoteData | undefined)?.updateNote;
+      expect(updated).toBeDefined();
+      if (!updated) return;
       expect(updated.title).toBe('Updated');
       expect(updated.tags).toContain('study');
     }
@@ -201,7 +237,7 @@ describe('Notes Resolvers', () => {
     expect(response.body.kind).toBe('single');
     if (response.body.kind === 'single') {
       expect(response.body.singleResult.errors).toBeUndefined();
-      const notes = ((response.body.singleResult.data as any)?.myNotes ?? []) as Array<{ title: string }>;
+      const notes = ((response.body.singleResult.data as NotesQueryData | undefined)?.myNotes ?? []) as Array<{ title: string }>;
       expect(notes).toHaveLength(1);
       expect(notes[0].title).toBe('January checkpoint');
     }
@@ -224,8 +260,7 @@ describe('Notes Resolvers', () => {
     expect(response.body.kind).toBe('single');
     if (response.body.kind === 'single') {
       expect(response.body.singleResult.errors).toBeUndefined();
-      expect((response.body.singleResult.data as any)?.deleteNote).toBe(true);
+      expect((response.body.singleResult.data as DeleteNoteData | undefined)?.deleteNote).toBe(true);
     }
   });
 });
-  const getDocId = (doc: { _id: unknown }) => String(doc._id);

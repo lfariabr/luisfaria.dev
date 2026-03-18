@@ -1,4 +1,4 @@
-import { format, getISOWeek, isDate, isValid, parseISO } from 'date-fns';
+import { format, getISOWeek, getISOWeekYear, isDate, isValid, parseISO } from 'date-fns';
 
 export const toSafeDate = (value: unknown): Date | null => {
   if (!value) return null;
@@ -42,5 +42,5 @@ export const getNoteMonthKey = (value: string | Date | null | undefined) => {
 export const getNoteWeekKey = (value: string | Date | null | undefined) => {
   const parsed = toSafeDate(value);
   if (!parsed) return 'unknown';
-  return `${parsed.getUTCFullYear()}-W${String(getISOWeek(parsed)).padStart(2, '0')}`;
+  return `${getISOWeekYear(parsed)}-W${String(getISOWeek(parsed)).padStart(2, '0')}`;
 };

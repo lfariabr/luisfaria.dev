@@ -2,24 +2,20 @@ import { useMutation } from '@apollo/client';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
 import { CREATE_NOTE, DELETE_NOTE, UPDATE_NOTE } from '../graphql/mutations/note.mutations';
-import { GET_MY_NOTES } from '../graphql/queries/note.queries';
 import { Note, NoteInput, NoteUpdateInput } from '../graphql/types/note.types';
 
 export const useNoteMutations = () => {
   const [createNoteMutation, { loading: createLoading }] = useMutation(CREATE_NOTE, {
-    refetchQueries: [{ query: GET_MY_NOTES }],
     onCompleted: () => toast.success('Note created successfully!'),
     onError: (error) => toast.error(`Failed to create note: ${error.message}`),
   });
 
   const [updateNoteMutation, { loading: updateLoading }] = useMutation(UPDATE_NOTE, {
-    refetchQueries: [{ query: GET_MY_NOTES }],
     onCompleted: () => toast.success('Note updated successfully!'),
     onError: (error) => toast.error(`Failed to update note: ${error.message}`),
   });
 
   const [deleteNoteMutation, { loading: deleteLoading }] = useMutation(DELETE_NOTE, {
-    refetchQueries: [{ query: GET_MY_NOTES }],
     onCompleted: () => toast.success('Note deleted successfully!'),
     onError: (error) => toast.error(`Failed to delete note: ${error.message}`),
   });

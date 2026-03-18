@@ -141,13 +141,16 @@ export default function NotesPage() {
                 onEdit={(note) => setEditingNote(note)}
                 onDelete={async (noteId) => {
                   setDeletingId(noteId);
-                  const deleted = await deleteNote(noteId);
-                  if (deleted) {
-                    await refetch();
-                  } else {
-                    logger.warn('Delete note mutation returned false', { noteId });
+                  try {
+                    const deleted = await deleteNote(noteId);
+                    if (deleted) {
+                      await refetch();
+                    } else {
+                      logger.warn('Delete note mutation returned false', { noteId });
+                    }
+                  } finally {
+                    setDeletingId(null);
                   }
-                  setDeletingId(null);
                 }}
               />
             ) : (

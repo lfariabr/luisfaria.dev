@@ -38,7 +38,7 @@ export const notesTypes = `#graphql
     tags: [String!]
   }
 
-  type Query {
+  extend type Query {
     myNotes(
       periodType: NotePeriodType
       year: Int
@@ -51,7 +51,7 @@ export const notesTypes = `#graphql
     note(id: ID!): Note
   }
 
-  type Mutation {
+  extend type Mutation {
     createNote(input: NoteInput!): Note!
     updateNote(id: ID!, input: NoteUpdateInput!): Note!
     deleteNote(id: ID!): Boolean!

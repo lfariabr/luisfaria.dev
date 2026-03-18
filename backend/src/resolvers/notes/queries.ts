@@ -1,6 +1,7 @@
 import Note, { NotePeriodType } from '../../models/Note';
 import { Errors } from '../../utils/errors';
 import { logger } from '../../utils/logger';
+import { z } from 'zod';
 
 interface NotesFilterArgs {
   periodType?: NotePeriodType;
@@ -18,6 +19,13 @@ interface ResolverContext {
   } | null;
 }
 
+const noteSearchSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(120)
+  .transform((value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+
 export const noteQueries = {
   myNotes: async (_: unknown, args: NotesFilterArgs, context: ResolverContext) => {
     if (!context.user?.id) {
@@ -33,10 +41,11 @@ export const noteQueries = {
       query.periodType = periodType;
     }
 
-    if (search?.trim()) {
+    const escapedSearch = search ? noteSearchSchema.safeParse(search) : null;
+    if (escapedSearch?.success) {
       query.$or = [
-        { title: { $regex: search.trim(), $options: 'i' } },
-        { content: { $regex: search.trim(), $options: 'i' } },
+        { title: { $regex: escapedSearch.data, $options: 'i' } },
+        { content: { $regex: escapedSearch.data, $options: 'i' } },
       ];
     }
 
@@ -56,7 +65,17 @@ export const noteQueries = {
       .sort({ date: -1, createdAt: -1 })
       .skip(Math.max(offset, 0))
       .limit(Math.max(Math.min(limit, 200), 1));
-    logger.debug('Fetched notes', { userId: context.user.id, count: notes.length, filters: { periodType, year, month, search, tag } });
+    logger.debug('Fetched notes', {
+      userId: context.user.id,
+      count: notes.length,
+      filters: {
+        periodType,
+        year,
+        month,
+        hasSearch: Boolean(search?.trim()),
+        hasTag: Boolean(tag?.trim()),
+      },
+    });
     return notes;
   },
 

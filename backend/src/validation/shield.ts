@@ -9,6 +9,7 @@ import { chatbotInputSchema } from './schemas/chatbot.schema';
 import { screamInputSchema } from './schemas/scream.schema';
 import { CheckoutInputSchema } from './schemas/checkout.schema';
 import { noteInputSchema, noteUpdateSchema } from './schemas/notes.schema';
+import { z } from 'zod';
 
 // Authentication rules
 const isAuthenticated = rule({ cache: 'contextual' })(
@@ -82,6 +83,11 @@ const validateNoteUpdate = rule({ cache: 'no_cache' })(
   validateInput(noteUpdateSchema, 'input')
 );
 
+const noteIdSchema = z.string().regex(/^[a-f\d]{24}$/i, 'Invalid note id');
+const validateNoteId = rule({ cache: 'no_cache' })(
+  validateInput(noteIdSchema, 'id')
+);
+
 // Helper function to combine rules
 function and(...rules: any[]) {
   return rule({ cache: 'no_cache' })(async (parent: any, args: any, context: any, info: any) => {
@@ -115,7 +121,7 @@ export const permissions = shield(
       chatHistory: isAuthenticated,
       testRateLimit: isAuthenticated,
       myNotes: isAuthenticated,
-      note: isAuthenticated,
+      note: and(isAuthenticated, validateNoteId),
     },
     Mutation: {
       // Public mutations
@@ -139,8 +145,8 @@ export const permissions = shield(
       logout: isAuthenticated,
       sendGogginsEmail: isAuthenticated,
       createNote: and(isAuthenticated, validateNoteInput),
-      updateNote: and(isAuthenticated, validateNoteUpdate),
-      deleteNote: isAuthenticated,
+      updateNote: and(isAuthenticated, validateNoteId, validateNoteUpdate),
+      deleteNote: and(isAuthenticated, validateNoteId),
     },
   },
   {

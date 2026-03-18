@@ -30,8 +30,8 @@ export function NoteCard({ note, onEdit, onDelete, deleting = false }: NoteCardP
           <div>
             <p className="mb-1 text-sm font-semibold">Main accomplishments</p>
             <ul className="list-disc pl-5 text-sm text-muted-foreground">
-              {note.accomplishments.map((item) => (
-                <li key={item}>{item}</li>
+              {note.accomplishments.map((item, index) => (
+                <li key={`accomplishment-${item}-${index}`}>{item}</li>
               ))}
             </ul>
           </div>
@@ -41,8 +41,8 @@ export function NoteCard({ note, onEdit, onDelete, deleting = false }: NoteCardP
           <div>
             <p className="mb-1 text-sm font-semibold">Plans for next period</p>
             <ul className="list-disc pl-5 text-sm text-muted-foreground">
-              {note.nextPlans.map((item) => (
-                <li key={item}>{item}</li>
+              {note.nextPlans.map((item, index) => (
+                <li key={`plan-${item}-${index}`}>{item}</li>
               ))}
             </ul>
           </div>
@@ -50,8 +50,8 @@ export function NoteCard({ note, onEdit, onDelete, deleting = false }: NoteCardP
 
         {note.tags.length > 0 && (
           <div className="flex flex-wrap gap-2">
-            {note.tags.map((tag) => (
-              <Badge key={tag} variant="secondary">
+            {note.tags.map((tag, index) => (
+              <Badge key={`tag-${tag}-${index}`} variant="secondary">
                 {tag}
               </Badge>
             ))}
