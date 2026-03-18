@@ -13,6 +13,7 @@ import { useNoteMutations } from '@/lib/hooks/useNoteMutations';
 import { NoteForm } from '@/components/notes/NoteForm';
 import { NotesTimelineView } from '@/components/notes/NotesTimelineView';
 import { NotesPeriodView } from '@/components/notes/NotesPeriodView';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Note, NotePeriodType } from '@/lib/graphql/types/note.types';
 import { logger } from '@/lib/logger';
 import { toast } from 'sonner';
@@ -99,15 +100,19 @@ export default function NotesPage() {
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
-            <select
-              className="rounded-md border border-input bg-background px-3 py-2 text-sm"
-              value={periodType ?? ''}
-              onChange={(event) => setPeriodType((event.target.value || undefined) as NotePeriodType | undefined)}
+            <Select
+              value={periodType ?? 'ALL'}
+              onValueChange={(v) => setPeriodType((v === 'ALL' ? undefined : v) as NotePeriodType | undefined)}
             >
-              <option value="">All periods</option>
-              <option value="WEEKLY">Weekly</option>
-              <option value="MONTHLY">Monthly</option>
-            </select>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="All periods" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All periods</SelectItem>
+                <SelectItem value="WEEKLY">Weekly</SelectItem>
+                <SelectItem value="MONTHLY">Monthly</SelectItem>
+              </SelectContent>
+            </Select>
             <div className="flex gap-2">
               <Button variant={viewMode === 'timeline' ? 'default' : 'outline'} onClick={() => setViewMode('timeline')}>
                 Timeline

@@ -1,4 +1,4 @@
-import { shield, rule, allow } from 'graphql-shield';
+import { shield, rule, allow, Rule } from 'graphql-shield';
 import { GraphQLError } from 'graphql';
 import { checkAuth, checkRole } from '../utils/authUtils';
 import { validateInput } from './middleware';
@@ -89,10 +89,11 @@ const validateNoteId = rule({ cache: 'no_cache' })(
 );
 
 // Helper function to combine rules
-function and(...rules: any[]) {
-  return rule({ cache: 'no_cache' })(async (parent: any, args: any, context: any, info: any) => {
+function and(...rules: Rule[]) {
+  return rule({ cache: 'no_cache' })(async (parent: unknown, args: unknown, context: unknown, info: unknown) => {
     for (const r of rules) {
       const result = await r.resolve(parent, args, context, info);
+      if (result instanceof Error) return result;
       if (!result) return false;
     }
     return true;

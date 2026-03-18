@@ -43,8 +43,9 @@ export function NoteForm({ note, loading = false, onSubmit }: NoteFormProps) {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    const defaultTitle = periodType === 'MONTHLY' ? 'Monthly update' : 'Weekly update';
     await onSubmit({
-      title: title.trim() || 'Weekly update',
+      title: title.trim() || defaultTitle,
       content,
       date: new Date(date).toISOString(),
       periodType,

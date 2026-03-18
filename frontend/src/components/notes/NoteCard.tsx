@@ -18,7 +18,7 @@ export function NoteCard({ note, onEdit, onDelete, deleting = false }: NoteCardP
     <Card>
       <CardHeader className="space-y-2">
         <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-lg">{note.title || 'Weekly update'}</CardTitle>
+          <CardTitle className="text-lg">{note.title || (note.periodType === 'MONTHLY' ? 'Monthly update' : 'Weekly update')}</CardTitle>
           <Badge variant="outline">{note.periodType === 'WEEKLY' ? 'Weekly' : 'Monthly'}</Badge>
         </div>
         <p className="text-sm text-muted-foreground">{formatSafeDate(note.date, 'dd/MM/yyyy')}</p>
