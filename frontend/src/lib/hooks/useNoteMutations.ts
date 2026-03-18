@@ -5,20 +5,29 @@ import { CREATE_NOTE, DELETE_NOTE, UPDATE_NOTE } from '../graphql/mutations/note
 import { Note, NoteInput, NoteUpdateInput } from '../graphql/types/note.types';
 
 export const useNoteMutations = () => {
-  const [createNoteMutation, { loading: createLoading }] = useMutation(CREATE_NOTE, {
+  const [createNoteMutation, { loading: createLoading }] = useMutation<{ createNote: Note }, { input: NoteInput }>(
+    CREATE_NOTE,
+    {
     onCompleted: () => toast.success('Note created successfully!'),
     onError: (error) => toast.error(`Failed to create note: ${error.message}`),
-  });
+    }
+  );
 
-  const [updateNoteMutation, { loading: updateLoading }] = useMutation(UPDATE_NOTE, {
+  const [updateNoteMutation, { loading: updateLoading }] = useMutation<
+    { updateNote: Note },
+    { id: string; input: NoteUpdateInput }
+  >(UPDATE_NOTE, {
     onCompleted: () => toast.success('Note updated successfully!'),
     onError: (error) => toast.error(`Failed to update note: ${error.message}`),
   });
 
-  const [deleteNoteMutation, { loading: deleteLoading }] = useMutation(DELETE_NOTE, {
+  const [deleteNoteMutation, { loading: deleteLoading }] = useMutation<{ deleteNote: boolean }, { id: string }>(
+    DELETE_NOTE,
+    {
     onCompleted: () => toast.success('Note deleted successfully!'),
     onError: (error) => toast.error(`Failed to delete note: ${error.message}`),
-  });
+    }
+  );
 
   const createNote = async (input: NoteInput): Promise<Note | null> => {
     try {

@@ -34,7 +34,8 @@ export default function NotesPage() {
     [periodType, search]
   );
 
-  const { notes, loading, error, refetch } = useNotes(filters);
+  const shouldFetchNotes = !authLoading && isAuthenticated;
+  const { notes, loading, error, refetch } = useNotes(filters, { skip: !shouldFetchNotes });
   const { createNote, updateNote, deleteNote, loading: mutationLoading } = useNoteMutations();
 
   useEffect(() => {

@@ -1,7 +1,7 @@
 import { format, getISOWeek, getISOWeekYear, isDate, isValid, parseISO } from 'date-fns';
 
 export const toSafeDate = (value: unknown): Date | null => {
-  if (!value) return null;
+  if (value === null || value === undefined || value === '') return null;
   if (typeof value === 'number') {
     const timestampDate = new Date(value);
     return isValid(timestampDate) ? timestampDate : null;
