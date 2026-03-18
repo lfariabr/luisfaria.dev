@@ -27,6 +27,7 @@ export const AUTH_COOKIE_BASE_OPTIONS = {
   secure: process.env.NODE_ENV === 'production',
 };
 
+// Updated
 if (process.env.NODE_ENV === 'production') {
   if (!process.env.COOKIE_DOMAIN) {
     throw new Error('COOKIE_DOMAIN environment variable is required in production');

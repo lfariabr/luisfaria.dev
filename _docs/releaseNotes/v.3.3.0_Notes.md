@@ -56,3 +56,6 @@
 - Epic: [#168](https://github.com/lfariabr/luisfaria.dev/issues/168)
 - PR: [#175](https://github.com/lfariabr/luisfaria.dev/pull/175)
 - Detailed breakdown: `_docs/featureBreakdown/v3.3-notes-flashcards.md`
+
+**Full Changelog**: https://github.com/lfariabr/luisfaria.dev/compare/v3.2.0...v3.3.0
+
