@@ -101,6 +101,7 @@ luisfaria/
 | ~~v3.0~~ | ~~Resend Integration~~ | ~~Transactional emails~~ |
 | v3.1 | Stripe Payments | Coffee & meeting checkout via Stripe — APOD-style FAB, hosted checkout, success/cancel pages |
 | v3.2 | Registration Security Hardening | Cloudflare Turnstile on `register`, IP/email throttling, fail-fast Turnstile config validation |
+| v3.3 | Authenticated Notes | Private `/notes` area — CRUD checkpoints, timeline + week/month views, period/search filters, Shield-validated queries, ISO date serialization |
 
 ---
 
@@ -157,6 +158,7 @@ docker-compose up --build
 | `TURNSTILE_SECRET_KEY` | Backend secret for Cloudflare Turnstile verification |
 | `NEXT_PUBLIC_GRAPHQL_URL` | Frontend → API (defaults to `http://localhost:4000/graphql`) |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Public Turnstile site key for the register page |
+| `COOKIE_DOMAIN` | Auth cookie domain in production (e.g. `.luisfaria.dev`) — required in prod, omit in dev |
 
 ### Stripe Local Setup
 
