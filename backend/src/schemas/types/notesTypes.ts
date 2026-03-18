@@ -8,7 +8,7 @@ export const notesTypes = `#graphql
     id: ID!
     userId: ID!
     title: String
-    content: String!
+    content: String
     date: String!
     periodType: NotePeriodType!
     accomplishments: [String!]!
@@ -20,7 +20,7 @@ export const notesTypes = `#graphql
 
   input NoteInput {
     title: String
-    content: String!
+    content: String
     date: String
     periodType: NotePeriodType
     accomplishments: [String!]

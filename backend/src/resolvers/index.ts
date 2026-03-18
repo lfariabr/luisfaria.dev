@@ -43,6 +43,12 @@ export const resolvers = {
     sendGogginsEmail: sendGogginsEmailMutation,
   },
   
+  Note: {
+    date: (parent: { date: Date }) => parent.date?.toISOString() ?? new Date().toISOString(),
+    createdAt: (parent: { createdAt: Date }) => parent.createdAt?.toISOString() ?? new Date().toISOString(),
+    updatedAt: (parent: { updatedAt: Date }) => parent.updatedAt?.toISOString() ?? new Date().toISOString(),
+  },
+
   Project: {
     // Ensure non-null slug by backfilling if missing
     async slug(parent: any) {

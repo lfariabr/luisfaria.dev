@@ -162,15 +162,6 @@ export function Header() {
                 {item.name}
               </Link>
             ))}
-            {!isAuthenticated && (
-              <Link 
-                href="/register" 
-                className="sm:hidden text-sm font-medium py-1"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Sign Up
-              </Link>
-            )}
             {isAuthenticated && (
               <Link
                 href="/notes"
@@ -178,6 +169,15 @@ export function Header() {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 My Notes
+              </Link>
+            )}
+            {!isAuthenticated && (
+              <Link 
+                href="/register" 
+                className="sm:hidden text-sm font-medium py-1"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Sign Up
               </Link>
             )}
           </nav>

@@ -21,10 +21,9 @@ const NoteSchema: Schema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true,
     },
     title: { type: String, trim: true, default: 'Note update' },
-    content: { type: String, required: true, trim: true },
+    content: { type: String, trim: true, default: '' },
     date: { type: Date, required: true, default: Date.now },
     periodType: {
       type: String,

@@ -1,4 +1,4 @@
-import { shield, rule, allow, Rule } from 'graphql-shield';
+import { shield, rule, allow } from 'graphql-shield';
 import { GraphQLError } from 'graphql';
 import { checkAuth, checkRole } from '../utils/authUtils';
 import { validateInput } from './middleware';
@@ -8,9 +8,7 @@ import { articleInputSchema, articleUpdateSchema } from './schemas/article.schem
 import { chatbotInputSchema } from './schemas/chatbot.schema';
 import { screamInputSchema } from './schemas/scream.schema';
 import { CheckoutInputSchema } from './schemas/checkout.schema';
-import { noteInputSchema, noteUpdateSchema } from './schemas/notes.schema';
-import { z } from 'zod';
-
+import { noteInputSchema, noteUpdateSchema, noteIdSchema } from './schemas/notes.schema';
 // Authentication rules
 const isAuthenticated = rule({ cache: 'contextual' })(
   async (_parent: any, _args: any, context: any) => {
@@ -83,18 +81,17 @@ const validateNoteUpdate = rule({ cache: 'no_cache' })(
   validateInput(noteUpdateSchema, 'input')
 );
 
-const noteIdSchema = z.string().regex(/^[a-f\d]{24}$/i, 'Invalid note id');
 const validateNoteId = rule({ cache: 'no_cache' })(
   validateInput(noteIdSchema, 'id')
 );
 
 // Helper function to combine rules
-function and(...rules: Rule[]) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function and(...rules: any[]) {
   return rule({ cache: 'no_cache' })(async (parent: unknown, args: unknown, context: unknown, info: unknown) => {
     for (const r of rules) {
-      const result = await r.resolve(parent, args, context, info);
-      if (result instanceof Error) return result;
-      if (!result) return false;
+      const result = await (r.resolve(parent, args, context, info) as Promise<boolean | string | Error>);
+      if (result !== true) return result as Error | string | false;
     }
     return true;
   });

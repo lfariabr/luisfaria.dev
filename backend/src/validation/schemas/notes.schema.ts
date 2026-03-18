@@ -1,10 +1,12 @@
 import { z } from 'zod';
 
+export const noteIdSchema = z.string().regex(/^[a-f\d]{24}$/i, 'Invalid note id');
+
 const stringArray = z.array(z.string().trim().min(1)).optional();
 
 export const noteInputSchema = z.object({
   title: z.string().trim().min(1).max(160).optional(),
-  content: z.string().trim().min(1, 'Content is required').max(5000, 'Content is too long'),
+  content: z.string().trim().max(5000, 'Content is too long').optional(),
   date: z.string().datetime().optional(),
   periodType: z.enum(['WEEKLY', 'MONTHLY']).optional(),
   accomplishments: stringArray,

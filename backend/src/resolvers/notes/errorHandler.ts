@@ -37,6 +37,7 @@ export const withNotesErrorHandling = async <T>(operation: () => Promise<T>, ope
     try {
       return await operation();
     } catch (error) {
+      if (isNotesServiceError(error)) throw error;
       throw toNotesServiceError(error);
     }
   }, operationName);

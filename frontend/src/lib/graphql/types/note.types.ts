@@ -4,7 +4,7 @@ export interface Note {
   id: string;
   userId: string;
   title?: string;
-  content: string;
+  content?: string;
   date: string;
   periodType: NotePeriodType;
   accomplishments: string[];
@@ -16,7 +16,7 @@ export interface Note {
 
 export interface NoteInput {
   title?: string;
-  content: string;
+  content?: string;
   date?: string;
   periodType?: NotePeriodType;
   accomplishments?: string[];

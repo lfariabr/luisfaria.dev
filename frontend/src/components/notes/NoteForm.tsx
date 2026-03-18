@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Note, NoteInput, NotePeriodType } from '@/lib/graphql/types/note.types';
 import { toDateInputValue } from './dateUtils';
@@ -47,7 +46,7 @@ export function NoteForm({ note, loading = false, onSubmit }: NoteFormProps) {
     await onSubmit({
       title: title.trim() || defaultTitle,
       content,
-      date: new Date(date).toISOString(),
+      date: `${date}T00:00:00.000Z`,
       periodType,
       accomplishments: parseCsv(accomplishments),
       nextPlans: parseCsv(nextPlans),
@@ -60,18 +59,6 @@ export function NoteForm({ note, loading = false, onSubmit }: NoteFormProps) {
       <div className="space-y-2">
         <Label htmlFor="note-title">Title</Label>
         <Input id="note-title" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Weekly update" />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="note-content">Notes</Label>
-        <Textarea
-          id="note-content"
-          value={content}
-          onChange={(event) => setContent(event.target.value)}
-          placeholder="Write your notes..."
-          className="min-h-[120px]"
-          required
-        />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -111,11 +98,6 @@ export function NoteForm({ note, loading = false, onSubmit }: NoteFormProps) {
           onChange={(event) => setNextPlans(event.target.value)}
           placeholder="sleep routine, continue reading, keep budgeting"
         />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="note-tags">Tags (comma-separated)</Label>
-        <Input id="note-tags" value={tags} onChange={(event) => setTags(event.target.value)} placeholder="health, finance, mindset" />
       </div>
 
       <Button type="submit" disabled={loading}>
