@@ -23,7 +23,7 @@ const NoteSchema: Schema = new Schema(
       required: true,
       index: true,
     },
-    title: { type: String, trim: true, default: 'Weekly update' },
+    title: { type: String, trim: true, default: 'Note update' },
     content: { type: String, required: true, trim: true },
     date: { type: Date, required: true, default: Date.now },
     periodType: {

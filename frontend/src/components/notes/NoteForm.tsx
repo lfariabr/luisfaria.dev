@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Note, NoteInput, NotePeriodType } from '@/lib/graphql/types/note.types';
 import { toDateInputValue } from './dateUtils';
 
@@ -79,15 +80,15 @@ export function NoteForm({ note, loading = false, onSubmit }: NoteFormProps) {
         </div>
         <div className="space-y-2">
           <Label htmlFor="note-period">Period</Label>
-          <select
-            id="note-period"
-            value={periodType}
-            onChange={(event) => setPeriodType(event.target.value as NotePeriodType)}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-          >
-            <option value="WEEKLY">Weekly</option>
-            <option value="MONTHLY">Monthly</option>
-          </select>
+          <Select value={periodType} onValueChange={(value) => setPeriodType(value as NotePeriodType)}>
+            <SelectTrigger id="note-period">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="WEEKLY">Weekly</SelectItem>
+              <SelectItem value="MONTHLY">Monthly</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

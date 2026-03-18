@@ -1,6 +1,7 @@
 import Note from '../../models/Note';
 import { Errors } from '../../utils/errors';
 import { logger } from '../../utils/logger';
+import { withNotesErrorHandling } from './errorHandler';
 
 interface ResolverContext {
   user?: {
@@ -28,19 +29,27 @@ interface NoteUpdateInput {
   tags?: string[];
 }
 
+const defaultTitleForPeriod = (periodType?: 'WEEKLY' | 'MONTHLY') =>
+  periodType === 'MONTHLY' ? 'Monthly update' : 'Weekly update';
+
 export const noteMutations = {
   createNote: async (_: unknown, { input }: { input: NoteInput }, context: ResolverContext) => {
     if (!context.user?.id) {
       throw Errors.unauthenticated();
     }
+    const userId = context.user.id;
 
-    const note = await Note.create({
-      ...input,
-      title: input.title?.trim() || 'Weekly update',
-      date: input.date ? new Date(input.date) : new Date(),
-      userId: context.user.id,
-    });
-    logger.info('Note created', { userId: context.user.id, noteId: note.id, periodType: note.periodType });
+    const note = await withNotesErrorHandling(
+      () =>
+        Note.create({
+          ...input,
+          title: input.title?.trim() || defaultTitleForPeriod(input.periodType),
+          date: input.date ? new Date(input.date) : new Date(),
+          userId,
+        }),
+      'createNote'
+    );
+    logger.info('Note created', { userId, noteId: note.id, periodType: note.periodType });
 
     return note;
   },
@@ -53,26 +62,36 @@ export const noteMutations = {
     if (!context.user?.id) {
       throw Errors.unauthenticated();
     }
+    const userId = context.user.id;
 
     const updatePayload: Record<string, unknown> = { ...input };
     if (input.date) {
       updatePayload.date = new Date(input.date);
     }
     if (typeof input.title === 'string') {
-      updatePayload.title = input.title.trim() || 'Weekly update';
+      const trimmedTitle = input.title.trim();
+      if (trimmedTitle) {
+        updatePayload.title = trimmedTitle;
+      } else {
+        const existingNote = await withNotesErrorHandling(
+          () => Note.findOne({ _id: id, userId }).select('periodType'),
+          'resolveUpdateNoteTitle'
+        );
+        updatePayload.title = defaultTitleForPeriod(input.periodType ?? existingNote?.periodType);
+      }
     }
 
-    const note = await Note.findOneAndUpdate(
-      { _id: id, userId: context.user.id },
-      { $set: updatePayload },
-      { new: true, runValidators: true }
+    const note = await withNotesErrorHandling(
+      () =>
+        Note.findOneAndUpdate({ _id: id, userId }, { $set: updatePayload }, { new: true, runValidators: true }),
+      'updateNote'
     );
 
     if (!note) {
-      logger.warn('Note update failed: note not found', { userId: context.user.id, noteId: id });
+      logger.warn('Note update failed: note not found', { userId, noteId: id });
       throw Errors.notFound('Note');
     }
-    logger.info('Note updated', { userId: context.user.id, noteId: note.id });
+    logger.info('Note updated', { userId, noteId: note.id });
 
     return note;
   },
@@ -81,13 +100,17 @@ export const noteMutations = {
     if (!context.user?.id) {
       throw Errors.unauthenticated();
     }
+    const userId = context.user.id;
 
-    const result = await Note.findOneAndDelete({ _id: id, userId: context.user.id });
+    const result = await withNotesErrorHandling(
+      () => Note.findOneAndDelete({ _id: id, userId }),
+      'deleteNote'
+    );
     if (!result) {
-      logger.warn('Note delete failed: note not found', { userId: context.user.id, noteId: id });
+      logger.warn('Note delete failed: note not found', { userId, noteId: id });
       throw Errors.notFound('Note');
     }
-    logger.info('Note deleted', { userId: context.user.id, noteId: result.id });
+    logger.info('Note deleted', { userId, noteId: result.id });
     return true;
   },
 };

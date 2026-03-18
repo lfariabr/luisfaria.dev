@@ -15,6 +15,7 @@ import { NotesTimelineView } from '@/components/notes/NotesTimelineView';
 import { NotesPeriodView } from '@/components/notes/NotesPeriodView';
 import { Note, NotePeriodType } from '@/lib/graphql/types/note.types';
 import { logger } from '@/lib/logger';
+import { toast } from 'sonner';
 
 export default function NotesPage() {
   const router = useRouter();
@@ -79,6 +80,7 @@ export default function NotesPage() {
                     setOpenCreate(false);
                   } else {
                     logger.warn('Create note mutation returned empty result');
+                    toast.error('Failed to create note. Please try again.');
                   }
                 }}
               />
@@ -177,6 +179,7 @@ export default function NotesPage() {
                   setEditingNote(null);
                 } else {
                   logger.warn('Update note mutation returned empty result', { noteId: editingNote.id });
+                  toast.error('Failed to update note. Please try again.');
                 }
               }}
             />

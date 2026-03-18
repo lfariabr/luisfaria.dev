@@ -2,6 +2,7 @@ import Note, { NotePeriodType } from '../../models/Note';
 import { Errors } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 import { z } from 'zod';
+import { withNotesErrorHandling } from './errorHandler';
 
 interface NotesFilterArgs {
   periodType?: NotePeriodType;
@@ -31,10 +32,11 @@ export const noteQueries = {
     if (!context.user?.id) {
       throw Errors.unauthenticated();
     }
+    const userId = context.user.id;
 
     const { periodType, year, month, search, tag, limit = 50, offset = 0 } = args;
     const query: Record<string, unknown> = {
-      userId: context.user.id,
+      userId,
     };
 
     if (periodType) {
@@ -61,12 +63,16 @@ export const noteQueries = {
       query.date = { $gte: start, $lt: end };
     }
 
-    const notes = await Note.find(query)
-      .sort({ date: -1, createdAt: -1 })
-      .skip(Math.max(offset, 0))
-      .limit(Math.max(Math.min(limit, 200), 1));
+    const notes = await withNotesErrorHandling(
+      () =>
+        Note.find(query)
+          .sort({ date: -1, createdAt: -1 })
+          .skip(Math.max(offset, 0))
+          .limit(Math.max(Math.min(limit, 200), 1)),
+      'myNotes'
+    );
     logger.debug('Fetched notes', {
-      userId: context.user.id,
+      userId,
       count: notes.length,
       filters: {
         periodType,
@@ -83,10 +89,14 @@ export const noteQueries = {
     if (!context.user?.id) {
       throw Errors.unauthenticated();
     }
+    const userId = context.user.id;
 
-    const note = await Note.findOne({ _id: id, userId: context.user.id });
+    const note = await withNotesErrorHandling(
+      () => Note.findOne({ _id: id, userId }),
+      'note'
+    );
     if (!note) {
-      logger.warn('Note fetch failed: note not found', { userId: context.user.id, noteId: id });
+      logger.warn('Note fetch failed: note not found', { userId, noteId: id });
       throw Errors.notFound('Note');
     }
     return note;
