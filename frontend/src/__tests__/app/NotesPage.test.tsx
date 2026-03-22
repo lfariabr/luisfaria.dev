@@ -63,6 +63,7 @@ describe('NotesPage', () => {
     render(<NotesPage />);
 
     expect(screen.getByText('My Notes & Flashcards')).toBeInTheDocument();
+    expect(screen.getByText('Private study cockpit')).toBeInTheDocument();
     expect(screen.getByText('Weekly checkpoint')).toBeInTheDocument();
     expect(screen.getByText('Unknown date')).toBeInTheDocument();
 
