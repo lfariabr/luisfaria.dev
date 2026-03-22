@@ -7,6 +7,7 @@ import { MainLayout } from '@/components/layouts/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useNotes } from '@/lib/hooks/useNotes';
@@ -47,7 +48,7 @@ export default function NotesPage() {
   );
   const totalPlans = useMemo(() => notes.reduce((count, note) => count + note.nextPlans.length, 0), [notes]);
   const monthlyCount = useMemo(() => notes.filter((note) => note.periodType === 'MONTHLY').length, [notes]);
-  const weeklyCount = notes.length - monthlyCount;
+  const weeklyCount = useMemo(() => notes.length - monthlyCount, [notes.length, monthlyCount]);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -149,8 +150,8 @@ export default function NotesPage() {
           <CardContent className="grid gap-4 px-5 py-5 md:grid-cols-[minmax(0,1.4fr)_220px_auto] md:items-center">
             <label className="relative block">
               <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <input
-                className="h-11 w-full rounded-2xl border border-input bg-background pl-11 pr-4 text-sm shadow-xs transition-colors focus:border-ring focus:outline-none"
+              <Input
+                className="h-11 w-full rounded-2xl pl-11 pr-4"
                 placeholder="Search content or title"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}

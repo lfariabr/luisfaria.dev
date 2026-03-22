@@ -14,13 +14,13 @@ interface NotesPeriodViewProps {
 export function NotesPeriodView({ notes }: NotesPeriodViewProps) {
   const monthly = notes.reduce<Record<string, Note[]>>((acc, note) => {
     const key = getNoteMonthKey(note.date);
-    acc[key] = [...(acc[key] ?? []), note];
+    (acc[key] ??= []).push(note);
     return acc;
   }, {});
 
   const weekly = notes.reduce<Record<string, Note[]>>((acc, note) => {
     const key = getNoteWeekKey(note.date);
-    acc[key] = [...(acc[key] ?? []), note];
+    (acc[key] ??= []).push(note);
     return acc;
   }, {});
 
@@ -42,48 +42,56 @@ export function NotesPeriodView({ notes }: NotesPeriodViewProps) {
       return <p className="text-sm text-muted-foreground">{emptyLabel}</p>;
     }
 
-    return entries.map(([key, groupNotes]) => (
-      <section key={key} className="rounded-3xl border border-border/60 bg-background/80 p-4 shadow-sm">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-semibold">{formatLabel(key)}</p>
-            <p className="text-xs text-muted-foreground">
-              {groupNotes.length} {groupNotes.length === 1 ? 'checkpoint' : 'checkpoints'}
-            </p>
-          </div>
-          <Badge variant={badgeVariant} className="px-3 py-1">
-            {groupNotes[0]?.periodType === 'MONTHLY' ? 'Monthly' : 'Mixed'}
-          </Badge>
-        </div>
-        <div className="grid gap-2">
-          {groupNotes.map((note) => (
-            <div
-              key={note.id}
-              className="rounded-2xl border border-border/50 bg-card/90 px-3 py-3 transition-colors hover:border-border"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="font-medium">
-                  {note.title || (note.periodType === 'MONTHLY' ? 'Monthly update' : 'Weekly update')}
-                </p>
-                <span className="text-xs text-muted-foreground">{formatSafeDate(note.date, 'dd MMM')}</span>
-              </div>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {note.accomplishments.slice(0, 2).map((item, index) => (
-                  <Badge key={`${note.id}-accomplishment-${index}`} variant="secondary" className="max-w-full truncate">
-                    {item}
-                  </Badge>
-                ))}
-                {note.nextPlans.slice(0, 1).map((item, index) => (
-                  <Badge key={`${note.id}-plan-${index}`} variant="outline" className="max-w-full truncate">
-                    Next: {item}
-                  </Badge>
-                ))}
-              </div>
+    return entries.map(([key, groupNotes]) => {
+      const groupLabel = groupNotes.every((note) => note.periodType === 'MONTHLY')
+        ? 'Monthly'
+        : groupNotes.every((note) => note.periodType === 'WEEKLY')
+          ? 'Weekly'
+          : 'Mixed';
+
+      return (
+        <section key={key} className="rounded-3xl border border-border/60 bg-background/80 p-4 shadow-sm">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold">{formatLabel(key)}</p>
+              <p className="text-xs text-muted-foreground">
+                {groupNotes.length} {groupNotes.length === 1 ? 'checkpoint' : 'checkpoints'}
+              </p>
             </div>
-          ))}
-        </div>
-      </section>
-    ));
+            <Badge variant={badgeVariant} className="px-3 py-1">
+              {groupLabel}
+            </Badge>
+          </div>
+          <div className="grid gap-2">
+            {groupNotes.map((note) => (
+              <div
+                key={note.id}
+                className="rounded-2xl border border-border/50 bg-card/90 px-3 py-3 transition-colors hover:border-border"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="font-medium">
+                    {note.title || (note.periodType === 'MONTHLY' ? 'Monthly update' : 'Weekly update')}
+                  </p>
+                  <span className="text-xs text-muted-foreground">{formatSafeDate(note.date, 'dd MMM')}</span>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {note.accomplishments.slice(0, 2).map((item, index) => (
+                    <Badge key={`${note.id}-accomplishment-${index}`} variant="secondary" className="max-w-full truncate">
+                      {item}
+                    </Badge>
+                  ))}
+                  {note.nextPlans.slice(0, 1).map((item, index) => (
+                    <Badge key={`${note.id}-plan-${index}`} variant="outline" className="max-w-full truncate">
+                      Next: {item}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      );
+    });
   };
 
   return (
