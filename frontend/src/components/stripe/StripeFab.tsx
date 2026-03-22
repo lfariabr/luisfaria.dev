@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -13,7 +14,10 @@ import { StripeDialog } from "./StripeDialog";
 import { trackClientEvent } from "@/utils/analytics";
 
 export function StripeFab() {
+  const pathname = usePathname();
   const [open, setOpen] = React.useState(false);
+
+  if (pathname.startsWith('/notes')) return null;
 
   const handleOpen = () => {
     setOpen(true);

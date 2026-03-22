@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { usePathname } from "next/navigation";
 import { ApodDialog } from "./ApodDialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +13,10 @@ import {
 import Image from "next/image";
 
 export function ApodFab() {
+  const pathname = usePathname();
   const [open, setOpen] = React.useState(false);
+
+  if (pathname.startsWith('/notes')) return null;
 
   return (
     <>
