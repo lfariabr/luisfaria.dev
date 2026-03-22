@@ -17,7 +17,7 @@ export function StripeFab() {
   const pathname = usePathname();
   const [open, setOpen] = React.useState(false);
 
-  if (pathname.startsWith('/notes')) return null;
+  if (pathname && (pathname === '/notes' || pathname.startsWith('/notes/'))) return null;
 
   const handleOpen = () => {
     setOpen(true);
