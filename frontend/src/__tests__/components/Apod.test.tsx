@@ -13,6 +13,10 @@ jest.mock("@/utils/analytics", () => ({
   trackClientEvent: (...args: any[]) => mockTrackClientEvent(...args),
 }));
 
+jest.mock("@/utils/discord", () => ({
+  sendDiscordWebhook: jest.fn().mockResolvedValue(undefined),
+}));
+
 const mockUseAuth = jest.fn();
 jest.mock("@/lib/auth/AuthContext", () => ({
   useAuth: () => mockUseAuth(),
