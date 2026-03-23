@@ -1,6 +1,10 @@
 // npm test -- --testPathPattern="GogginsDialog.component.test"
 
 import { MockedProvider } from '@apollo/client/testing';
+
+jest.mock('@/utils/discord', () => ({
+  sendDiscordWebhook: jest.fn().mockResolvedValue(undefined),
+}));
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { GogginsDialog } from '@/components/goggins/GogginsDialog';
