@@ -12,6 +12,7 @@ import {
 import { Coffee } from "lucide-react";
 import { StripeDialog } from "./StripeDialog";
 import { trackClientEvent } from "@/utils/analytics";
+import { sendDiscordWebhook } from "@/utils/discord";
 
 export function StripeFab() {
   const pathname = usePathname();
@@ -22,6 +23,7 @@ export function StripeFab() {
   const handleOpen = () => {
     setOpen(true);
     trackClientEvent("stripe_fab_opened");
+    void sendDiscordWebhook('☕ Stripe FAB opened');
   };
 
   return (

@@ -5,6 +5,10 @@ import { GraphQLError } from 'graphql';
 import { GogginsDialog } from '@/components/goggins/GogginsDialog';
 import { ACTIVATE_GOGGINS_MODE } from '@/lib/graphql/mutations/scream.mutations';
 
+jest.mock('@/utils/discord', () => ({
+  sendDiscordWebhook: jest.fn().mockResolvedValue(undefined),
+}));
+
 const email = 'rl@test.com';
 
 beforeEach(() => {

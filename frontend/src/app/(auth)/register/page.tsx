@@ -11,7 +11,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { sendDiscordWebhook } from '@/utils/discord';
-import { logger } from '@/lib/logger';
 
 declare global {
   interface Window {
@@ -70,13 +69,8 @@ export default function RegisterPage() {
     e.preventDefault();
     setFormError(null);
     
-    // Send Discord webhook before registration
-    try {
-      await sendDiscordWebhook('Register button was clicked');
-    } catch (error) {
-      logger.warn('Discord webhook failed, continuing with registration', { error: String(error) });
-    }
-    
+    void sendDiscordWebhook(`📝 New registration: ${email}`);
+
     // Form validation
     if (password !== confirmPassword) {
       setFormError('Passwords do not match');

@@ -3,6 +3,10 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { StripeFab } from "@/components/stripe/StripeFab";
 
+jest.mock("@/utils/discord", () => ({
+  sendDiscordWebhook: jest.fn().mockResolvedValue(undefined),
+}));
+
 const mockStartCheckout = jest.fn();
 const mockTrackClientEvent = jest.fn();
 const mockToastError = jest.fn();

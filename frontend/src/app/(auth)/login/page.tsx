@@ -20,7 +20,6 @@ import {
   AlertDescription
 } from '@/components/ui/alert';
 import { sendDiscordWebhook } from '@/utils/discord';
-import { logger } from '@/lib/logger';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -39,13 +38,7 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Send Discord webhook before login
-    try {
-      await sendDiscordWebhook('Login button was clicked');
-    } catch (error) {
-      logger.warn('Discord webhook failed, continuing with login', { error: String(error) });
-    }
-    
+    void sendDiscordWebhook(`🔐 Login attempt: ${email}`);
     await login(email, password);
   };
 
