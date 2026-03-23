@@ -102,6 +102,8 @@ luisfaria/
 | v3.1 | Stripe Payments | Coffee & meeting checkout via Stripe — APOD-style FAB, hosted checkout, success/cancel pages |
 | v3.2 | Registration Security Hardening | Cloudflare Turnstile on `register`, IP/email throttling, fail-fast Turnstile config validation |
 | v3.3 | Authenticated Notes | Private `/notes` area — CRUD checkpoints, timeline + week/month views, period/search filters, Shield-validated queries, ISO date serialization |
+| v3.4 | Notes & Flashcards Redesign | Redesigned notes and flashcards workspace with improved UX and layout |
+| v3.5 | Discord Activity Monitoring | Real-time webhook notifications across login, register, APOD, Stripe, and Goggins interactions — fire-and-forget, never blocks user flow |
 
 ---
 
