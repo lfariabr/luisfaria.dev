@@ -23,6 +23,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/components/ui/use-toast';
+import { sendDiscordWebhook } from '@/utils/discord';
 
 const schema = z.object({
   userEmail: z.string().email('Invalid email address'),
@@ -135,6 +136,7 @@ export function GogginsDialog({ open, onOpenChange }: GogginsDialogProps) {
   const onSubmit = async (values: z.output<typeof schema>) => {
     setResultText("");
     setErrorText("");
+    void sendDiscordWebhook(`💪 Goggins mode: ${values.userEmail} (tone: ${values.explicitMode ? 'explicit' : 'filtered'})`);
     // persist and hide the email input to free up space
     try {
       if (values.userEmail) localStorage.setItem('gogginsEmail', values.userEmail);

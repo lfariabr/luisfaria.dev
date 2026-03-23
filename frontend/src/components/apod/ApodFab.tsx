@@ -11,6 +11,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import Image from "next/image";
+import { sendDiscordWebhook } from "@/utils/discord";
 
 export function ApodFab() {
   const pathname = usePathname();
@@ -42,7 +43,7 @@ export function ApodFab() {
                 />
 
                 <Button
-                  onClick={() => setOpen(true)}
+                  onClick={() => { void sendDiscordWebhook('🔭 APOD FAB clicked'); setOpen(true); }}
                   aria-label="Open Astronomy Picture of the Day"
                   className="
                     rounded-full h-20 w-20 p-0
