@@ -19,7 +19,7 @@
   - Concise markdown formatting enforced (bullets, short paragraphs, no walls of text)
 
 - **Content Sync Script**
-  - New `backend/scripts/sync-profile-articles.ts` reads all `.md` files from `_docs/devTo/`
+  - New `backend/scripts/sync-profile-articles.ts` reads all `.md` files from `_docs/buildInPublic/devTo/`
   - Extracts title, tags, and first paragraph as summary
   - Outputs JSON to stdout for review before updating the profile
 

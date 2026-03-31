@@ -3,7 +3,7 @@
  * SEO Audit Script — checks live pages and markdown content for SEO health.
  *
  * Check A: Fetches production pages from sitemap and validates meta tags.
- * Check B: Reads _docs/devTo/**\/*.md and validates content structure.
+ * Check B: Reads _docs/buildInPublic/devTo/**\/*.md and validates content structure.
  *
  * Usage:
  *   npx ts-node backend/scripts/seo-audit.ts           # stdout report
@@ -17,7 +17,7 @@ import * as path from 'path';
 
 const SITE_URL = 'https://luisfaria.dev';
 const SITEMAP_URL = `${SITE_URL}/sitemap.xml`;
-const DOCS_ROOT = path.resolve(__dirname, '../../_docs/devTo');
+const DOCS_ROOT = path.resolve(__dirname, '../../_docs/buildInPublic/devTo');
 const PASS_THRESHOLD = 0.8; // 80% pass rate required
 const CONCURRENCY = 5;
 const RESTRICTED_URLS = [

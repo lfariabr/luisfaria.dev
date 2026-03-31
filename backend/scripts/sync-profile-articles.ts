@@ -1,6 +1,6 @@
 #!/usr/bin/env ts-node
 /**
- * Reads all .md files from _docs/devTo/ subdirectories and outputs
+ * Reads all .md files from _docs/buildInPublic/devTo/ subdirectories and outputs
  * a JSON array of article entries matching the luis-profile.json schema.
  *
  * Usage: npx ts-node backend/scripts/sync-profile-articles.ts
@@ -9,7 +9,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-const DOCS_ROOT = path.resolve(__dirname, '../../_docs/devTo');
+const DOCS_ROOT = path.resolve(__dirname, '../../_docs/buildInPublic/devTo');
 
 interface ArticleEntry {
   title: string;
