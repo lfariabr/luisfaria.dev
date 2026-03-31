@@ -41,3 +41,5 @@
 
 ## TL;DR Changelog
 Expanded Discord webhook coverage from 3 generic events to 7 contextual notifications across all major user touchpoints. All are fire-and-forget and never block the user flow.
+
+**Full Changelog**: https://github.com/lfariabr/luisfaria.dev/compare/v3.4.0...v3.5.0
