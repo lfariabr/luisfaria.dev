@@ -6,6 +6,10 @@ export const defaultMetadata: Metadata = {
   title: 'Luis Faria | Senior Software Engineer',
   description: 'Expertise in modern web technologies, system architecture, and team leadership. Check out my portfolio and projects.',
   metadataBase: new URL(siteUrl),
+  icons: {
+    icon: [{ url: '/icon', type: 'image/png' }],
+    apple: [{ url: '/apple-icon', type: 'image/png' }],
+  },
   openGraph: {
     title: 'Luis Faria | Senior Software Engineer',
     description: 'Expertise in modern web technologies, system architecture, and team leadership.',
