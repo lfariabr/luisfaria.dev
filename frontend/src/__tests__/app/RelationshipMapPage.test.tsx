@@ -2,6 +2,7 @@ import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { useQuery } from '@apollo/client';
 import RelationshipMapPage from '@/app/admin/relationship/page';
+import { GET_HOME_LOCATION, GET_PINS } from '@/lib/graphql/queries/pin.queries';
 
 jest.mock('@apollo/client', () => ({
   useQuery: jest.fn(),
@@ -75,9 +76,8 @@ const mockQueryResults = ({ pins: pinsOverride, home: homeOverride }: QueryResul
   };
 
   mockedUseQuery.mockImplementation((query: unknown) => {
-    if (typeof query === 'string' && query.includes('GetHomeLocation')) {
-      return homeResult;
-    }
+    if (query === GET_HOME_LOCATION) return homeResult;
+    if (query === GET_PINS) return pinsResult;
     return pinsResult;
   });
 
@@ -158,9 +158,11 @@ describe('RelationshipMapPage', () => {
   describe('home marker', () => {
     const homeLocation = { label: 'Home base', lat: 1.23, lng: 2.34 };
     const ORIGINAL_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    const ORIGINAL_MAP_ID = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID;
 
     beforeEach(() => {
       process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = 'test-maps-key';
+      process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID = 'test-map-id';
     });
 
     afterEach(() => {
@@ -168,6 +170,11 @@ describe('RelationshipMapPage', () => {
         delete process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
       } else {
         process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = ORIGINAL_KEY;
+      }
+      if (ORIGINAL_MAP_ID === undefined) {
+        delete process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID;
+      } else {
+        process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID = ORIGINAL_MAP_ID;
       }
     });
 

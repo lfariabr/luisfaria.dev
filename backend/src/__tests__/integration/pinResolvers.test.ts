@@ -292,6 +292,28 @@ describe('Pin Resolvers', () => {
       expect(parseRelationshipHome({})).toBeNull();
     });
 
+    it('treats whitespace-only values as missing', () => {
+      expect(parseRelationshipHome({ RELATIONSHIP_HOME_LAT: '   ', RELATIONSHIP_HOME_LNG: '\t' })).toBeNull();
+    });
+
+    it('trims surrounding whitespace before parsing valid coords', () => {
+      expect(
+        parseRelationshipHome({ RELATIONSHIP_HOME_LAT: '  1.23  ', RELATIONSHIP_HOME_LNG: '\t2.34\n' })
+      ).toEqual({ label: 'Home base', lat: 1.23, lng: 2.34 });
+    });
+
+    it('rejects trailing garbage in lat (e.g. "1.23abc")', () => {
+      expect(
+        parseRelationshipHome({ RELATIONSHIP_HOME_LAT: '1.23abc', RELATIONSHIP_HOME_LNG: '2.34' })
+      ).toBeNull();
+    });
+
+    it('rejects trailing garbage in lng (e.g. "2.34xyz")', () => {
+      expect(
+        parseRelationshipHome({ RELATIONSHIP_HOME_LAT: '1.23', RELATIONSHIP_HOME_LNG: '2.34xyz' })
+      ).toBeNull();
+    });
+
     it('returns null and warns when only lat is set', () => {
       expect(parseRelationshipHome({ RELATIONSHIP_HOME_LAT: '1.23' })).toBeNull();
       expect(warnSpy).toHaveBeenCalled();

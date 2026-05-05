@@ -32,15 +32,17 @@ interface Config {
 }
 
 export function parseRelationshipHome(env: NodeJS.ProcessEnv = process.env): RelationshipHome | null {
-    const rawLat = env.RELATIONSHIP_HOME_LAT;
-    const rawLng = env.RELATIONSHIP_HOME_LNG;
+    const rawLat = env.RELATIONSHIP_HOME_LAT?.trim();
+    const rawLng = env.RELATIONSHIP_HOME_LNG?.trim();
+    // Whitespace-only values behave as missing (after trim, they become empty strings).
     if (!rawLat && !rawLng) return null;
     if (!rawLat || !rawLng) {
         console.warn('[config] RELATIONSHIP_HOME_LAT and RELATIONSHIP_HOME_LNG must both be set; ignoring home marker.');
         return null;
     }
-    const lat = parseFloat(rawLat);
-    const lng = parseFloat(rawLng);
+    // Number() (unlike parseFloat) rejects trailing garbage like "1.23abc" by returning NaN.
+    const lat = Number(rawLat);
+    const lng = Number(rawLng);
     if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
         console.warn('[config] RELATIONSHIP_HOME_LAT is invalid; ignoring home marker.');
         return null;

@@ -26,7 +26,12 @@ const PinSchema: Schema = new Schema(
     category: { type: String, trim: true, maxlength: 80 },
     payment: { type: String, trim: true, maxlength: 80 },
     city: { type: String, trim: true, maxlength: 80 },
-    countryCode: { type: String, trim: true, uppercase: true, minlength: 2, maxlength: 2 },
+    countryCode: {
+      type: String,
+      trim: true,
+      uppercase: true,
+      match: [/^[A-Z]{2}$/, 'countryCode must be ISO 3166-1 alpha-2 (two letters)'],
+    },
     notes: { type: String, trim: true, maxlength: 500 },
     source: { type: String, trim: true, maxlength: 80 },
   },

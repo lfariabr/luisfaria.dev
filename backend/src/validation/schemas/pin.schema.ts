@@ -29,8 +29,8 @@ export const pinInputSchema = z.object({
   countryCode: z
     .string()
     .trim()
-    .length(2, 'Country code must be ISO 3166-1 alpha-2 format')
     .toUpperCase()
+    .regex(/^[A-Z]{2}$/, 'Country code must be ISO 3166-1 alpha-2 (two letters)')
     .optional(),
   notes: optionalTrimmedString(500),
   source: optionalTrimmedString(80),

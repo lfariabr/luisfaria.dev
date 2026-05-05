@@ -30,6 +30,7 @@ function formatAmount(amount: number) {
 
 export default function RelationshipMapPage() {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? '';
+  const mapId = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID ?? '';
   const { data, loading, error, refetch } = useQuery<PinsData>(GET_PINS);
   const { data: homeData } = useQuery<RelationshipHomeData>(GET_HOME_LOCATION, {
     errorPolicy: 'ignore',
@@ -102,7 +103,11 @@ export default function RelationshipMapPage() {
                 <p>Unable to load pins from GraphQL.</p>
                 <button
                   type="button"
-                  onClick={() => void refetch()}
+                  onClick={() => {
+                    setActivePin(null);
+                    setHomeOpen(false);
+                    void refetch();
+                  }}
                   className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-foreground transition-colors hover:bg-accent"
                 >
                   <RefreshCw className="h-4 w-4" />
@@ -117,13 +122,17 @@ export default function RelationshipMapPage() {
               <div className="flex h-[520px] items-center justify-center px-6 text-center text-sm text-muted-foreground">
                 Set <code className="mx-1 rounded bg-muted px-1 font-mono">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code> to enable the map.
               </div>
+            ) : !mapId ? (
+              <div className="flex h-[520px] items-center justify-center px-6 text-center text-sm text-muted-foreground">
+                Set <code className="mx-1 rounded bg-muted px-1 font-mono">NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID</code> (AdvancedMarker requires a Map ID with Advanced Markers enabled).
+              </div>
             ) : (
               <APIProvider apiKey={apiKey}>
                 <Map
                   style={{ width: '100%', height: 'min(68vh, 620px)', minHeight: '420px' }}
                   defaultCenter={SYDNEY}
                   defaultZoom={13}
-                  mapId="sydney-adventures"
+                  mapId={mapId}
                   gestureHandling="cooperative"
                   disableDefaultUI={false}
                 >
