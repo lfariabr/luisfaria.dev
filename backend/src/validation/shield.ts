@@ -9,6 +9,7 @@ import { chatbotInputSchema } from './schemas/chatbot.schema';
 import { screamInputSchema } from './schemas/scream.schema';
 import { CheckoutInputSchema } from './schemas/checkout.schema';
 import { noteInputSchema, noteUpdateSchema, noteIdSchema, noteFiltersSchema } from './schemas/notes.schema';
+import { pinInputSchema } from './schemas/pin.schema';
 // Authentication rules
 const isAuthenticated = rule({ cache: 'contextual' })(
   async (_parent: any, _args: any, context: any) => {
@@ -97,6 +98,10 @@ const validateNoteFilters = rule({ cache: 'no_cache' })(
   }
 );
 
+const validatePinInput = rule({ cache: 'no_cache' })(
+  validateInput(pinInputSchema, 'input')
+);
+
 // Export shield middleware
 export const permissions = shield(
   {
@@ -120,6 +125,8 @@ export const permissions = shield(
       testRateLimit: isAuthenticated,
       myNotes: and(isAuthenticated, validateNoteFilters),
       note: and(isAuthenticated, validateNoteId),
+      pins: isAdmin,
+      relationshipHomeLocation: isAdmin,
     },
     Mutation: {
       // Public mutations
@@ -128,6 +135,7 @@ export const permissions = shield(
       createCheckoutSession: validateCheckout,
       
       // Admin-only mutations
+      createPin: and(isAdmin, validatePinInput),
       createProject: and(isAdmin, validateProjectInput),
       updateProject: and(isAdmin, validateProjectUpdate),
       deleteProject: isAdmin,
