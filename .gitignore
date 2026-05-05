@@ -111,3 +111,4 @@ server
 backend/dump.rdb
 frontend/src/app/test-sentry
 backend/scripts/seed-nana-notes.ts
+backend/scripts/seed-pins.ts

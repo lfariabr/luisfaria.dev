@@ -14,6 +14,8 @@ import { stripeMutations } from './stripe/mutations';
 import { stripeQueries } from './stripe/queries';
 import { noteQueries } from './notes/queries';
 import { noteMutations } from './notes/mutations';
+import { pinQueries } from './pins/queries';
+import { pinMutations } from './pins/mutations';
 import Project from '../models/Project';
 import { slugify } from '../utils/slugUtils';
 import type { ApodResponse } from '../services/apod/';
@@ -29,8 +31,9 @@ export const resolvers = {
     ...ApodQueries,
     ...stripeQueries,
     ...noteQueries,
+    ...pinQueries,
   },
-  
+
   Mutation: {
     ...projectMutations,
     ...articleMutations,
@@ -39,6 +42,7 @@ export const resolvers = {
     ...screamMutations,
     ...stripeMutations,
     ...noteMutations,
+    ...pinMutations,
     // Wire Resend mutation
     sendGogginsEmail: sendGogginsEmailMutation,
   },
@@ -47,6 +51,11 @@ export const resolvers = {
     date: (parent: { date?: Date }) => parent.date?.toISOString(),
     createdAt: (parent: { createdAt?: Date }) => parent.createdAt?.toISOString(),
     updatedAt: (parent: { updatedAt?: Date }) => parent.updatedAt?.toISOString(),
+  },
+
+  Pin: {
+    date: (parent: { date?: Date }) => parent.date?.toISOString(),
+    createdAt: (parent: { createdAt?: Date }) => parent.createdAt?.toISOString(),
   },
 
   Project: {

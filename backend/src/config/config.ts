@@ -3,6 +3,12 @@ import dotenv from "dotenv";
 // Load environment variables
 dotenv.config();
 
+interface RelationshipHome {
+    label: string;
+    lat: number;
+    lng: number;
+}
+
 interface Config {
     port: number;
     nodeEnv: string;
@@ -21,6 +27,30 @@ interface Config {
     stripeCoffeePriceId: string;
     stripeMeetingPriceId: string;
     turnstileSecretKey: string;
+    geocodingApiKey: string;
+    relationshipHome: RelationshipHome | null;
+}
+
+export function parseRelationshipHome(env: NodeJS.ProcessEnv = process.env): RelationshipHome | null {
+    const rawLat = env.RELATIONSHIP_HOME_LAT;
+    const rawLng = env.RELATIONSHIP_HOME_LNG;
+    if (!rawLat && !rawLng) return null;
+    if (!rawLat || !rawLng) {
+        console.warn('[config] RELATIONSHIP_HOME_LAT and RELATIONSHIP_HOME_LNG must both be set; ignoring home marker.');
+        return null;
+    }
+    const lat = parseFloat(rawLat);
+    const lng = parseFloat(rawLng);
+    if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
+        console.warn('[config] RELATIONSHIP_HOME_LAT is invalid; ignoring home marker.');
+        return null;
+    }
+    if (!Number.isFinite(lng) || lng < -180 || lng > 180) {
+        console.warn('[config] RELATIONSHIP_HOME_LNG is invalid; ignoring home marker.');
+        return null;
+    }
+    const label = env.RELATIONSHIP_HOME_LABEL?.trim() || 'Home base';
+    return { label, lat, lng };
 }
 
 // Validate required environment variables
@@ -35,7 +65,7 @@ const requiredEnvVars = [
   'RATE_LIMIT_MAX_REQUESTS',
   'RATE_LIMIT_ANONYMOUS_REQUESTS',
   'RESEND_API_KEY',
-  'NASA_API_KEY'
+  'NASA_API_KEY',
 ];
 if (process.env.NODE_ENV !== 'test') {
   requiredEnvVars.push('TURNSTILE_SECRET_KEY');
@@ -64,6 +94,8 @@ const config: Config = {
     stripeCoffeePriceId: process.env.STRIPE_COFFEE_PRICE_ID || '',
     stripeMeetingPriceId: process.env.STRIPE_MEETING_PRICE_ID || '',
     turnstileSecretKey: process.env.TURNSTILE_SECRET_KEY || '',
+    geocodingApiKey: process.env.GEOCODING_API_KEY || '',
+    relationshipHome: parseRelationshipHome(),
   };
-  
+
 export default config;
