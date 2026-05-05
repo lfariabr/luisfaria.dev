@@ -92,19 +92,19 @@ export function createApolloClient(): ApolloClient<NormalizedCacheObject> {
     },
   });
 
+  const httpFetch: typeof fetch = (input, init) => {
+    return fetch(input, {
+      ...init,
+      mode: 'cors',
+      credentials: 'include',
+    });
+  };
+
   // HTTP link with proper CORS and credentials
   const httpLink = new HttpLink({
     uri: process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:4000/graphql',
     credentials: 'include',
-    // Force use of fetch polyfill for consistent behavior
-    fetch: (uri: RequestInfo, options?: RequestInit) => {
-      return fetch(uri, {
-        ...options,
-        // Ensure CORS is enabled and credentials are sent
-        mode: 'cors',
-        credentials: 'include',
-      });
-    },
+    fetch: httpFetch,
   });
 
   // Combine all links - no authLink needed, cookies are sent automatically

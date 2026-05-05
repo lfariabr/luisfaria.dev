@@ -16,6 +16,15 @@ type CodeProps = React.HTMLAttributes<HTMLElement> & {
   children?: React.ReactNode;
 };
 
+type MarkdownNode = {
+  tagName?: string;
+  children?: Array<{ tagName?: string }>;
+};
+
+type MarkdownChildProps = {
+  node?: MarkdownNode;
+};
+
 interface MarkdownMessageProps {
   content: string;
   className?: string;
@@ -42,6 +51,8 @@ export function MarkdownMessage({
     // Check if any direct child is a block-level element or an image
     const hasBlockChild = Children.toArray(children).some(child => {
       if (!isValidElement(child)) return false;
+      const element = child as React.ReactElement<MarkdownChildProps>;
+      const tagName = element.props.node?.tagName;
       
       // List of block-level elements that can't be inside <p>
       const blockElements = [
@@ -51,12 +62,12 @@ export function MarkdownMessage({
       
       // Check if it's a block element
       const isBlockElement = blockElements.includes(child.type as string) || 
-                            (child.props?.node?.tagName && blockElements.includes(child.props.node.tagName));
+                            (tagName && blockElements.includes(tagName));
       
       // Check if it's an image (which we render as figure)
       const isImage = child.type === 'img' || 
-                     (child.props?.node?.tagName === 'img') ||
-                     (typeof child.type === 'function' && child.props?.node?.tagName === 'img');
+                     tagName === 'img' ||
+                     (typeof child.type === 'function' && tagName === 'img');
       
       return isBlockElement || isImage;
     });
@@ -143,7 +154,7 @@ export function MarkdownMessage({
           
             return (
               <SyntaxHighlighter
-                style={vscDarkPlus}
+                style={vscDarkPlus as { [key: string]: React.CSSProperties }}
                 language={language}
                 PreTag="div"
                 customStyle={{
@@ -154,7 +165,6 @@ export function MarkdownMessage({
                   marginTop: '1rem',
                   marginBottom: '1rem',
                 }}
-                {...props}
               >
                 {String(children).trim()}
               </SyntaxHighlighter>

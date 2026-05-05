@@ -40,7 +40,8 @@ Browser ─── Next.js (SSR/CSR) ─── Apollo Client ─── GraphQL AP
                                                                   ├─ OpenAI
                                                                   ├─ Resend
                                                                   ├─ NASA
-                                                                  └─ Stripe
+                                                                  ├─ Stripe
+                                                                  └─ Google Maps
 ```
 
 ```
@@ -104,6 +105,7 @@ luisfaria/
 | v3.3 | Authenticated Notes | Private `/notes` area — CRUD checkpoints, timeline + week/month views, period/search filters, Shield-validated queries, ISO date serialization |
 | v3.4 | Notes & Flashcards Redesign | Redesigned notes and flashcards workspace with improved UX and layout |
 | v3.5 | Discord Activity Monitoring | Real-time webhook notifications across login, register, APOD, Stripe, and Goggins interactions — fire-and-forget, never blocks user flow |
+| v3.6 | Relationship Pins Admin Map | Private admin Google Maps view for relationship outings with spend/date context, timeline, and optional backend-only home marker |
 
 ---
 
@@ -160,6 +162,12 @@ docker-compose up --build
 | `TURNSTILE_SECRET_KEY` | Backend secret for Cloudflare Turnstile verification |
 | `NEXT_PUBLIC_GRAPHQL_URL` | Frontend → API (defaults to `http://localhost:4000/graphql`) |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Public Turnstile site key for the register page |
+| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Browser key for Google Maps JavaScript API; restrict by HTTP referrer |
+| `NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID` | Google Maps Map ID required by Advanced Markers |
+| `GEOCODING_API_KEY` | Backend-only Google Geocoding key for local/private import helpers |
+| `RELATIONSHIP_HOME_LAT` | Optional backend-only admin home marker latitude |
+| `RELATIONSHIP_HOME_LNG` | Optional backend-only admin home marker longitude |
+| `RELATIONSHIP_HOME_LABEL` | Optional backend-only home marker label, defaults to `"Home base"` |
 | `COOKIE_DOMAIN` | Auth cookie domain in production (e.g. `.luisfaria.dev`) — required in prod, omit in dev |
 
 ### Stripe Local Setup
@@ -218,6 +226,38 @@ NEXT_PUBLIC_TURNSTILE_SITE_KEY=your_cloudflare_turnstile_site_key
 
 ---
 
+### Relationship Pins / Google Maps Setup
+
+The v3.6 relationship pins map is private and admin-only at `/admin/relationship`.
+
+Frontend values are browser-visible by design:
+
+```bash
+# frontend/.env.local
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_maps_javascript_api_key
+NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID=your_maps_javascript_map_id
+```
+
+- Restrict `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` in Google Cloud to trusted HTTP referrers and Maps JavaScript API.
+- Create `NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID` in Google Maps Platform → Map Management. Advanced Markers require a valid Map ID. `DEMO_MAP_ID` is suitable only for local testing.
+- Keep production CSP in sync with the Maps dependency. The Nginx file is server-local and intentionally not committed; update it manually on the host to allow Google Maps JavaScript/static endpoints and Google Analytics if tracking remains enabled.
+
+Backend-only values stay out of the browser:
+
+```bash
+# backend/.env or production server env
+GEOCODING_API_KEY=your_geocoding_key
+RELATIONSHIP_HOME_LAT=
+RELATIONSHIP_HOME_LNG=
+RELATIONSHIP_HOME_LABEL="Home base"
+```
+
+- `GEOCODING_API_KEY` is optional at boot and should be restricted to Geocoding API.
+- `RELATIONSHIP_HOME_*` is optional. If unset or invalid, the admin map renders without the home marker.
+- Never expose home coordinates through `NEXT_PUBLIC_*`; those values would be bundled into frontend JavaScript.
+
+---
+
 ## Testing
 
 Both suites run in CI with MongoDB 7 and Redis 7 service containers.
@@ -232,6 +272,7 @@ npm run test:coverage      # With coverage
 cd frontend
 npm test                   # All tests
 npm run test:coverage      # With coverage
+npx tsc --noEmit           # Frontend app typecheck
 
 # Single test file
 cd backend && npx jest path/to/test.ts

@@ -56,23 +56,23 @@ const formatDateSafe = (dateString: string) => {
 };
 
 // When checking user roles
-const isAdmin = (role: string) => role === 'ADMIN' || role === 'admin';
-const isUser = (role: string) => role === 'USER' || role === 'user';
+const isAdmin = (role?: UserRole | string | null) => role === UserRole.ADMIN || role === 'admin';
+const isUser = (role?: UserRole | string | null) => role === UserRole.USER || role === 'user';
 
 // Display roles with proper capitalization
-const formatRole = (role: string) => {
+const formatRole = (role: UserRole | string) => {
   if (isAdmin(role)) return 'ADMIN';
   if (isUser(role)) return 'USER';
-  if (role === 'EDITOR' || role === 'editor') return 'EDITOR';
+  if (role === UserRole.EDITOR || role === 'editor') return 'EDITOR';
   return role.toUpperCase(); // Fallback
 };
 
 // Convert role for API calls
-const roleForApi = (role: string) => {
-  if (isAdmin(role)) return 'ADMIN';
-  if (isUser(role)) return 'USER';
-  if (role === 'EDITOR' || role === 'editor') return 'EDITOR';
-  return role.toUpperCase(); // Fallback
+const roleForApi = (role: string): UserRole => {
+  const normalized = role.toUpperCase();
+  if (normalized === UserRole.ADMIN) return UserRole.ADMIN;
+  if (normalized === UserRole.EDITOR) return UserRole.EDITOR;
+  return UserRole.USER;
 };
 
 export default function UsersAdminPage() {

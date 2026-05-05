@@ -46,7 +46,7 @@ export default function AdminProjectsPage() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-[400px]">
-        <p className="text-destructive">Error loading projects: {error.message}</p>
+        <p className="text-destructive">Error loading projects: {error}</p>
         <Button 
           variant="outline" 
           className="mt-4"
