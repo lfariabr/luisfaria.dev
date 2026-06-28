@@ -13,7 +13,7 @@ export function Footer() {
           <div className="space-y-3">
             <h3 className="text-lg font-medium">Luis Faria</h3>
             <p className="text-sm text-muted-foreground">
-              Fullstack Senior Software Engineer specialized in development with Python, TypeScript, React, Node.js, and modern web technologies.
+              Software and data engineer — turning manual workflows into automated, KPI-driven systems with software, data, automation, and AI.
             </p>
           </div>
           
@@ -26,6 +26,11 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/work" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Work
+                </Link>
+              </li>
+              <li>
                 <Link href="/projects" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Projects
                 </Link>
@@ -33,6 +38,11 @@ export function Footer() {
               <li>
                 <Link href="/articles" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Articles
+                </Link>
+              </li>
+              <li>
+                <Link href="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  About
                 </Link>
               </li>
               <li>

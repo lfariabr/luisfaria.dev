@@ -9,6 +9,8 @@ import type { Project } from '@/lib/graphql/types/project.types';
 
 const BASE_URL = 'https://luisfaria.dev';
 const STATIC_LAST_MODIFIED = new Date('2026-03-03T00:00:00.000Z');
+// Pages introduced after STATIC_LAST_MODIFIED carry their own ship date.
+const ABOUT_LAST_MODIFIED = new Date('2026-06-29T00:00:00.000Z');
 
 function safeDate(value: string): Date {
   const d = new Date(value);
@@ -22,6 +24,12 @@ const staticRoutes: MetadataRoute.Sitemap = [
     lastModified: STATIC_LAST_MODIFIED,
     changeFrequency: 'weekly',
     priority: 0.9,
+  },
+  {
+    url: `${BASE_URL}/about`,
+    lastModified: ABOUT_LAST_MODIFIED,
+    changeFrequency: 'monthly',
+    priority: 0.8,
   },
   {
     url: `${BASE_URL}/projects`,
