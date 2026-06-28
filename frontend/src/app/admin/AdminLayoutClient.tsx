@@ -4,6 +4,7 @@ import { ReactNode, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useIsAdmin } from '@/lib/auth/isAdmin';
+import { SessionRetry } from '@/components/auth/SessionRetry';
 import {
   LayoutDashboard,
   FileText,
@@ -21,22 +22,28 @@ interface AdminLayoutClientProps {
 }
 
 export default function AdminLayoutClient({ children }: AdminLayoutClientProps) {
-  const { isAuthenticated, loading, logout } = useAuth();
+  const { status, logout, refetchUser } = useAuth();
   const isAdmin = useIsAdmin();
   const router = useRouter();
   const pathname = usePathname() ?? '';
 
   useEffect(() => {
-    if (!loading) {
-      if (!isAuthenticated) {
-        router.push('/login?redirect=/admin');
-      } else if (!isAdmin) {
-        router.push('/');
-      }
+    // Redirect only on a *definitive* result — never while `initializing` or on a
+    // transient ME failure (`error`), which is what caused spurious bounces on refresh.
+    if (status === 'unauthenticated') {
+      // Preserve the exact admin destination (e.g. /admin/users) for post-login return.
+      router.push(`/login?redirect=${encodeURIComponent(pathname || '/admin')}`);
+    } else if (status === 'authenticated' && !isAdmin) {
+      router.push('/');
     }
-  }, [loading, isAuthenticated, isAdmin, router]);
+  }, [status, isAdmin, pathname, router]);
 
-  if (loading || !isAuthenticated || !isAdmin) {
+  // Couldn't verify the session (transient) — offer a retry instead of a logout.
+  if (status === 'error') {
+    return <SessionRetry onRetry={refetchUser} />;
+  }
+
+  if (status !== 'authenticated' || !isAdmin) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />

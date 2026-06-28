@@ -78,6 +78,18 @@ if (missingEnvVars.length > 0) {
   throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}`);
 }
 
+// Fail fast on a weak/placeholder JWT secret. A short or empty secret silently
+// invalidates every issued token (mass logout) and is trivially brute-forceable.
+// Skipped under tests, which use a deterministic short secret.
+if (process.env.NODE_ENV !== 'test') {
+  const secret = (process.env.JWT_SECRET || '').trim();
+  if (secret.length < 32) {
+    throw new Error(
+      'JWT_SECRET is too weak: provide a random secret of at least 32 characters.'
+    );
+  }
+}
+
 const config: Config = {
     port: parseInt(process.env.PORT || '4000', 10),
     nodeEnv: process.env.NODE_ENV || 'development',

@@ -1,11 +1,12 @@
 'use client';
 
-import { 
-  createContext, 
-  useContext, 
-  useState, 
+import {
+  createContext,
+  useContext,
+  useState,
   ReactNode,
-  useCallback
+  useCallback,
+  useEffect
 } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, ApolloError } from '@apollo/client';
@@ -22,15 +23,40 @@ export interface User {
   role: UserRole;
 }
 
+/**
+ * Auth lifecycle state.
+ * - `initializing`: the bootstrap ME query has not resolved yet — outcome unknown.
+ * - `authenticated`: a session is confirmed.
+ * - `unauthenticated`: the session is *definitively* absent (no token / 401).
+ * - `error`: the session could NOT be verified due to a transient network/server
+ *   failure (not a 401). Recoverable — surface a retry affordance, never a logout.
+ *
+ * Protected routes must redirect to /login ONLY on `unauthenticated` — never on
+ * `initializing` or `error`, which is what caused spurious bounces on refresh.
+ */
+export type AuthStatus = 'initializing' | 'authenticated' | 'unauthenticated' | 'error';
+
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  status: AuthStatus;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (credentials: { name: string, email: string, password: string, captchaToken: string }) => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
-  refetchUser: () => void;
+  refetchUser: () => Promise<void>;
+}
+
+// Classify a ME failure: is it a *definitive* "you are not logged in" (401 /
+// UNAUTHENTICATED), or a transient network/server error we should not log out on?
+function isUnauthenticatedError(error: ApolloError | undefined): boolean {
+  if (!error) return false;
+  const hasUnauthCode = error.graphQLErrors?.some(
+    (e) => e.extensions?.code === 'UNAUTHENTICATED'
+  );
+  const statusCode = (error.networkError as { statusCode?: number } | null)?.statusCode;
+  return Boolean(hasUnauthCode) || statusCode === 401;
 }
 
 interface AuthProviderProps {
@@ -69,32 +95,82 @@ const formatError = (err: any): string => {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: false,
+  status: 'initializing',
   error: null,
   login: async () => {},
   register: async () => {},
   logout: async () => {},
   isAuthenticated: false,
-  refetchUser: () => {},
+  refetchUser: async () => {},
 });
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
+  const [status, setStatus] = useState<AuthStatus>('initializing');
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  // Query current user on mount - cookie is sent automatically
-  const { loading, refetch: refetchUser } = useQuery(ME_QUERY, {
+  // Bootstrap the current user on mount — the httpOnly cookie is sent automatically.
+  // We derive auth state from the query result (works for refetches too) instead of
+  // one-shot callbacks, so a transient ME failure cannot silently destroy a session.
+  const { data, error: meError, refetch } = useQuery(ME_QUERY, {
     fetchPolicy: 'network-only',
-    onCompleted: (data) => {
-      if (data?.me) {
-        setUser(data.me);
-      }
-    },
-    onError: () => {
-      // Not authenticated or token expired - this is expected
-      setUser(null);
-    },
+    errorPolicy: 'all',
+    notifyOnNetworkStatusChange: true,
   });
+
+  useEffect(() => {
+    // Confirmed session.
+    if (data?.me) {
+      setUser(data.me);
+      setStatus('authenticated');
+      setError(null);
+      return;
+    }
+
+    // Definitively logged out: backend returned a null `me`, or a 401 / UNAUTHENTICATED.
+    if (isUnauthenticatedError(meError) || (data && data.me === null && !meError)) {
+      setUser(null);
+      setStatus('unauthenticated');
+      setError(null);
+      return;
+    }
+
+    // Transient network/server error (NOT a 401). Never treat this as a logout:
+    //  - an established session is preserved as-is;
+    //  - on first boot (refresh) we enter the recoverable `error` state rather than
+    //    `unauthenticated`, so a valid cookie + a blip shows a retry affordance
+    //    instead of bouncing the user to /login. RetryLink and the `online` listener
+    //    drive recovery.
+    if (meError) {
+      logger.warn('Auth bootstrap: non-auth ME failure; not logging out', {
+        reason: meError.networkError ? 'network' : 'unknown',
+        message: meError.message,
+      });
+      setError('We couldn\'t verify your session. Check your connection and retry.');
+      setStatus((prev) => (prev === 'authenticated' ? prev : 'error'));
+    }
+  }, [data, meError]);
+
+  // Self-heal: when connectivity returns and we are not confirmed authenticated,
+  // re-verify the session instead of leaving the user stranded on a stale failure.
+  useEffect(() => {
+    const recheck = () => {
+      if (status !== 'authenticated') {
+        refetch().catch(() => {});
+      }
+    };
+    window.addEventListener('online', recheck);
+    return () => window.removeEventListener('online', recheck);
+  }, [status, refetch]);
+
+  const refetchUser = useCallback(async () => {
+    await refetch().catch(() => undefined);
+  }, [refetch]);
+
+  // `loading` stays true only while the FIRST resolution is pending, so background
+  // refetches never trigger a full-page auth spinner on protected routes.
+  const loading = status === 'initializing';
 
   const [loginMutation] = useMutation(LOGIN_MUTATION);
   const [registerMutation] = useMutation(REGISTER_MUTATION);
@@ -115,6 +191,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Backend sets httpOnly cookie automatically
         // Just update local state with user data
         setUser(data.login.user);
+        setStatus('authenticated');
         router.push('/');
       } else {
         const errorMessage =
@@ -142,6 +219,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Backend sets httpOnly cookie automatically
         // Just update local state with user data
         setUser(data.register.user);
+        setStatus('authenticated');
         router.push('/');
       }
     } catch (err: unknown) {
@@ -172,6 +250,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       logger.warn('Logout failed', { error: String(err) });
     } finally {
       setUser(null);
+      setStatus('unauthenticated');
       router.push('/login');
     }
   }, [logoutMutation, router]);
@@ -181,11 +260,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       value={{
         user,
         loading,
+        status,
         error,
         login,
         register,
         logout,
-        isAuthenticated: !!user,
+        isAuthenticated: status === 'authenticated',
         refetchUser,
       }}
     >

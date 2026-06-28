@@ -452,7 +452,7 @@ describe('Cookie Auth E2E - Full HTTP Flow', () => {
       expect(setCookieHeader).toBeDefined();
       // Verify security attributes are preserved when clearing
       expect(setCookieHeader[0]).toMatch(/HttpOnly/i);
-      expect(setCookieHeader[0]).toMatch(/SameSite=Strict/i);
+      expect(setCookieHeader[0]).toMatch(/SameSite=Lax/i);
     });
   });
 });

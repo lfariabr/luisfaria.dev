@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { BookOpenText, CalendarRange, LayoutGrid, Plus, Search, Sparkles, TimerReset } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { MainLayout } from '@/components/layouts/MainLayout';
+import { SessionRetry } from '@/components/auth/SessionRetry';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -23,7 +24,7 @@ import { toast } from 'sonner';
 
 export default function NotesPage() {
   const router = useRouter();
-  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { status, refetchUser } = useAuth();
   const [viewMode, setViewMode] = useState<'timeline' | 'period'>('timeline');
   const [periodType, setPeriodType] = useState<NotePeriodType | undefined>(undefined);
   const [search, setSearch] = useState('');
@@ -39,7 +40,7 @@ export default function NotesPage() {
     [periodType, search]
   );
 
-  const shouldFetchNotes = !authLoading && isAuthenticated;
+  const shouldFetchNotes = status === 'authenticated';
   const { notes, loading, error, refetch } = useNotes(filters, { skip: !shouldFetchNotes });
   const { createNote, updateNote, deleteNote, loading: mutationLoading } = useNoteMutations();
   const totalAccomplishments = useMemo(
@@ -51,12 +52,23 @@ export default function NotesPage() {
   const weeklyCount = useMemo(() => notes.length - monthlyCount, [notes.length, monthlyCount]);
 
   useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
+    // Redirect only once auth is definitively resolved as logged-out, so a transient
+    // ME failure on refresh no longer bounces an authenticated user to /login.
+    if (status === 'unauthenticated') {
       router.push('/login?redirect=/notes');
     }
-  }, [authLoading, isAuthenticated, router]);
+  }, [status, router]);
 
-  if (authLoading || !isAuthenticated) {
+  // Couldn't verify the session (transient) — offer a retry instead of a logout.
+  if (status === 'error') {
+    return (
+      <MainLayout>
+        <SessionRetry onRetry={refetchUser} />
+      </MainLayout>
+    );
+  }
+
+  if (status !== 'authenticated') {
     return (
       <MainLayout>
         <div className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 lg:px-8">Loading...</div>
