@@ -21,22 +21,22 @@ interface AdminLayoutClientProps {
 }
 
 export default function AdminLayoutClient({ children }: AdminLayoutClientProps) {
-  const { isAuthenticated, loading, logout } = useAuth();
+  const { status, logout } = useAuth();
   const isAdmin = useIsAdmin();
   const router = useRouter();
   const pathname = usePathname() ?? '';
 
   useEffect(() => {
-    if (!loading) {
-      if (!isAuthenticated) {
-        router.push('/login?redirect=/admin');
-      } else if (!isAdmin) {
-        router.push('/');
-      }
+    // Redirect only on a *definitive* result — never while `initializing` or on a
+    // transient ME failure, which is what caused spurious bounces to /login on refresh.
+    if (status === 'unauthenticated') {
+      router.push('/login?redirect=/admin');
+    } else if (status === 'authenticated' && !isAdmin) {
+      router.push('/');
     }
-  }, [loading, isAuthenticated, isAdmin, router]);
+  }, [status, isAdmin, router]);
 
-  if (loading || !isAuthenticated || !isAdmin) {
+  if (status !== 'authenticated' || !isAdmin) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />

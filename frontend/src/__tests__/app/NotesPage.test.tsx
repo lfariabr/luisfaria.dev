@@ -19,6 +19,7 @@ jest.mock('@/lib/auth/AuthContext', () => ({
   useAuth: () => ({
     isAuthenticated: true,
     loading: false,
+    status: 'authenticated',
   }),
 }));
 

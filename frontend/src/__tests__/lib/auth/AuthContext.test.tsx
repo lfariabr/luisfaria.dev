@@ -490,3 +490,94 @@ describe('AuthContext - Logout Flow', () => {
     expect(mockPush).toHaveBeenCalledWith('/login');
   });
 });
+
+describe('AuthContext - Session resilience', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('exposes a definitive status that resolves to authenticated', async () => {
+    const mocks: MockedResponse[] = [
+      {
+        request: { query: ME_QUERY },
+        result: { data: { me: mockUser } },
+      },
+    ];
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <MockedProvider mocks={mocks} addTypename={false}>
+        <AuthProvider>{children}</AuthProvider>
+      </MockedProvider>
+    );
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    // Starts in the indeterminate state so protected routes don't redirect early.
+    expect(result.current.status).toBe('initializing');
+
+    await waitFor(() => expect(result.current.status).toBe('authenticated'));
+    expect(result.current.isAuthenticated).toBe(true);
+  });
+
+  it('reports unauthenticated on a 401 / UNAUTHENTICATED bootstrap', async () => {
+    const mocks: MockedResponse[] = [
+      {
+        request: { query: ME_QUERY },
+        result: {
+          errors: [
+            new GraphQLError('Not authenticated', {
+              extensions: { code: 'UNAUTHENTICATED' },
+            }),
+          ],
+        },
+      },
+    ];
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <MockedProvider mocks={mocks} addTypename={false}>
+        <AuthProvider>{children}</AuthProvider>
+      </MockedProvider>
+    );
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await waitFor(() => expect(result.current.status).toBe('unauthenticated'));
+    expect(result.current.isAuthenticated).toBe(false);
+  });
+
+  it('does NOT clear an authenticated session on a transient network error', async () => {
+    const mocks: MockedResponse[] = [
+      {
+        request: { query: ME_QUERY },
+        result: { data: { me: mockUser } },
+      },
+      {
+        // A later re-verification blips on the network — this must not log the user out.
+        request: { query: ME_QUERY },
+        error: new Error('Network error'),
+      },
+    ];
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <MockedProvider mocks={mocks} addTypename={false}>
+        <AuthProvider>{children}</AuthProvider>
+      </MockedProvider>
+    );
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    // Establish the session.
+    await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
+    expect(result.current.user).toEqual(mockUser);
+
+    // Trigger a re-verification that fails with a network error.
+    await act(async () => {
+      result.current.refetchUser();
+    });
+
+    // Session is preserved — the user stays logged in through the blip.
+    expect(result.current.user).toEqual(mockUser);
+    expect(result.current.isAuthenticated).toBe(true);
+    expect(result.current.status).toBe('authenticated');
+  });
+});
