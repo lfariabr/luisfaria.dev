@@ -59,8 +59,8 @@ export default function AboutPage() {
             Building data systems at <strong>St Catherine’s School, Sydney</strong> — SQL Server
             pipelines and Power BI reporting — while completing a{' '}
             <strong>Master of Software Engineering with AI</strong>. I keep the coursework applied:
-            secure cloud architectures on AWS, a self-hosted Apache Superset BI deployment, and AI
-            tooling built on OpenAI.
+            secure cloud architectures on AWS, a self-hosted Apache Superset BI deployment, applied
+            machine learning (scikit-learn, CRISP-DM), and LLM tooling on OpenAI and Claude.
           </p>
         </section>
 
