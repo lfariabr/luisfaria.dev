@@ -18,9 +18,10 @@ import { useAuth } from '@/lib/auth/AuthContext';
 
 const navigation = [
   { name: 'Home', href: '/' },
+  { name: 'Work', href: '/work' },
   { name: 'Projects', href: '/projects' },
   { name: 'Articles', href: '/articles' },
-  { name: 'Chatbot', href: '/chatbot' },
+  { name: 'About', href: '/about' },
 ];
 
 export function Header() {
@@ -96,9 +97,6 @@ export function Header() {
                   </p>
                 </div>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/profile">Profile</Link>
-                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/notes">My Notes</Link>
                 </DropdownMenuItem>

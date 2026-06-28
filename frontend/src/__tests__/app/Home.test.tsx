@@ -4,96 +4,90 @@ import HomePage from '@/app/page';
 import { renderWithProviders } from '@/utils/test-utils';
 
 describe('Home Page', () => {
-  it('renders the hero section with main heading', () => {
+  it('renders the hero section with the problem/outcome-led heading', () => {
     renderWithProviders(<HomePage />);
-    
-    // Check for hero heading
+
     const heroHeading = screen.getByRole('heading', { level: 1 });
     expect(heroHeading).toBeInTheDocument();
-    expect(heroHeading).toHaveTextContent(/I build end-to-end systems/i);
+    expect(heroHeading).toHaveTextContent(/I solve real business problems/i);
   });
 
-  it('renders the hero badge with credentials', () => {
+  it('renders the positioning badge', () => {
     renderWithProviders(<HomePage />);
 
     const badge = screen.getByText((_, element) => {
       const text = element?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
-      return (
-        element?.tagName.toLowerCase() === 'p' &&
-        text.includes('Senior Software Engineer') &&
-        text.includes("Master's SWE & AI")
-      );
+      return element?.tagName.toLowerCase() === 'p' && /Engineer · Data · Automation · AI/.test(text);
     });
     expect(badge).toBeInTheDocument();
   });
 
-  it('renders the hero description', () => {
+  it('renders the hero subline', () => {
     renderWithProviders(<HomePage />);
-    
-    const description = screen.getByText(/Luis.*Senior Software Engineer.*10\+ years/i);
-    expect(description).toBeInTheDocument();
+
+    // Phrase unique to the hero subline (the footer tagline also mentions KPI-driven systems).
+    expect(screen.getByText(/internal tools, data pipelines, dashboards/i)).toBeInTheDocument();
   });
 
   it('renders CTA buttons', () => {
     renderWithProviders(<HomePage />);
-    
-    const projectsButton = screen.getByRole('link', { name: /view featured work/i });
+
+    const workButton = screen.getByRole('link', { name: /see my work/i });
     const chatbotButton = screen.getByRole('link', { name: /try my ai assistant/i });
-    
-    expect(projectsButton).toHaveAttribute('href', '/work');
+
+    expect(workButton).toHaveAttribute('href', '/work');
     expect(chatbotButton).toHaveAttribute('href', '/chatbot');
   });
 
-  it('renders the Core Stack section', () => {
+  it('renders the "What I do" pillars', () => {
     renderWithProviders(<HomePage />);
-    
-    const coreStackLabel = screen.getByText(/core stack/i);
-    expect(coreStackLabel).toBeInTheDocument();
-    
-    // Check for some key technologies (each is a separate element)
-    expect(screen.getByText('Python')).toBeInTheDocument();
-    expect(screen.getByText('Django')).toBeInTheDocument();
-    expect(screen.getByText('TypeScript')).toBeInTheDocument();
-    expect(screen.getByText('Next.js')).toBeInTheDocument();
+
+    expect(screen.getByText('What I do')).toBeInTheDocument();
+    expect(screen.getByText('Software Engineering')).toBeInTheDocument();
+    expect(screen.getByText('Data Engineering')).toBeInTheDocument();
+  });
+
+  it('renders the core stack grouped by pillar', () => {
+    renderWithProviders(<HomePage />);
+
+    expect(screen.getByText(/core stack/i)).toBeInTheDocument();
+    // Stack-only tech (not present in any pillar tag list)
+    expect(screen.getByText('Express')).toBeInTheDocument();
+    // Common techs appear in both pillars and the stack, so assert >= 1
+    expect(screen.getAllByText('TypeScript').length).toBeGreaterThan(0);
   });
 
   it('renders the MetricsSection', () => {
     renderWithProviders(<HomePage />);
-    
-    // MetricsSection should render - check for presence by finding Core Stack section
-    // which comes before MetricsSection
-    const coreStack = screen.getByText(/core stack/i);
-    expect(coreStack).toBeInTheDocument();
+
+    expect(screen.getByRole('heading', { name: /impact at a glance/i })).toBeInTheDocument();
   });
 
   it('renders the TimelineSection', () => {
     renderWithProviders(<HomePage />);
-    
-    // Check for timeline heading
+
     const timelineHeading = screen.getByRole('heading', { name: /timeline at a glance/i });
     expect(timelineHeading).toBeInTheDocument();
-    
-    // Check for timeline content
+
     const timeline = screen.getByRole('list', { name: /career timeline/i });
     expect(timeline).toBeInTheDocument();
   });
 
-  it('has navigation links in the header', () => {
+  it('has the updated navigation links in the header', () => {
     renderWithProviders(<HomePage />);
-    
-    // Find the navigation element first, then find links within it
+
     const navigation = screen.getByRole('navigation');
-    
-    // Find links within the navigation
+
     const homeLink = within(navigation).getByText(/^home$/i);
+    const workLink = within(navigation).getByText(/^work$/i);
     const projectsLink = within(navigation).getByText(/^projects$/i);
     const articlesLink = within(navigation).getByText(/^articles$/i);
-    const chatbotLink = within(navigation).getByText(/^chatbot$/i);
-    
-    // Check that links have correct hrefs
+    const aboutLink = within(navigation).getByText(/^about$/i);
+
     expect(homeLink).toHaveAttribute('href', '/');
+    expect(workLink).toHaveAttribute('href', '/work');
     expect(projectsLink).toHaveAttribute('href', '/projects');
     expect(articlesLink).toHaveAttribute('href', '/articles');
-    expect(chatbotLink).toHaveAttribute('href', '/chatbot');
+    expect(aboutLink).toHaveAttribute('href', '/about');
   });
 });
