@@ -11,10 +11,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoonIcon, SunIcon, MenuIcon, UserIcon, LogOutIcon } from 'lucide-react';
+import { MoonIcon, SunIcon, MenuIcon, UserIcon, LogOutIcon, Linkedin } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { SOCIALS } from '@/content/profile';
 
 const navigation = [
   { name: 'Home', href: '/' },
@@ -56,6 +57,12 @@ export function Header() {
           </nav>
         </div>
         <div className="flex items-center gap-2">
+          <Button asChild variant="ghost" size="icon" className="h-10 w-10">
+            <a href={SOCIALS.linkedin} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+              <Linkedin className="h-4 w-4" />
+            </a>
+          </Button>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-10 w-10">

@@ -8,7 +8,7 @@ export const POSITIONING = {
   badge: 'Engineer · Data · Automation · AI',
   headline: 'I solve real business problems with software and data.',
   subline:
-    'I turn messy, manual workflows into automated, KPI-driven systems — internal tools, data pipelines, dashboards, and AI assistants. 10+ years shipping end-to-end across healthcare, agencies, and tech; now building data systems at St Catherine’s School, Sydney.',
+    'I turn messy, manual workflows into automated, KPI-driven systems — internal tools, data pipelines, dashboards, and AI assistants. 10+ years shipping end-to-end across healthcare, agencies, and tech; now building data systems at St Catherine’s, Sydney.',
   // Short, concrete proof points shown as a strip under the hero.
   proof: [
     'Healthcare ERP/CRM',
@@ -104,6 +104,7 @@ export const SOCIALS = {
   github: 'https://github.com/lfariabr',
   linkedin: 'https://linkedin.com/in/lfariabr',
   devto: 'https://dev.to/lfariaus',
+  mastersRepo: 'https://github.com/lfariabr/masters-swe-ai',
   email: 'lfariabr@gmail.com',
   location: 'Sydney, Australia',
 } as const;

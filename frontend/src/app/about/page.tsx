@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Github, Linkedin, Mail, PenLine, MapPin } from 'lucide-react';
+import { Github, Linkedin, Mail, PenLine, MapPin, GraduationCap } from 'lucide-react';
 import { MainLayout } from '@/components/layouts/MainLayout';
 import { Button } from '@/components/ui/button';
 import { PillarsSection } from '@/components/sections/PillarsSection';
@@ -60,7 +60,17 @@ export default function AboutPage() {
             pipelines and Power BI reporting — while completing a{' '}
             <strong>Master of Software Engineering with AI</strong>. I keep the coursework applied:
             secure cloud architectures on AWS, a self-hosted Apache Superset BI deployment, applied
-            machine learning (scikit-learn, CRISP-DM), and LLM tooling on OpenAI and Claude.
+            machine learning (scikit-learn, CRISP-DM, Spark), and LLM tooling on OpenAI and Claude —
+            much of it open-sourced in my{' '}
+            <a
+              href={SOCIALS.mastersRepo}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium underline underline-offset-2 hover:text-foreground"
+            >
+              Master’s repo
+            </a>{' '}
+            (1,100+ commits, mostly Jupyter notebooks).
           </p>
         </section>
 
@@ -89,6 +99,11 @@ export default function AboutPage() {
             <Button asChild variant="outline" className="rounded-full">
               <a href={SOCIALS.devto} target="_blank" rel="noopener noreferrer">
                 <PenLine className="mr-2 h-4 w-4" /> dev.to
+              </a>
+            </Button>
+            <Button asChild variant="outline" className="rounded-full">
+              <a href={SOCIALS.mastersRepo} target="_blank" rel="noopener noreferrer">
+                <GraduationCap className="mr-2 h-4 w-4" /> Master’s repo
               </a>
             </Button>
             <Button asChild variant="outline" className="rounded-full">
