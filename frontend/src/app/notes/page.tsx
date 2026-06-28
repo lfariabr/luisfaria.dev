@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { BookOpenText, CalendarRange, LayoutGrid, Plus, Search, Sparkles, TimerReset } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { MainLayout } from '@/components/layouts/MainLayout';
+import { SessionRetry } from '@/components/auth/SessionRetry';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -23,7 +24,7 @@ import { toast } from 'sonner';
 
 export default function NotesPage() {
   const router = useRouter();
-  const { status } = useAuth();
+  const { status, refetchUser } = useAuth();
   const [viewMode, setViewMode] = useState<'timeline' | 'period'>('timeline');
   const [periodType, setPeriodType] = useState<NotePeriodType | undefined>(undefined);
   const [search, setSearch] = useState('');
@@ -57,6 +58,15 @@ export default function NotesPage() {
       router.push('/login?redirect=/notes');
     }
   }, [status, router]);
+
+  // Couldn't verify the session (transient) — offer a retry instead of a logout.
+  if (status === 'error') {
+    return (
+      <MainLayout>
+        <SessionRetry onRetry={refetchUser} />
+      </MainLayout>
+    );
+  }
 
   if (status !== 'authenticated') {
     return (

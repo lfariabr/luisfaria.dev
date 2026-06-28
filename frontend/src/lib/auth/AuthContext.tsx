@@ -24,15 +24,17 @@ export interface User {
 }
 
 /**
- * Definitive auth lifecycle state.
+ * Auth lifecycle state.
  * - `initializing`: the bootstrap ME query has not resolved yet — outcome unknown.
  * - `authenticated`: a session is confirmed.
- * - `unauthenticated`: the session is *definitively* absent (no token / 401), or
- *   the bootstrap failed transiently before a session was ever established.
+ * - `unauthenticated`: the session is *definitively* absent (no token / 401).
+ * - `error`: the session could NOT be verified due to a transient network/server
+ *   failure (not a 401). Recoverable — surface a retry affordance, never a logout.
  *
- * Protected routes must redirect ONLY on `unauthenticated`, never on `initializing`.
+ * Protected routes must redirect to /login ONLY on `unauthenticated` — never on
+ * `initializing` or `error`, which is what caused spurious bounces on refresh.
  */
-export type AuthStatus = 'initializing' | 'authenticated' | 'unauthenticated';
+export type AuthStatus = 'initializing' | 'authenticated' | 'unauthenticated' | 'error';
 
 interface AuthContextType {
   user: User | null;
@@ -43,7 +45,7 @@ interface AuthContextType {
   register: (credentials: { name: string, email: string, password: string, captchaToken: string }) => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
-  refetchUser: () => void;
+  refetchUser: () => Promise<void>;
 }
 
 // Classify a ME failure: is it a *definitive* "you are not logged in" (401 /
@@ -99,7 +101,7 @@ const AuthContext = createContext<AuthContextType>({
   register: async () => {},
   logout: async () => {},
   isAuthenticated: false,
-  refetchUser: () => {},
+  refetchUser: async () => {},
 });
 
 export function AuthProvider({ children }: AuthProviderProps) {
@@ -122,6 +124,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (data?.me) {
       setUser(data.me);
       setStatus('authenticated');
+      setError(null);
       return;
     }
 
@@ -129,20 +132,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (isUnauthenticatedError(meError) || (data && data.me === null && !meError)) {
       setUser(null);
       setStatus('unauthenticated');
+      setError(null);
       return;
     }
 
-    // Transient network/server error. Do NOT tear down an existing session over a
-    // blip — keep the last-known user and let RetryLink / the `online` listener
-    // recover. Only fall back to `unauthenticated` if we never established a session
-    // (initial load after retries are exhausted), so the user sees login rather than
-    // an infinite spinner.
+    // Transient network/server error (NOT a 401). Never treat this as a logout:
+    //  - an established session is preserved as-is;
+    //  - on first boot (refresh) we enter the recoverable `error` state rather than
+    //    `unauthenticated`, so a valid cookie + a blip shows a retry affordance
+    //    instead of bouncing the user to /login. RetryLink and the `online` listener
+    //    drive recovery.
     if (meError) {
-      logger.warn('Auth bootstrap: non-auth ME failure; preserving current session', {
+      logger.warn('Auth bootstrap: non-auth ME failure; not logging out', {
         reason: meError.networkError ? 'network' : 'unknown',
         message: meError.message,
       });
-      setStatus((prev) => (prev === 'authenticated' ? prev : 'unauthenticated'));
+      setError('We couldn\'t verify your session. Check your connection and retry.');
+      setStatus((prev) => (prev === 'authenticated' ? prev : 'error'));
     }
   }, [data, meError]);
 
@@ -158,8 +164,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return () => window.removeEventListener('online', recheck);
   }, [status, refetch]);
 
-  const refetchUser = useCallback(() => {
-    refetch().catch(() => {});
+  const refetchUser = useCallback(async () => {
+    await refetch().catch(() => undefined);
   }, [refetch]);
 
   // `loading` stays true only while the FIRST resolution is pending, so background

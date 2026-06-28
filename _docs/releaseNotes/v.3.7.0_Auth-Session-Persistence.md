@@ -26,11 +26,13 @@ Production is single-origin (nginx serves the app and `/graphql` from one drople
 ## Frontend
 
 - Rewrote `AuthContext` to derive auth state from the query result (works across refetches) instead of one-shot callbacks.
-- Added `AuthStatus = 'initializing' | 'authenticated' | 'unauthenticated'` to the context.
-- Only a real `UNAUTHENTICATED` / `401` clears the session; transient errors preserve the last-known user and log a warning.
-- Added an `online` self-heal re-check when connectivity returns.
-- `AdminLayoutClient` and the notes page now gate/redirect on `status === 'unauthenticated'` only.
-- Added an `AuthContext` test proving a transient network error keeps an authenticated session.
+- Added `AuthStatus = 'initializing' | 'authenticated' | 'unauthenticated' | 'error'` to the context.
+- Only a real `UNAUTHENTICATED` / `401` is treated as a logout. An established session is preserved through a blip, and a **first-boot (refresh) transient failure enters a recoverable `error` state** — a valid cookie + a blip now shows a Retry affordance instead of bouncing to `/login`.
+- New shared `SessionRetry` component renders on protected routes in the `error` state.
+- Added an `online` self-heal re-check when connectivity returns; `refetchUser()` is now awaitable.
+- Admin login redirect preserves the exact path (e.g. `/admin/users`) for post-login return.
+- `AdminLayoutClient` and the notes page redirect on `status === 'unauthenticated'` only.
+- Added tests: a transient error keeps an authenticated session, and a first-boot blip yields the recoverable `error` state (not `unauthenticated`).
 
 ---
 
@@ -52,7 +54,8 @@ Production is single-origin (nginx serves the app and `/graphql` from one drople
 
 | Scenario | Before | After |
 |----------|--------|-------|
-| Refresh `/admin` during a network blip | Bounced to `/login` | Stays logged in |
+| Network blip while already logged in | Bounced to `/login` | Stays logged in |
+| Refresh `/admin` with a valid cookie + transient ME failure | Bounced to `/login` | Recoverable Retry screen (never a logout) |
 | Visit on `www.` after login on apex | Cookie not sent → logged out | Redirected to apex, cookie sent |
 | Bookmark / external link straight to `/admin` | `sameSite=strict` withheld cookie → `/login` | `lax` sends cookie → stays in |
 | Real expired/invalid token | Redirect to `/login` | Redirect to `/login` (unchanged) |
@@ -62,7 +65,7 @@ Production is single-origin (nginx serves the app and `/graphql` from one drople
 
 ## Validation
 
-- `cd frontend && npx jest` → 147 passed / 5 skipped (23 suites)
+- `cd frontend && npx jest` → 148 passed / 5 skipped (23 suites)
 - `cd frontend && npx tsc --noEmit` → no errors
 - `cd backend && npx jest` (Redis on :6381) → 258 passed (18 suites)
 

@@ -545,6 +545,31 @@ describe('AuthContext - Session resilience', () => {
     expect(result.current.isAuthenticated).toBe(false);
   });
 
+  it('enters a recoverable error state (not unauthenticated) on a first-boot network failure', async () => {
+    const mocks: MockedResponse[] = [
+      {
+        // No prior session in memory (a fresh refresh) + a transient network error.
+        request: { query: ME_QUERY },
+        error: new Error('Network error'),
+      },
+    ];
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <MockedProvider mocks={mocks} addTypename={false}>
+        <AuthProvider>{children}</AuthProvider>
+      </MockedProvider>
+    );
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    // A blip on refresh must NOT be classified as logged-out — that would bounce a
+    // user with a valid cookie to /login. It must be recoverable.
+    await waitFor(() => expect(result.current.status).toBe('error'));
+    expect(result.current.status).not.toBe('unauthenticated');
+    expect(result.current.isAuthenticated).toBe(false);
+    expect(result.current.error).toBeTruthy();
+  });
+
   it('does NOT clear an authenticated session on a transient network error', async () => {
     const mocks: MockedResponse[] = [
       {
@@ -570,14 +595,17 @@ describe('AuthContext - Session resilience', () => {
     await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
     expect(result.current.user).toEqual(mockUser);
 
-    // Trigger a re-verification that fails with a network error.
+    // Trigger a re-verification that fails with a network error — awaited so the
+    // failure is actually processed before we assert.
     await act(async () => {
-      result.current.refetchUser();
+      await result.current.refetchUser();
     });
 
     // Session is preserved — the user stays logged in through the blip.
-    expect(result.current.user).toEqual(mockUser);
-    expect(result.current.isAuthenticated).toBe(true);
-    expect(result.current.status).toBe('authenticated');
+    await waitFor(() => {
+      expect(result.current.user).toEqual(mockUser);
+      expect(result.current.isAuthenticated).toBe(true);
+      expect(result.current.status).toBe('authenticated');
+    });
   });
 });
