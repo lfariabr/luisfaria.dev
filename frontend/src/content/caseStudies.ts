@@ -42,7 +42,7 @@ export const CASE_STUDIES: CaseStudy[] = [
     outcomes: [
       'Reliable, decision-ready reporting that staff can trust.',
       'Less manual spreadsheet work and faster turnaround on recurring reports.',
-      '[Add a concrete result you’re comfortable sharing — e.g. “X hours/week saved on reporting”.]',
+      '~4 hours of manual work eliminated each term rollover — now fully automated.',
     ],
   },
   {
