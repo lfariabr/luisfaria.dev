@@ -107,6 +107,11 @@ luisfaria/
 | v3.4 | Notes & Flashcards Redesign | Redesigned notes and flashcards workspace with improved UX and layout |
 | v3.5 | Discord Activity Monitoring | Real-time webhook notifications across login, register, APOD, Stripe, and Goggins interactions — fire-and-forget, never blocks user flow |
 | v3.6 | Relationship Pins Admin Map | Private admin Google Maps view for relationship outings with spend/date context, timeline, and optional backend-only home marker |
+| v3.7 | Auth Session Persistence | Resilient session restore (status state machine, transient-error tolerance + retry UI), `sameSite=lax`, `JWT_SECRET` strength guard, and an nginx www→apex canonical host |
+| v3.8 | Home Reposition + About | Problem/outcome-led home ("I solve real business problems with software and data"), four pillars (Software · Data · Automation · AI/ML), stack-by-pillar, and a new `/about` page |
+| v3.9 | Case Studies | `/work` repurposed into curated case studies (problem → approach → stack → outcome) with statically prerendered `/work/[slug]` detail pages |
+| v3.10 | Timeline + Contact | Dedicated `/timeline` page (curated data), new `/contact` page, and a Review Pulse ML case study |
+| v3.11 | Impact Metrics Curation | Curated home metrics for freshness + credibility; data moved to `content/metrics.ts` |
 
 ---
 
