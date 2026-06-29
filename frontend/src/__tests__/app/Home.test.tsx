@@ -60,7 +60,7 @@ describe('Home Page', () => {
   it('renders the MetricsSection', () => {
     renderWithProviders(<HomePage />);
 
-    expect(screen.getByRole('heading', { name: /impact at a glance/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /^impact$/i })).toBeInTheDocument();
   });
 
   it('renders the TimelineSection', () => {
