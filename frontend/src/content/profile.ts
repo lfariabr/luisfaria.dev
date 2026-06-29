@@ -8,15 +8,37 @@ export const POSITIONING = {
   badge: 'Engineer · Data · Automation · AI',
   headline: 'I solve real business problems with software and data.',
   subline:
-    'I turn messy, manual workflows into automated, KPI-driven systems — internal tools, data pipelines, dashboards, and AI assistants. 10+ years shipping end-to-end across healthcare, agencies, and tech; now building data systems at St Catherine’s, Sydney.',
-  // Short, concrete proof points shown as a strip under the hero.
-  proof: [
-    'Healthcare ERP/CRM',
-    '30K+ msgs automated / mo',
-    '1M+ client records',
-    'SQL Server pipelines & BI',
-  ],
+    'I turn messy, manual work into automated, KPI-driven systems — data, full-stack, and ML. 10+ years end-to-end; now at St Catherine’s, Sydney.',
 } as const;
+
+/** Full, static canonical phrase — the accessible/SEO text rendered in the hero <h1>. */
+export const HERO_CANONICAL_PHRASE = 'I build systems that pay for themselves.';
+
+export type HeroFrame = { lens: string; clause: string };
+
+/**
+ * Rotating hero frames: lens label (pill) + green clause. Order is ML → Data →
+ * Full-Stack → Hybrid; Hybrid is canonical and renders first (SSR + no-JS + reduced-motion).
+ */
+export const HERO_FRAMES: HeroFrame[] = [
+  { lens: 'ML Engineer', clause: 'with ML that ships to production.' },
+  { lens: 'Data Engineer', clause: 'from raw data to real decisions.' },
+  { lens: 'Full-Stack Engineer', clause: 'end-to-end, frontend to infra.' },
+  { lens: 'Hybrid', clause: 'that pay for themselves.' },
+];
+
+/** Index of the canonical frame (Hybrid) used for first paint and reduced-motion. */
+export const HERO_CANONICAL_INDEX = 3;
+
+export type HeroMetric = { value: string; label: string; accent?: boolean };
+
+/** Concrete proof points shown as a 4-card metrics row under the hero headline. */
+export const HERO_METRICS: HeroMetric[] = [
+  { value: '~4h saved', label: 'per term rollover · St Cath', accent: true },
+  { value: '30K+', label: 'messages automated / mo' },
+  { value: '5 models', label: 'compared by MAE · CRISP-DM' },
+  { value: '$12/mo', label: 'infra, production-grade' },
+];
 
 export type Pillar = {
   key: string;
