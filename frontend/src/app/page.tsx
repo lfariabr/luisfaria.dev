@@ -2,7 +2,9 @@ import type { Metadata } from 'next';
 import Link from "next/link";
 import { MainLayout } from "@/components/layouts/MainLayout";
 import { Button } from "@/components/ui/button";
-import { POSITIONING } from "@/content/profile";
+import { cn } from "@/lib/utils";
+import { HERO_METRICS } from "@/content/profile";
+import { HeroHeadline } from "@/components/sections/HeroHeadline";
 import { PillarsSection } from "@/components/sections/PillarsSection";
 import { StackSection } from "@/components/sections/StackSection";
 import { MetricsSection } from "@/components/sections/MetricsSection";
@@ -67,36 +69,29 @@ export default function Home() {
         <div className="container max-w-4xl px-6 py-16 space-y-16">
           {/* Hero */}
           <div className="space-y-8 sm:space-y-10 text-center">
-            {/* Badge */}
-            <p className="inline-flex items-center justify-center gap-2 rounded-full border border-border bg-muted/60 px-4 py-1 text-xs font-medium text-muted-foreground">
-              {POSITIONING.badge}
-            </p>
+            <HeroHeadline />
 
-            {/* Heading + subheading */}
-            <div className="space-y-4 sm:space-y-6">
-              <h1 className="text-3xl font-extrabold tracking-tight leading-tight sm:text-5xl lg:text-6xl">
-                I solve real business problems
-                <span className="block bg-gradient-to-r from-emerald-400 to-emerald-600 bg-clip-text text-transparent">
-                  with software and data.
-                </span>
-              </h1>
-
-              <p className="mx-auto max-w-[720px] text-base text-muted-foreground sm:text-lg">
-                {POSITIONING.subline}
-              </p>
-            </div>
-
-            {/* Proof strip */}
-            <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-xs font-medium text-muted-foreground sm:text-sm">
-              {POSITIONING.proof.map((item, i) => (
-                <span key={item} className="flex items-center gap-3">
-                  {i > 0 ? <span className="text-muted-foreground/40">·</span> : null}
-                  {item}
-                </span>
+            {/* Metrics row */}
+            <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {HERO_METRICS.map((metric) => (
+                <div
+                  key={metric.value}
+                  className="rounded-xl border border-border bg-muted/40 px-4 py-3 text-center"
+                >
+                  <dt
+                    className={cn(
+                      "text-lg font-bold sm:text-xl",
+                      metric.accent && "text-emerald-600 dark:text-emerald-400",
+                    )}
+                  >
+                    {metric.value}
+                  </dt>
+                  <dd className="mt-1 text-xs text-muted-foreground">{metric.label}</dd>
+                </div>
               ))}
-            </div>
+            </dl>
 
-            {/* Primary CTAs */}
+            {/* Primary CTAs — AI assistant gets visual priority (emerald ring + tint). */}
             <div className="flex flex-wrap justify-center gap-3">
               <Button asChild className="rounded-full px-6">
                 <Link href="/work">See my work</Link>
@@ -104,7 +99,11 @@ export default function Home() {
               <Button asChild variant="outline" className="rounded-full px-6">
                 <Link href="/about">About me</Link>
               </Button>
-              <Button asChild variant="ghost" className="rounded-full px-6">
+              <Button
+                asChild
+                variant="ghost"
+                className="rounded-full px-6 ring-2 ring-emerald-500 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/15 dark:text-emerald-400 dark:hover:bg-emerald-500/15"
+              >
                 <Link href="/chatbot">Try my AI assistant</Link>
               </Button>
             </div>

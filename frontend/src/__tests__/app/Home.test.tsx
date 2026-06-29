@@ -4,29 +4,27 @@ import HomePage from '@/app/page';
 import { renderWithProviders } from '@/utils/test-utils';
 
 describe('Home Page', () => {
-  it('renders the hero section with the problem/outcome-led heading', () => {
+  it('renders the static canonical h1 (SEO/no-JS safe)', () => {
     renderWithProviders(<HomePage />);
 
     const heroHeading = screen.getByRole('heading', { level: 1 });
     expect(heroHeading).toBeInTheDocument();
-    expect(heroHeading).toHaveTextContent(/I solve real business problems/i);
+    expect(heroHeading).toHaveTextContent(/I build systems that pay for themselves\./i);
   });
 
-  it('renders the positioning badge', () => {
+  it('renders the rotating lens pill frames (canonical Hybrid first)', () => {
     renderWithProviders(<HomePage />);
 
-    const badge = screen.getByText((_, element) => {
-      const text = element?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
-      return element?.tagName.toLowerCase() === 'p' && /Engineer · Data · Automation · AI/.test(text);
-    });
-    expect(badge).toBeInTheDocument();
+    // All frames are in the DOM (grid-stacked); the canonical one is shown on first paint.
+    expect(screen.getByText('Hybrid')).toBeInTheDocument();
+    expect(screen.getByText('ML Engineer')).toBeInTheDocument();
   });
 
   it('renders the hero subline', () => {
     renderWithProviders(<HomePage />);
 
     // Phrase unique to the hero subline (the footer tagline also mentions KPI-driven systems).
-    expect(screen.getByText(/internal tools, data pipelines, dashboards/i)).toBeInTheDocument();
+    expect(screen.getByText(/CRISP-DM modelling, full-stack delivery/i)).toBeInTheDocument();
   });
 
   it('renders CTA buttons', () => {
