@@ -175,7 +175,7 @@ describe('APOD Resolvers Integration Tests', () => {
         if (response.body.kind === 'single') {
           const { errors } = response.body.singleResult;
           expect(errors).toBeDefined();
-          expect(errors?.[0].extensions?.code).toBe('RATE_LIMIT_EXCEEDED');
+          expect(errors?.[0].extensions?.code).toBe('RATE_LIMITED');
         }
       });
 
@@ -227,7 +227,7 @@ describe('APOD Resolvers Integration Tests', () => {
         // Should return rate limit error
         expect(response.body.kind).toBe('single');
         if (response.body.kind === 'single') {
-          expect(response.body.singleResult.errors?.[0]?.extensions?.code).toBe('RATE_LIMIT_EXCEEDED');
+          expect(response.body.singleResult.errors?.[0]?.extensions?.code).toBe('RATE_LIMITED');
         }
       });
     });
@@ -360,7 +360,7 @@ describe('APOD Resolvers Integration Tests', () => {
         if (finalRes.body.kind === 'single') {
           const { errors } = finalRes.body.singleResult;
           expect(errors).toBeDefined();
-          expect(errors?.[0].extensions?.code).toBe('RATE_LIMIT_EXCEEDED');
+          expect(errors?.[0].extensions?.code).toBe('RATE_LIMITED');
         } else {
           throw new Error('Expected single result with rate limit error');
         }

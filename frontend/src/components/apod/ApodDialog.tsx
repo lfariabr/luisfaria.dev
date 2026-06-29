@@ -97,14 +97,14 @@ export function ApodDialog({ open, onOpenChange }: ApodDialogProps) {
   
   // Rate limit derived state
   const isRateLimited = secondsUntilReset !== null && secondsUntilReset > 0;
-  const isRateLimitError = dateError?.graphQLErrors?.[0]?.extensions?.code === 'RATE_LIMIT_EXCEEDED';
+  const isRateLimitError = dateError?.graphQLErrors?.[0]?.extensions?.code === 'RATE_LIMITED';
 
   // Extract rate limit info from GraphQL errors
   useEffect(() => {
     if (dateError) {
       const gqlError = dateError.graphQLErrors?.[0];
       const ext = gqlError?.extensions as Record<string, unknown> | undefined;
-      if (ext?.code === 'RATE_LIMIT_EXCEEDED') {
+      if (ext?.code === 'RATE_LIMITED') {
         const limit = ext.limit as number;
         const remaining = ext.remaining as number;
         const resetTime = ext.resetTime as string;
