@@ -44,7 +44,7 @@ The flipped classroom assumes you will do the front-loading yourself. Fine. I ju
 
 ## The pipeline
 
-Instead of one heroic study session, I split the journey into stages and gave each stage a skill. A skill in Claude Code is a named, reusable prompt with a fixed contract - it always reads the same inputs, follows the same steps, and writes the same shape of output. That repeatability is the whole point: I am not re-explaining "how I study" every week, I am running `/study-mode BDA 5` and getting the same disciplined result every time.
+Instead of one heroic study session, I split the journey into stages and gave each stage a bounded contract. A skill in Claude Code is a named, reusable prompt that resolves the same inputs, follows the same guardrails, and produces a consistent kind of result. That repeatability is the whole point: I am not re-explaining "how I study" every week, I am running `/study-mode BDA 5` and getting the same disciplined result every time.
 
 ```mermaid
 flowchart LR
@@ -52,12 +52,12 @@ flowchart LR
     LEC["Lecture recording"] --> TG["transcript-generator<br/>-> txt + srt"]
     S1 --> S2["study-mode<br/>-> moduleNN_notes.md"]
     TG --> S2
-    S2 --> S3["study-mode tutor<br/>active recall + honest grading"]
+    S2 --> S3["active-recall<br/>5 questions + honest grading"]
     S3 --> S4["one-pager<br/>-> 3-pen A4 sheet"]
     S4 --> S5["Assessment<br/>gh-issue-creator + v2 notebook + assessment-checker"]
 ```
 
-Five stages. Each one removes a specific kind of pain. Here is what is actually inside them.
+Five stages. Most are Claude Code skills; the assessment stage combines skills with a repeatable execution pattern. Each stage removes a specific kind of pain.
 
 ---
 
@@ -122,21 +122,20 @@ The skill marks each resource done with a status emoji and refuses to touch anyt
 
 ---
 
-### 3. Active recall, not re-reading - `/study-mode` (tutor mode)
+### 3. Active recall, not re-reading - `/active-recall`
 
 Here is where the agent stops doing the work for me and starts making me do it.
 
-Summaries are comfortable and useless on their own - re-reading feels like learning and is not. So the same `/study-mode` session flips into a tutor that quizzes me from memory and grades me without mercy. The behaviour is pinned down in my own notes on how I want to be taught:
+Summaries are comfortable and useless on their own - re-reading feels like learning and is not. So `/active-recall BDA 5` reads the notes produced by `/study-mode`, privately builds five questions, and asks them one at a time. It grades my first attempt before teaching anything:
 
 ```text
-- Active recall over re-reading - quiz them from memory, grade honestly
-  (real check/cross, even a blunt score like 1.6/5), then teach the gaps.
-- Real-world anchor: the user has a day job with a data warehouse +
-  operational database - use their work stack to make abstract concepts
-  (lake vs warehouse, schema-on-read) stick.
+- Ask Question 1 only and stop. Never reveal the private answer key.
+- Grade the first attempt from 0 to 5 before teaching or asking a follow-up.
+- Return: Right, Gap, Fix, and a practical Anchor when it genuinely helps.
+- After five questions, calculate the mean and produce three retest prompts.
 ```
 
-A 1.6 out of 5 stings. It is supposed to. The agent then teaches only the gaps, and anchors every abstract idea to my actual day job - "schema-on-write is your warehouse, schema-on-read would be the lake." That hook is why it sticks.
+A 1.6 out of 5 stings. It is supposed to. The skill keeps the original score even if I repair the answer, teaches only the gap, and anchors abstract ideas to my actual day job - "schema-on-write is your warehouse, schema-on-read would be the lake." That hook is why it sticks.
 
 **So what:** the AI is most valuable when it withholds the answer, not when it hands it over.
 
@@ -220,7 +219,7 @@ None of this works if the agent does the learning. The agent does the *logistics
 |---|---|
 | Scaffold the subject README from PDFs | Decide what to prioritise |
 | Summarise resources into cited notes | Read the notes, then recall from memory |
-| Grade my recall, honestly | Sit the quiz and feel the 1.6/5 |
+| Run `/active-recall` and grade honestly | Retrieve the answer and feel the 1.6/5 |
 | Draft the 3-pen one-pager | Hand-write it onto A4 |
 | Scaffold issues, draft the notebook, lint citations | Run every cell, make every academic call, submit |
 
@@ -230,8 +229,9 @@ sequenceDiagram
     participant A as Agent (Claude Code skills)
     A->>U: scaffold README from PDFs
     A->>U: summarise resources into Key Highlights
-    U->>U: read notes, then quiz from memory
-    A->>U: grade honestly (1.6/5), teach the gaps
+    A->>U: ask one active-recall question
+    U->>A: answer from memory
+    A->>U: grade honestly (1.6/5), teach the gap
     A->>U: draft the 3-pen one-pager
     U->>U: HAND-WRITE the one-pager (the encoding step)
     U->>A: decide the assessment approach
