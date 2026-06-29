@@ -22,7 +22,8 @@ A full-stack TypeScript portfolio application featuring AI-powered tools, techni
 This repository powers [luisfaria.dev](https://luisfaria.dev) — a portfolio built with Next.js, Node.js, GraphQL, MongoDB, and Redis. It goes beyond a static portfolio by integrating modern patterns: an authenticated AI assistant, atomic rate limiting, CI/CD pipelines, and a layered caching strategy.
 
 **Highlights for reviewers:**
-- [Live site](https://luisfaria.dev) — browse projects, articles, and the AI chatbot
+- [Live site](https://luisfaria.dev) — a software & data engineer's portfolio; browse case studies, projects, and the AI chatbot
+- [Case studies](https://luisfaria.dev/work) — St Catherine's data systems, an ML review-sentiment classifier, and cloud/BI work, each told as problem → approach → stack → outcome
 - [From Groomzilla to Full-Stack Engineer](https://luisfaria.dev/projects/from-groomzilla-to-full-stack-engineer-building-wedstack) — case study built on this stack
 - [Security Incident Report: Cryptominer Attack](https://dev.to/lfariaus/security-incident-report-cryptominer-attack-on-nextjs-application-1df4) — led to the `feat/sec-auth` hardening milestone
 

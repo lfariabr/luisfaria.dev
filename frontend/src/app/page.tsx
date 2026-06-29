@@ -117,7 +117,7 @@ export default function Home() {
           <StackSection />
 
           <MetricsSection />
-          <TimelineSection />
+          <TimelineSection limit={4} showViewAll />
         </div>
       </div>
     </MainLayout>

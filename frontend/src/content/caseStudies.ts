@@ -46,6 +46,31 @@ export const CASE_STUDIES: CaseStudy[] = [
     ],
   },
   {
+    slug: 'review-pulse-sentiment',
+    title: 'Review Pulse — multi-domain sentiment classifier',
+    tagline: 'An ML pipeline that classifies product-review sentiment and holds up across four retail domains.',
+    context: 'Master of SWE & AI · Machine Learning',
+    period: '2026',
+    pillars: ['AI/ML', 'Data'],
+    problem:
+      'Product reviews carry signal that’s expensive to read at scale, and a model trained on one category often degrades on another. The task: build a sentiment classifier that generalises across multiple, different retail domains — not just one.',
+    approach: [
+      'Worked from a labelled dataset of ~8,000 Amazon reviews across four domains (Books, DVDs, Electronics, Kitchen & Housewares).',
+      'Cleaned and vectorised the text, then trained and evaluated classical ML models with scikit-learn, following a CRISP-DM workflow.',
+      'Measured per-domain and cross-domain performance to test generalisation — not just headline accuracy.',
+      'Iterated in Jupyter notebooks, version-controlled in a dedicated open-source repo.',
+    ],
+    stack: ['Python', 'scikit-learn', 'pandas', 'Jupyter', 'CRISP-DM'],
+    outcomes: [
+      'A working multi-domain sentiment classifier with documented per-domain and cross-domain evaluation.',
+      'A reproducible ML pipeline (notebooks + repo) — concrete, hands-on ML, not just coursework slides.',
+    ],
+    links: [
+      { label: 'review-pulse repo', href: 'https://github.com/lfariabr/review-pulse' },
+      { label: 'Master’s repo', href: 'https://github.com/lfariabr/masters-swe-ai' },
+    ],
+  },
+  {
     slug: 'aws-cloud-architecture',
     title: 'Secure cloud architecture for a delivery startup',
     tagline: 'Designing a scalable, defense-in-depth AWS architecture for a 10× surge.',
