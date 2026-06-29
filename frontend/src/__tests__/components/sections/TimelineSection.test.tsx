@@ -137,7 +137,7 @@ describe('TimelineSection', () => {
       
       expect(screen.getByText(/Relocated to Sydney/i)).toBeInTheDocument();
       expect(screen.getByText(/Stanford.*Machine Learning Specialization/i)).toBeInTheDocument();
-      expect(screen.getByText(/backend architecture expertise/i)).toBeInTheDocument();
+      expect(screen.getByText(/Strengthened backend architecture/i)).toBeInTheDocument();
     });
 
     it('displays current activities (2025)', () => {
@@ -145,8 +145,8 @@ describe('TimelineSection', () => {
       
       expect(screen.getByText(/Master.*Software Engineering & AI/i)).toBeInTheDocument();
       expect(screen.getByText(/Next\.js.*GraphQL.*Stripe/i)).toBeInTheDocument();
-      expect(screen.getByText(/OpenAI integration/i)).toBeInTheDocument();
-      expect(screen.getByText(/Dev\.to/i)).toBeInTheDocument();
+      expect(screen.getByText(/built AI tools on OpenAI/i)).toBeInTheDocument();
+      expect(screen.getByText(/dev\.to/i)).toBeInTheDocument();
     });
   });
 
