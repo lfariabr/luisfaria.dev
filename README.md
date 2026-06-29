@@ -112,6 +112,8 @@ luisfaria/
 | v3.9 | Case Studies | `/work` repurposed into curated case studies (problem → approach → stack → outcome) with statically prerendered `/work/[slug]` detail pages |
 | v3.10 | Timeline + Contact | Dedicated `/timeline` page (curated data), new `/contact` page, and a Review Pulse ML case study |
 | v3.11 | Impact Metrics Curation | Curated home metrics for freshness + credibility; data moved to `content/metrics.ts` |
+| v3.12 | Backend Cleanup | Removed dead resolver files, `checkRole` on the `UserRole` enum, and unified the rate-limit error code on `RATE_LIMITED` |
+| v3.13 | Error Handling Standardization | `screams` / `resend` resolvers migrated to the shared `Errors.*` factories |
 
 ---
 
