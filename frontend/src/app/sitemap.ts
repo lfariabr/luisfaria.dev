@@ -6,6 +6,7 @@ import {
 } from '@/lib/graphql/queries/server.queries';
 import type { Article } from '@/lib/graphql/types/article.types';
 import type { Project } from '@/lib/graphql/types/project.types';
+import { CASE_STUDIES } from '@/content/caseStudies';
 
 const BASE_URL = 'https://luisfaria.dev';
 const STATIC_LAST_MODIFIED = new Date('2026-03-03T00:00:00.000Z');
@@ -94,5 +95,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Graceful fallback — return static routes only if GraphQL is unavailable
   }
 
-  return [...staticRoutes, ...articleRoutes, ...projectRoutes];
+  const caseStudyRoutes: MetadataRoute.Sitemap = CASE_STUDIES.map((cs) => ({
+    url: `${BASE_URL}/work/${cs.slug}`,
+    lastModified: ABOUT_LAST_MODIFIED,
+    changeFrequency: 'monthly' as const,
+    priority: 0.8,
+  }));
+
+  return [...staticRoutes, ...caseStudyRoutes, ...articleRoutes, ...projectRoutes];
 }
