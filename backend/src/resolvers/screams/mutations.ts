@@ -1,5 +1,6 @@
 import { GraphQLError } from 'graphql';
 import Scream from '../../models/Scream';
+import { Errors } from '../../utils/errors';
 import { rateLimiter } from '../../services/rateLimiter';
 import { chatWithGogginsMode } from '../../services/openai';
 import { sendGogginsEmail } from '../../services/resendMailer';
@@ -21,9 +22,7 @@ export const activateGogginsMode = async (_: any, { input }: any) => {
   const explicitMode = Boolean(input?.explicitMode);
 
   if (!userEmailRaw || !isValidEmail(userEmailRaw)) {
-    throw new GraphQLError('Invalid email address', {
-      extensions: { code: 'BAD_USER_INPUT' },
-    });
+    throw Errors.badInput('Invalid email address');
   }
 
   const userEmail = normalizeEmail(userEmailRaw);
