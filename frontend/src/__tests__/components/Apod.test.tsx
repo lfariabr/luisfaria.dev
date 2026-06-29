@@ -308,7 +308,7 @@ describe("ApodFab", () => {
             errors: [
               new GraphQLError("Rate limit exceeded", {
                 extensions: {
-                  code: "RATE_LIMIT_EXCEEDED",
+                  code: "RATE_LIMITED",
                   limit: 5,
                   remaining: 0,
                   resetTime: "2099-01-01T00:00:00.000Z",

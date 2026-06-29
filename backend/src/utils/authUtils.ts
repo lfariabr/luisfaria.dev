@@ -1,4 +1,5 @@
 import { Errors } from './errors';
+import { UserRole } from '../models/User';
 
 // Check if user is authenticated
 export const checkAuth = (context: any) => {
@@ -8,14 +9,15 @@ export const checkAuth = (context: any) => {
   return context.user;
 };
 
-// Check if user has the required role
-export const checkRole = (context: any, requiredRole: string = 'admin') => {
+// Check if user has the required role (ADMIN always passes). `context.user.role`
+// is normalized to the uppercase UserRole enum upstream in getUser().
+export const checkRole = (context: any, requiredRole: string = UserRole.ADMIN) => {
   const user = checkAuth(context);
-  
-  if (user.role !== requiredRole && user.role !== 'admin') {
+
+  if (user.role !== requiredRole && user.role !== UserRole.ADMIN) {
     throw Errors.forbidden('Not authorized');
   }
-  
+
   return user;
 };
 

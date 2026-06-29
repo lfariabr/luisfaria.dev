@@ -26,7 +26,7 @@ export async function applyRateLimit(
     if (!result.success) {
         throw new GraphQLError('Rate limit exceeded', {
             extensions: {
-                code: 'RATE_LIMIT_EXCEEDED',
+                code: 'RATE_LIMITED',
                 limit: result.limit,
                 remaining: result.remaining,
                 resetTime: result.resetTime.toISOString(),
