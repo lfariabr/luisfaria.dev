@@ -8,7 +8,7 @@ export const POSITIONING = {
   badge: 'Engineer · Data · Automation · AI',
   headline: 'I solve real business problems with software and data.',
   subline:
-    'Data pipelines, internal tools, and ML — turned into automated, KPI-driven systems. CRISP-DM modelling, full-stack delivery, production infra. 10+ years end-to-end across healthcare, agencies, and tech; now at St Catherine’s, Sydney.',
+    'I turn messy, manual work into automated, KPI-driven systems — data, full-stack, and ML. 10+ years end-to-end; now at St Catherine’s, Sydney.',
 } as const;
 
 /** Full, static canonical phrase — the accessible/SEO text rendered in the hero <h1>. */

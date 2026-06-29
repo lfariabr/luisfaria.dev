@@ -24,7 +24,7 @@ describe('Home Page', () => {
     renderWithProviders(<HomePage />);
 
     // Phrase unique to the hero subline (the footer tagline also mentions KPI-driven systems).
-    expect(screen.getByText(/CRISP-DM modelling, full-stack delivery/i)).toBeInTheDocument();
+    expect(screen.getByText(/messy, manual work into automated/i)).toBeInTheDocument();
   });
 
   it('renders CTA buttons', () => {
