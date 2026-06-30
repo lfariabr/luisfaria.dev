@@ -9,17 +9,23 @@ import {
   POSITIONING,
 } from '@/content/profile';
 
+/** Time the active frame dwells before the next swap (must match the fill duration). */
+const ROTATE_MS = 2950;
+
 /** Each frame fades in/out by index — overlapping grid cells avoid any layout shift. */
 const frameOpacity = (active: boolean) =>
   cn('transition-opacity duration-[350ms]', active ? 'opacity-100' : 'opacity-0');
 
 export function HeroHeadline() {
-  const index = useRotatingText(HERO_FRAMES.length, { start: HERO_CANONICAL_INDEX });
+  const { index, isRotating } = useRotatingText(HERO_FRAMES.length, {
+    start: HERO_CANONICAL_INDEX,
+    intervalMs: ROTATE_MS,
+  });
 
   return (
     <>
-      {/* Rotating lens pill — decorative; grid-stacked so width stays the widest label's. */}
-      <div aria-hidden="true" className="flex justify-center">
+      {/* Lens pill + rotation-timer bar — decorative; signals when the headline will swap. */}
+      <div aria-hidden="true" className="flex flex-col items-center gap-2.5">
         <span className="grid">
           {HERO_FRAMES.map((frame, i) => (
             <span
@@ -34,6 +40,17 @@ export function HeroHeadline() {
             </span>
           ))}
         </span>
+
+        {/* Fills left→right over one interval; re-keyed each frame so it restarts. */}
+        {isRotating && (
+          <span className="block h-0.5 w-12 overflow-hidden rounded-full bg-emerald-500/15">
+            <span
+              key={index}
+              style={{ animation: `hero-progress ${ROTATE_MS}ms linear` }}
+              className="block h-full w-full origin-left rounded-full bg-emerald-500/70"
+            />
+          </span>
+        )}
       </div>
 
       <div className="space-y-4 sm:space-y-6">

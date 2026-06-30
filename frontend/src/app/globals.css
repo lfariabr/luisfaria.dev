@@ -120,3 +120,13 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Hero rotating-headline progress bar: fills left→right over one rotation interval. */
+@keyframes hero-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
