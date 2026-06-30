@@ -21,8 +21,8 @@ export type HeroFrame = { lens: string; clause: string };
  * Full-Stack → Hybrid; Hybrid is canonical and renders first (SSR + no-JS + reduced-motion).
  */
 export const HERO_FRAMES: HeroFrame[] = [
-  { lens: 'ML Engineer', clause: 'with ML that ships to production.' },
-  { lens: 'Data Engineer', clause: 'from raw data to real decisions.' },
+  { lens: 'ML Engineer', clause: 'with production-grade ML.' },
+  { lens: 'Data Engineer', clause: 'from raw data to decisions.' },
   { lens: 'Full-Stack Engineer', clause: 'end-to-end, frontend to infra.' },
   { lens: 'Hybrid', clause: 'that pay for themselves.' },
 ];
