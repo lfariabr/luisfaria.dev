@@ -37,7 +37,7 @@ export const TIMELINE: TimelineEntry[] = [
   },
   {
     period: '2025',
-    body: 'Pursuing a Master’s in Software Engineering & AI while expanding full-stack capabilities. Shipped Wedstack (Next.js + GraphQL + Stripe), built AI tools on OpenAI, and published engineering writing on dev.to.',
+    body: 'Pursuing a Master’s in Software Engineering & AI while expanding full-stack capabilities. Shipped Wedstack (Next.js + GraphQL + Stripe), built AI tools on OpenAI, and published 30+ engineering write-ups on dev.to.',
     links: [
       {
         label: 'Wedstack',
@@ -46,6 +46,10 @@ export const TIMELINE: TimelineEntry[] = [
       {
         label: 'Master’s repo (GitHub)',
         href: SOCIALS.mastersRepo,
+      },
+      {
+        label: 'Writing on dev.to',
+        href: SOCIALS.devto,
       },
     ],
   },

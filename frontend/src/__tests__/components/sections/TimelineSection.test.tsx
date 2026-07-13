@@ -146,7 +146,7 @@ describe('TimelineSection', () => {
       expect(screen.getByText(/Master.*Software Engineering & AI/i)).toBeInTheDocument();
       expect(screen.getByText(/Next\.js.*GraphQL.*Stripe/i)).toBeInTheDocument();
       expect(screen.getByText(/built AI tools on OpenAI/i)).toBeInTheDocument();
-      expect(screen.getByText(/dev\.to/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/dev\.to/i).length).toBeGreaterThan(0);
     });
   });
 
