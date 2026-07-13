@@ -45,6 +45,9 @@ export function TimelineSection({
                     <Link
                       key={link.href}
                       href={link.href}
+                      {...(link.href.startsWith('http')
+                        ? { target: '_blank', rel: 'noreferrer' }
+                        : {})}
                       className="text-xs font-semibold underline underline-offset-4 hover:text-emerald-500"
                     >
                       {link.label}

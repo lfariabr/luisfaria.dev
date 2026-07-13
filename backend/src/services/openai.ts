@@ -11,7 +11,7 @@ const openai = new OpenAI({
 let cachedProfile: string | null = null;
 
 const getGogginsModePrompt = (): string => {
-  return `You're Goggins Mode — a ruthless, no-excuses motivator. Deliver brutal honesty, unrelenting discipline, and extreme ownership. Annihilate weakness, demand action, and embrace the grind. Keep responses raw, intense and soul-shaking paragraphs. Sign off: — Goggins Mode.`;
+  return `You're Goggins Mode - a ruthless, no-excuses motivator. Deliver brutal honesty, unrelenting discipline, and extreme ownership. Annihilate weakness, demand action, and embrace the grind. Keep responses raw, intense and soul-shaking paragraphs. Sign off: - Goggins Mode.`;
 }
 
 const buildProfileContext = (): string => {
@@ -22,7 +22,7 @@ const buildProfileContext = (): string => {
   const skills = p.skills || {};
 
   const bioSection = `## Bio
-${p.name} — ${p.location}
+${p.name} - ${p.location}
 ${p.summary}
 Current focus: ${p.current_focus}
 Languages spoken: ${Object.entries(p.languages || {}).map(([lang, level]) => `${lang} (${level})`).join(', ')}`;
@@ -38,7 +38,7 @@ ${experience.map((e: any) => {
 ${projects.map((proj: any) => `- **${proj.name}**: ${proj.description} Impact: ${proj.impact}`).join('\n')}`;
 
   const articlesSection = `## Published Articles (${articles.length} on dev.to)
-${articles.map((a: any) => `- "${a.title}" (${a.published}) — ${a.summary} [Tech: ${(a.tech || []).join(', ')}]`).join('\n')}`;
+${articles.map((a: any) => `- "${a.title}" (${a.published}) - ${a.summary} [Tech: ${(a.tech || []).join(', ')}]`).join('\n')}`;
 
   const skillsSection = `## Skills
 - Languages: ${(skills.languages || []).join(', ')}
@@ -50,7 +50,7 @@ ${articles.map((a: any) => `- "${a.title}" (${a.published}) — ${a.summary} [Te
 - Methods: ${(skills.project_methods || []).join(', ')}`;
 
   const educationSection = `## Education & Certifications
-${(p.education || []).map((e: any) => `- ${e.degree} — ${e.institution} (${e.years})`).join('\n')}
+${(p.education || []).map((e: any) => `- ${e.degree} - ${e.institution} (${e.years})`).join('\n')}
 Certifications: ${(p.certifications || []).join(', ')}`;
 
   return [bioSection, experienceSection, projectsSection, articlesSection, skillsSection, educationSection].join('\n\n');
@@ -69,7 +69,7 @@ ${cachedProfile}
 - Answer questions about Luis's background, projects, articles, and skills using the profile above.
 - When a question relates to a topic Luis has written about, reference the specific article by title and summarize its content.
 - Present Luis's career as a progression: agency TPM → healthcare software engineer → data analyst + Master's student, always building and shipping.
-- Use markdown formatting for readability. Keep responses concise — short paragraphs, bullet points, no walls of text.
+- Use markdown formatting for readability. Keep responses concise - short paragraphs, bullet points, no walls of text.
 - If the user asks for code or technical advice, respond as Luis would based on his hands-on experience.
 - If a question falls outside Luis's profile, say so honestly rather than guessing.`;
 };

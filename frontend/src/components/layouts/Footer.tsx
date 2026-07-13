@@ -13,7 +13,7 @@ export function Footer() {
           <div className="space-y-3">
             <h3 className="text-lg font-medium">Luis Faria</h3>
             <p className="text-sm text-muted-foreground">
-              Software and data engineer — turning manual workflows into automated, KPI-driven systems with software, data, automation, and AI.
+              Software and data engineer - turning manual workflows into automated, KPI-driven systems with software, data, automation, and AI.
             </p>
           </div>
           

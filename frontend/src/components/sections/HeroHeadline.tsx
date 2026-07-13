@@ -12,7 +12,7 @@ import {
 /** Time the active frame dwells before the next swap (must match the fill duration). */
 const ROTATE_MS = 2950;
 
-/** Each frame fades in/out by index — overlapping grid cells avoid any layout shift. */
+/** Each frame fades in/out by index - overlapping grid cells avoid any layout shift. */
 const frameOpacity = (active: boolean) =>
   cn('transition-opacity duration-[350ms]', active ? 'opacity-100' : 'opacity-0');
 
@@ -24,7 +24,7 @@ export function HeroHeadline() {
 
   return (
     <>
-      {/* Lens pill + rotation-timer bar — decorative; signals when the headline will swap. */}
+      {/* Lens pill + rotation-timer bar - decorative; signals when the headline will swap. */}
       <div aria-hidden="true" className="flex flex-col items-center gap-2.5">
         <span className="grid">
           {HERO_FRAMES.map((frame, i) => (
@@ -58,7 +58,7 @@ export function HeroHeadline() {
           {/* Accessible + SEO: the static, server-rendered canonical phrase. */}
           <span className="sr-only">{HERO_CANONICAL_PHRASE}</span>
 
-          {/* Decorative visual layer — the anchor plus the crossfading green clause. */}
+          {/* Decorative visual layer - the anchor plus the crossfading green clause. */}
           <span aria-hidden="true">
             <span className="block">I build systems</span>
             <span className="grid">

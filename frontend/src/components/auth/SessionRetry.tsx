@@ -11,7 +11,7 @@ interface SessionRetryProps {
 /**
  * Shown on protected routes when the session could not be *verified* due to a
  * transient network/server failure (auth `status === 'error'`). This is NOT a
- * logout — the user keeps a valid cookie — so we offer a retry instead of
+ * logout - the user keeps a valid cookie - so we offer a retry instead of
  * redirecting to /login.
  */
 export function SessionRetry({ message, onRetry }: SessionRetryProps) {

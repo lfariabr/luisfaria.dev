@@ -5,9 +5,9 @@ import { Button } from '@/components/ui/button';
 import { SOCIALS } from '@/content/profile';
 
 export const metadata: Metadata = {
-  title: 'Contact — Luis Faria',
+  title: 'Contact - Luis Faria',
   description:
-    'Get in touch with Luis Faria — software and data engineer in Sydney. Email, LinkedIn, GitHub, and dev.to.',
+    'Get in touch with Luis Faria - software and data engineer in Sydney. Email, LinkedIn, GitHub, and dev.to.',
   alternates: { canonical: 'https://luisfaria.dev/contact' },
 };
 
@@ -25,7 +25,7 @@ export default function ContactPage() {
         <div className="space-y-3">
           <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Get in touch</h1>
           <p className="text-muted-foreground">
-            Happy to talk about software, data, automation, or AI work — or just to connect. Email is
+            Happy to talk about software, data, automation, or AI work - or just to connect. Email is
             the fastest way to reach me.
           </p>
         </div>

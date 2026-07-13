@@ -3,6 +3,8 @@
  * dedicated /timeline page). Oldest → newest. Edit copy here.
  */
 
+import { SOCIALS } from './profile';
+
 export type TimelineEntry = {
   period: string;
   body: string;
@@ -41,10 +43,14 @@ export const TIMELINE: TimelineEntry[] = [
         label: 'Wedstack',
         href: '/projects/from-groomzilla-to-full-stack-engineer-building-wedstack',
       },
+      {
+        label: 'Master’s repo (GitHub)',
+        href: SOCIALS.mastersRepo,
+      },
     ],
   },
   {
     period: '2026',
-    body: 'Joined St Catherine’s School, Sydney as a Data Analyst — building SQL Server pipelines and reporting in a regulated educational environment, and establishing data foundations for analytics and ML, while continuing the Master’s.',
+    body: 'Joined St Catherine’s School, Sydney as a Data Analyst, now Data & Systems Specialist - building SQL Server pipelines, Power BI reporting, and cross-system integrations in a regulated educational environment, and laying data foundations for analytics and ML, while continuing the Master’s.',
   },
 ];

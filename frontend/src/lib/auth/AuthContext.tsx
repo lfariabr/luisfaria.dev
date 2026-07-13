@@ -25,13 +25,13 @@ export interface User {
 
 /**
  * Auth lifecycle state.
- * - `initializing`: the bootstrap ME query has not resolved yet — outcome unknown.
+ * - `initializing`: the bootstrap ME query has not resolved yet - outcome unknown.
  * - `authenticated`: a session is confirmed.
  * - `unauthenticated`: the session is *definitively* absent (no token / 401).
  * - `error`: the session could NOT be verified due to a transient network/server
- *   failure (not a 401). Recoverable — surface a retry affordance, never a logout.
+ *   failure (not a 401). Recoverable - surface a retry affordance, never a logout.
  *
- * Protected routes must redirect to /login ONLY on `unauthenticated` — never on
+ * Protected routes must redirect to /login ONLY on `unauthenticated` - never on
  * `initializing` or `error`, which is what caused spurious bounces on refresh.
  */
 export type AuthStatus = 'initializing' | 'authenticated' | 'unauthenticated' | 'error';
@@ -110,7 +110,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  // Bootstrap the current user on mount — the httpOnly cookie is sent automatically.
+  // Bootstrap the current user on mount - the httpOnly cookie is sent automatically.
   // We derive auth state from the query result (works for refetches too) instead of
   // one-shot callbacks, so a transient ME failure cannot silently destroy a session.
   const { data, error: meError, refetch } = useQuery(ME_QUERY, {
@@ -137,8 +137,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     // Transient network/server error (NOT a 401). Never treat this as a logout:
-    //  - an established session is preserved as-is;
-    //  - on first boot (refresh) we enter the recoverable `error` state rather than
+    // - an established session is preserved as-is;
+    // - on first boot (refresh) we enter the recoverable `error` state rather than
     //    `unauthenticated`, so a valid cookie + a blip shows a retry affordance
     //    instead of bouncing the user to /login. RetryLink and the `online` listener
     //    drive recovery.

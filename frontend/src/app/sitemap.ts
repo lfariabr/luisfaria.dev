@@ -104,7 +104,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     }));
   } catch {
-    // Graceful fallback — return static routes only if GraphQL is unavailable
+    // Graceful fallback - return static routes only if GraphQL is unavailable
   }
 
   const caseStudyRoutes: MetadataRoute.Sitemap = CASE_STUDIES.map((cs) => ({

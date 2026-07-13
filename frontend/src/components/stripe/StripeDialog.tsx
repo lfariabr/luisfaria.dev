@@ -85,7 +85,7 @@ export function StripeDialog({ open, onOpenChange }: StripeDialogProps) {
       }
     }
 
-    void sendDiscordWebhook(`💰 Stripe checkout initiated: ${selected}${trimmedEmail ? ` — ${trimmedEmail}` : ''}`);
+    void sendDiscordWebhook(`💰 Stripe checkout initiated: ${selected}${trimmedEmail ? ` - ${trimmedEmail}` : ''}`);
     setIsRedirecting(true);
     const result = await startCheckout(selected, trimmedEmail);
     if (!result.ok) {

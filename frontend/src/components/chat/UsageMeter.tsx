@@ -43,7 +43,7 @@ export function UsageMeter({ limit, remaining, timeUntilReset, status, hasData =
       <div className="flex items-center justify-between gap-3 md:gap-4">
         <div className="min-w-0">
           <p className="text-xs uppercase tracking-[0.2em] md:tracking-[0.3em] text-muted-foreground">Usage Meter</p>
-          <p className="text-2xl md:text-3xl font-semibold">{hasData ? `${remaining}/${limit}` : `—/${limit}`}</p>
+          <p className="text-2xl md:text-3xl font-semibold">{hasData ? `${remaining}/${limit}` : ` - /${limit}`}</p>
           <p className="text-xs text-muted-foreground mt-1">
             {timeUntilReset ? `Resets in ${timeUntilReset}` : 'Fresh window'}
           </p>
@@ -81,7 +81,7 @@ export function UsageMeter({ limit, remaining, timeUntilReset, status, hasData =
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
             <span className="text-[10px] md:text-xs uppercase tracking-[0.15em] md:tracking-[0.2em] text-muted-foreground">Used</span>
-            <span className="text-xl md:text-2xl font-semibold">{hasData ? used : '—'}</span>
+            <span className="text-xl md:text-2xl font-semibold">{hasData ? used : ' - '}</span>
           </div>
         </div>
       </div>

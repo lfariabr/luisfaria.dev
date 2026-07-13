@@ -562,7 +562,7 @@ describe('AuthContext - Session resilience', () => {
 
     const { result } = renderHook(() => useAuth(), { wrapper });
 
-    // A blip on refresh must NOT be classified as logged-out — that would bounce a
+    // A blip on refresh must NOT be classified as logged-out - that would bounce a
     // user with a valid cookie to /login. It must be recoverable.
     await waitFor(() => expect(result.current.status).toBe('error'));
     expect(result.current.status).not.toBe('unauthenticated');
@@ -577,7 +577,7 @@ describe('AuthContext - Session resilience', () => {
         result: { data: { me: mockUser } },
       },
       {
-        // A later re-verification blips on the network — this must not log the user out.
+        // A later re-verification blips on the network - this must not log the user out.
         request: { query: ME_QUERY },
         error: new Error('Network error'),
       },
@@ -595,13 +595,13 @@ describe('AuthContext - Session resilience', () => {
     await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
     expect(result.current.user).toEqual(mockUser);
 
-    // Trigger a re-verification that fails with a network error — awaited so the
+    // Trigger a re-verification that fails with a network error - awaited so the
     // failure is actually processed before we assert.
     await act(async () => {
       await result.current.refetchUser();
     });
 
-    // Session is preserved — the user stays logged in through the blip.
+    // Session is preserved - the user stays logged in through the blip.
     await waitFor(() => {
       expect(result.current.user).toEqual(mockUser);
       expect(result.current.isAuthenticated).toBe(true);

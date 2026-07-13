@@ -1,5 +1,5 @@
 /**
- * Curated impact metrics for the home page. Kept concrete and defensible —
+ * Curated impact metrics for the home page. Kept concrete and defensible -
  * every number here should survive a "how did you measure that?" in an interview.
  * Edit here; the MetricsSection renders from this.
  */
@@ -27,7 +27,7 @@ export const METRIC_GROUPS: MetricGroup[] = [
     accent: 'text-sky-500',
     stats: [
       { value: '0', caption: 'Cross-account data leaks at 100-concurrent load' },
-      { value: 'Passed', caption: 'External OWASP pentest — no breach' },
+      { value: 'Passed', caption: 'External OWASP pentest - no breach' },
       { value: '500+', caption: 'Automated tests behind a CI release gate' },
     ],
   },

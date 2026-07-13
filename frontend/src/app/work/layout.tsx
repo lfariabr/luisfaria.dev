@@ -4,7 +4,7 @@ import { resolveOgImage } from '@/lib/seo/metadata';
 const ogImage = resolveOgImage();
 
 const description =
-  'Case studies by Luis Faria — problem → approach → stack → outcome across data engineering, software, automation, and AI.';
+  'Case studies by Luis Faria - problem → approach → stack → outcome across data engineering, software, automation, and AI.';
 
 export const metadata: Metadata = {
   title: 'Case Studies | Luis Faria',

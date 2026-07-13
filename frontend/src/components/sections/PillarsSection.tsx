@@ -13,7 +13,7 @@ interface PillarsSectionProps {
   className?: string;
 }
 
-/** "What I do" — the four pillars (Software · Data · Automation · AI/ML). */
+/** "What I do" - the four pillars (Software · Data · Automation · AI/ML). */
 export function PillarsSection({ heading = 'What I do', className }: PillarsSectionProps) {
   return (
     <section className={className}>

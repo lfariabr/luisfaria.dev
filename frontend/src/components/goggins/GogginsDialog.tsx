@@ -277,12 +277,12 @@ export function GogginsDialog({ open, onOpenChange }: GogginsDialogProps) {
                     {field.value ? (
                       <>
                         <span className="mr-1">🔥</span>
-                        Unfiltered — Expect profanity and max intensity.
+                        Unfiltered - Expect profanity and max intensity.
                       </>
                     ) : (
                       <>
                         <span className="mr-1">💬</span>
-                        Filtered — Expect real hard truths, but respectful tone.
+                        Filtered - Expect real hard truths, but respectful tone.
                       </>
                     )}
                   </p>

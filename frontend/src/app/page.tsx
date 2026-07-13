@@ -34,7 +34,7 @@ const websiteLd = {
   name: 'Luis Faria',
   url: 'https://luisfaria.dev',
   description:
-    'Portfolio of Luis Faria — software and data engineer who solves real business problems with software, data, automation, and AI.',
+    'Portfolio of Luis Faria - software and data engineer who solves real business problems with software, data, automation, and AI.',
 };
 
 const organizationLd = {
@@ -91,7 +91,7 @@ export default function Home() {
               ))}
             </dl>
 
-            {/* Primary CTAs — AI assistant gets visual priority (emerald ring + tint). */}
+            {/* Primary CTAs - AI assistant gets visual priority (emerald ring + tint). */}
             <div className="flex flex-wrap justify-center gap-3">
               <Button asChild className="rounded-full px-6">
                 <Link href="/work">See my work</Link>
@@ -109,7 +109,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* What I do — pillars */}
+          {/* What I do - pillars */}
           <PillarsSection />
 
           {/* Core stack grouped by pillar */}

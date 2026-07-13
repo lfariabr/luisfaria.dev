@@ -12,7 +12,7 @@ const stripeClient = config.stripeSecretKey
   : null;
 
 if (!stripeClient) {
-  logger.warn('Stripe is not configured — STRIPE_SECRET_KEY is missing. Checkout will be unavailable.');
+  logger.warn('Stripe is not configured - STRIPE_SECRET_KEY is missing. Checkout will be unavailable.');
 }
 
 const PRODUCTS = {
@@ -131,7 +131,7 @@ export async function createCheckoutSession({
         { returnUrl }
       );
     }
-    logger.warn('createCheckoutSession: FRONTEND_URL not configured — skipping returnUrl origin check. Set FRONTEND_URL in production to enforce origin validation.', { returnUrl });
+    logger.warn('createCheckoutSession: FRONTEND_URL not configured - skipping returnUrl origin check. Set FRONTEND_URL in production to enforce origin validation.', { returnUrl });
   }
 
   const safeReturnUrl = isSameOrigin(returnUrl) ? returnUrl : undefined;

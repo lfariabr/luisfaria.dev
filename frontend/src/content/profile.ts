@@ -1,17 +1,17 @@
 /**
  * Curated portfolio content (single source of truth for the home + about pages).
  * Positioning is problem/outcome-led: "I solve real business problems with
- * software and data." Edit copy here — pages render from these values.
+ * software and data." Edit copy here - pages render from these values.
  */
 
 export const POSITIONING = {
   badge: 'Engineer · Data · Automation · AI',
   headline: 'I solve real business problems with software and data.',
   subline:
-    'I turn messy, manual work into automated, KPI-driven systems — data, full-stack, and ML. 10+ years end-to-end; now at St Catherine’s, Sydney.',
+    'I turn messy, manual work into automated, KPI-driven systems - data, full-stack, and ML. 10+ years end-to-end; now at St Catherine’s, Sydney.',
 } as const;
 
-/** Full, static canonical phrase — the accessible/SEO text rendered in the hero <h1>. */
+/** Full, static canonical phrase - the accessible/SEO text rendered in the hero <h1>. */
 export const HERO_CANONICAL_PHRASE = 'I build systems that pay for themselves.';
 
 export type HeroFrame = { lens: string; clause: string };
@@ -54,28 +54,28 @@ export const PILLARS: Pillar[] = [
     key: 'software',
     icon: 'Code2',
     title: 'Software Engineering',
-    blurb: 'Full-stack products shipped end-to-end — most recently a pentested portal serving 2,000 parents, built solo in 8 weeks.',
+    blurb: 'Full-stack products shipped end-to-end - most recently a pentested portal serving 2,000 parents, built solo in 8 weeks.',
     tags: ['Next.js', 'React', 'Node.js', 'GraphQL', 'Python', 'TypeScript'],
   },
   {
     key: 'data',
     icon: 'Database',
     title: 'Data Engineering',
-    blurb: 'Pipelines, reporting and BI people trust — from reverse-engineering legacy ETL estates to dashboards leadership actually uses.',
+    blurb: 'Pipelines, reporting and BI people trust - from reverse-engineering legacy ETL estates to dashboards leadership actually uses.',
     tags: ['SQL Server', 'PostgreSQL', 'Power BI', 'Apache Superset', 'ETL'],
   },
   {
     key: 'automation',
     icon: 'Workflow',
     title: 'Automation & DevOps',
-    blurb: 'I find manual work and delete it — a 100-minute batch job cut to ~2 seconds; deploy downtime from 10+ minutes to ~2s.',
+    blurb: 'I find manual work and delete it - a 100-minute batch job cut to ~2 seconds; deploy downtime from 10+ minutes to ~2s.',
     tags: ['Docker', 'GitHub Actions', 'Celery / Redis', 'Nginx', 'Sentry'],
   },
   {
     key: 'ai',
     icon: 'Sparkles',
     title: 'AI / ML',
-    blurb: 'Applied ML with honest metrics — deployed scikit-learn services, RAG assistants, and a 1,100+ commit open-source agentic pipeline.',
+    blurb: 'Applied ML with honest metrics - deployed scikit-learn services, RAG assistants, and a 1,100+ commit open-source agentic pipeline.',
     tags: ['scikit-learn', 'FastAPI', 'OpenAI', 'Claude', 'RAG / agents'],
   },
 ];
@@ -103,10 +103,10 @@ export const STACK_GROUPS: StackGroup[] = [
 
 /** First-person narrative for the About page (problem/outcome-led, grounded). */
 export const ABOUT_BIO: string[] = [
-  'I’m Luis Faria, a software and data engineer based in Sydney. For 10+ years I’ve built systems that turn manual, messy processes into automated, measurable products — across healthcare, marketing agencies, and tech.',
+  'I’m Luis Faria, a software and data engineer based in Sydney. For 10+ years I’ve built systems that turn manual, messy processes into automated, measurable products - across healthcare, marketing agencies, and tech.',
   'I led technical projects and delivered custom ERP/CRM platforms for a 20+ clinic healthcare group serving 1M+ client records, then built Konquista, a Django + Celery/Redis automation platform pushing 30K+ WhatsApp messages a month across clinics. After relocating to Sydney, I moved deeper into data and software engineering.',
-  'Today I build data systems at St Catherine’s School, Sydney — SQL Server pipelines and Power BI reporting that give staff reliable, decision-ready numbers in a regulated educational environment.',
-  'I’m completing a Master of Software Engineering with AI, and I keep the learning applied: secure cloud architectures on AWS, a self-hosted Apache Superset BI deployment, applied machine learning (scikit-learn, CRISP-DM), and LLM tooling on OpenAI and Claude. I build in public — shipping, writing, and sharing the wins and the scars.',
+  'Today I build data systems at St Catherine’s School, Sydney - SQL Server pipelines and Power BI reporting that give staff reliable, decision-ready numbers in a regulated educational environment.',
+  'I’m completing a Master of Software Engineering with AI, and I keep the learning applied: secure cloud architectures on AWS, a self-hosted Apache Superset BI deployment, applied machine learning (scikit-learn, CRISP-DM), and LLM tooling on OpenAI and Claude. I build in public - shipping, writing, and sharing the wins and the scars.',
 ];
 
 export const SOCIALS = {

@@ -59,7 +59,7 @@ export default function NotesPage() {
     }
   }, [status, router]);
 
-  // Couldn't verify the session (transient) — offer a retry instead of a logout.
+  // Couldn't verify the session (transient) - offer a retry instead of a logout.
   if (status === 'error') {
     return (
       <MainLayout>

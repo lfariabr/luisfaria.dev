@@ -96,7 +96,7 @@ describe('RelationshipMapPage', () => {
     expect(screen.getByText('Our Sydney Adventures')).toBeInTheDocument();
     expect(screen.getByText('2 places')).toBeInTheDocument();
     expect(screen.getByText(/Precise home address intentionally not shown/i)).toBeInTheDocument();
-    // Sentinel addresses — these strings should never render. If a regression
+    // Sentinel addresses - these strings should never render. If a regression
     // ever inlines a real address into the page, swap these for that pattern.
     expect(screen.queryByText(/123 Example Street/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Private Test Address/i)).not.toBeInTheDocument();
@@ -204,7 +204,7 @@ describe('RelationshipMapPage', () => {
       render(<RelationshipMapPage />);
 
       expect(screen.queryByTestId('home-marker')).not.toBeInTheDocument();
-      // The pins error UI must NOT show — pins query was successful
+      // The pins error UI must NOT show - pins query was successful
       expect(screen.queryByText('Failed to load pins')).not.toBeInTheDocument();
     });
 

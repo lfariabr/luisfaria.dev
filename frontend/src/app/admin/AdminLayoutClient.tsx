@@ -28,7 +28,7 @@ export default function AdminLayoutClient({ children }: AdminLayoutClientProps) 
   const pathname = usePathname() ?? '';
 
   useEffect(() => {
-    // Redirect only on a *definitive* result — never while `initializing` or on a
+    // Redirect only on a *definitive* result - never while `initializing` or on a
     // transient ME failure (`error`), which is what caused spurious bounces on refresh.
     if (status === 'unauthenticated') {
       // Preserve the exact admin destination (e.g. /admin/users) for post-login return.
@@ -38,7 +38,7 @@ export default function AdminLayoutClient({ children }: AdminLayoutClientProps) 
     }
   }, [status, isAdmin, pathname, router]);
 
-  // Couldn't verify the session (transient) — offer a retry instead of a logout.
+  // Couldn't verify the session (transient) - offer a retry instead of a logout.
   if (status === 'error') {
     return <SessionRetry onRetry={refetchUser} />;
   }

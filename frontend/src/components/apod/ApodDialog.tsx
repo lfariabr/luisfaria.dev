@@ -264,7 +264,7 @@ export function ApodDialog({ open, onOpenChange }: ApodDialogProps) {
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-white/60">
                   <Calendar className="h-4 w-4" />
-                  {loading ? "..." : apod?.date ?? "—"}
+                  {loading ? "..." : apod?.date ?? " - "}
                   {isHistorical && (
                     <Button
                       variant="ghost"
