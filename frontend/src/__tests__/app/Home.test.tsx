@@ -50,7 +50,7 @@ describe('Home Page', () => {
 
     expect(screen.getByText(/core stack/i)).toBeInTheDocument();
     // Stack-only tech (not present in any pillar tag list)
-    expect(screen.getByText('Express')).toBeInTheDocument();
+    expect(screen.getByText('pandas')).toBeInTheDocument();
     // Common techs appear in both pillars and the stack, so assert >= 1
     expect(screen.getAllByText('TypeScript').length).toBeGreaterThan(0);
   });

@@ -14,29 +14,30 @@ export type MetricGroup = {
 
 export const METRIC_GROUPS: MetricGroup[] = [
   {
-    label: 'Scale & automation',
+    label: 'Scale',
     accent: 'text-emerald-500',
     stats: [
-      { value: '30K+', caption: 'Messages automated / month' },
-      { value: '1M+', caption: 'Client records managed' },
-      { value: '20+', caption: 'Clinics onboarded' },
+      { value: '2,000', caption: 'Parents served by a portal built solo in 8 weeks' },
+      { value: '1M+', caption: 'Client records managed across 20+ clinics' },
+      { value: '30K+', caption: 'WhatsApp messages automated / month' },
     ],
   },
   {
-    label: 'Time & cost saved',
+    label: 'Reliability & security',
     accent: 'text-sky-500',
     stats: [
-      { value: '20+ hrs', caption: 'Saved weekly via ad automation' },
-      { value: '8+ hrs', caption: 'Saved weekly with BI dashboards' },
-      { value: '50%', caption: 'Email costs reduced' },
+      { value: '0', caption: 'Cross-account data leaks at 100-concurrent load' },
+      { value: 'Passed', caption: 'External OWASP pentest — no breach' },
+      { value: '500+', caption: 'Automated tests behind a CI release gate' },
     ],
   },
   {
-    label: 'Outcomes',
+    label: 'Efficiency',
     accent: 'text-amber-500',
     stats: [
-      { value: '+15%', caption: 'Marketing ROI improvement' },
-      { value: '~4 hrs', caption: 'Saved per term rollover (school reporting)' },
+      { value: '100 min → 2 s', caption: 'Batch job runtime after a rewrite' },
+      { value: '~2 s', caption: 'Deploy downtime, down from 10+ minutes' },
+      { value: '11 → 0', caption: 'Manual query edits per finance reporting cycle' },
     ],
   },
 ];

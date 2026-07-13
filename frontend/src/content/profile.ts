@@ -34,10 +34,10 @@ export type HeroMetric = { value: string; label: string; accent?: boolean };
 
 /** Concrete proof points shown as a 4-card metrics row under the hero headline. */
 export const HERO_METRICS: HeroMetric[] = [
-  { value: '~4h saved', label: 'per term rollover · St Cath', accent: true },
-  { value: '30K+', label: 'messages automated / mo' },
-  { value: '5 models', label: 'compared by MAE · CRISP-DM' },
-  { value: '$12/mo', label: 'infra, production-grade' },
+  { value: '10+ yrs', label: 'building software, data & AI systems end-to-end' },
+  { value: '2,000 users', label: 'pentested portal, shipped solo in 8 weeks', accent: true },
+  { value: '30K+', label: 'messages automated every month' },
+  { value: '1M+', label: 'client records managed in production' },
 ];
 
 export type Pillar = {
@@ -54,29 +54,29 @@ export const PILLARS: Pillar[] = [
     key: 'software',
     icon: 'Code2',
     title: 'Software Engineering',
-    blurb: 'Full-stack apps and internal systems, designed and shipped end-to-end.',
+    blurb: 'Full-stack products shipped end-to-end — most recently a pentested portal serving 2,000 parents, built solo in 8 weeks.',
     tags: ['Next.js', 'React', 'Node.js', 'GraphQL', 'Python', 'TypeScript'],
   },
   {
     key: 'data',
     icon: 'Database',
     title: 'Data Engineering',
-    blurb: 'Pipelines, reporting and BI that turn raw data into decisions people trust.',
+    blurb: 'Pipelines, reporting and BI people trust — from reverse-engineering legacy ETL estates to dashboards leadership actually uses.',
     tags: ['SQL Server', 'PostgreSQL', 'Power BI', 'Apache Superset', 'ETL'],
   },
   {
     key: 'automation',
     icon: 'Workflow',
     title: 'Automation & DevOps',
-    blurb: 'Removing manual work with workflows, CI/CD, and observability.',
+    blurb: 'I find manual work and delete it — a 100-minute batch job cut to ~2 seconds; deploy downtime from 10+ minutes to ~2s.',
     tags: ['Docker', 'GitHub Actions', 'Celery / Redis', 'Nginx', 'Sentry'],
   },
   {
     key: 'ai',
     icon: 'Sparkles',
     title: 'AI / ML',
-    blurb: 'Applied ML and LLM-powered tools — scikit-learn models, RAG assistants, and AI-augmented delivery.',
-    tags: ['scikit-learn', 'OpenAI', 'Claude', 'RAG / assistants', 'CRISP-DM', 'Stanford ML', 'MSWE + AI'],
+    blurb: 'Applied ML with honest metrics — deployed scikit-learn services, RAG assistants, and a 1,100+ commit open-source agentic pipeline.',
+    tags: ['scikit-learn', 'FastAPI', 'OpenAI', 'Claude', 'RAG / agents'],
   },
 ];
 
@@ -85,24 +85,11 @@ export type StackGroup = { label: string; items: string[] };
 export const STACK_GROUPS: StackGroup[] = [
   {
     label: 'Software',
-    items: [
-      'TypeScript',
-      'React',
-      'Next.js',
-      'Node.js',
-      'Express',
-      'Apollo Server',
-      'GraphQL',
-      'REST APIs',
-      'Python',
-      'Django',
-      'Flask',
-      'FastAPI',
-    ],
+    items: ['TypeScript', 'React', 'Next.js', 'Node.js', 'GraphQL', 'Python'],
   },
   {
     label: 'Data',
-    items: ['SQL Server', 'PostgreSQL', 'Power BI', 'Apache Superset', 'Spark', 'pandas', 'Redis', 'Supabase'],
+    items: ['SQL Server', 'PostgreSQL', 'Power BI', 'Apache Superset', 'pandas', 'Redis'],
   },
   {
     label: 'Automation & DevOps',
@@ -110,7 +97,7 @@ export const STACK_GROUPS: StackGroup[] = [
   },
   {
     label: 'AI / ML',
-    items: ['scikit-learn', 'OpenAI', 'Claude', 'RAG', 'CRISP-DM', 'Copilot', 'Codex'],
+    items: ['scikit-learn', 'OpenAI', 'Claude', 'RAG', 'Claude Code / agents'],
   },
 ];
 
