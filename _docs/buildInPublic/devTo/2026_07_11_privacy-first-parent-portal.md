@@ -1,16 +1,19 @@
-# 2,000 parents, 1 rule, 0 leaks: a parent portal from v0.0.1 to pentested go-live
+# 2,000 parents, 1 rule, 0 leaks: a pentested school parent portal in 8 weeks
 
 **Tags:** `security` `nextjs` `webdev` `buildinpublic`
 
 ---
 
-What does it take to let nearly 2,000 parents log in and see their daughter's data - attendance, grades, report PDFs, fee statements - and be certain that none of them ever sees anyone else's?
+One wrong line of code could have shown one family's child to another parent. Nearly 2,000 parents were about to log in.
 
 That was the brief. I work as a Data Analyst at an independent K-12 girls' school (~1,100 students), and in **eight weeks** I took a Next.js portal from an empty folder to a penetration-tested go-live: version 0.0.1 on 18 May, live to the full parent body on 10 July. 282 commits, dozens of numbered releases from `0.0.1` to `0.1.59`, one rule that never bent.
 
 In most apps, a bug is a bug. In a school, a single cross-family leak is not a bug - it is an incident involving a child's data. That one constraint drove every decision in this article.
 
 > *"Safe" was not a feature on the list. It was the entire product.*
+
+> **Stack:** Next.js App Router (standalone) · TypeScript · SQL Server via `mssql`/tedious · Microsoft Entra ID SSO (OIDC + PKCE) · on-prem Windows VM · 4 production dependencies total
+> **Try it:** a public, mock-data demo of the real app is live at [mydashboard-demo.vercel.app](https://mydashboard-demo.vercel.app/) - fictional families, no login, same code.
 
 This is the walkthrough: the architecture rule that held everything together, the go-live blocker that only a real parent could find, why logging out was harder than logging in, and what a 2-day external pentest did (and didn't) find.
 
@@ -71,13 +74,15 @@ flowchart TD
 
 > *Auth tells you who. The data boundary decides what they get.*
 
+This is a general **multi-tenant authorization pattern**, not a school thing - swap "parent" for "tenant" and "daughter" for "resource" and it is the same problem every SaaS has. If you enforce your tenancy boundary differently, I'd genuinely like to hear your approach (links at the end).
+
 <sub>[↑ Back to contents](#contents)</sub>
 
 ---
 
 ## Boring on purpose
 
-The production dependency list is four packages: `next`, `react`, `react-dom`, and the SQL Server driver. Everything else is dev tooling. `npm audit`: 0 vulnerabilities, kept at 0.
+The production dependency list is four packages: `next`, `react`, `react-dom`, and `mssql` (the tedious-based SQL Server driver). Everything else is dev tooling. `npm audit`: 0 vulnerabilities, kept at 0.
 
 That is not minimalism for style points. Every dependency is attack surface, and this app's threat model is "a stranger on the internet, one login away from children's data." Fewer moving parts meant the pentest scope was the code I wrote, not a tree of transitive packages I didn't.
 
@@ -88,6 +93,12 @@ Same logic elsewhere:
 - **Data minimization at the mapper boundary.** Medicare numbers masked to the last four digits, medical free-text withheld entirely, finance amounts kept inside the streamed PDF, insurance reduced to a boolean. The API never returns more than the screen needs.
 - **On-prem deployment** on a Windows VM as two services: the Next.js standalone server on loopback, and a small TLS-terminating proxy in front. A load test showed nothing heavier was needed.
 - **Honest degraded states.** If a data source is down, the UI says "Temporarily unavailable" - it never renders an empty list that could read as "no fees owing" or "no absences."
+
+The `mock | sql` split has a nice side effect: the exact same app runs as a [public demo on fictional families](https://mydashboard-demo.vercel.app/), so you can click through the dashboard, timetable, attendance, and reports yourself without any real child's data existing anywhere near it.
+
+<!-- screenshot 1: dashboard view, per-daughter cards (mock demo data) -->
+<!-- screenshot 2: timetable or attendance module (mock demo data) -->
+<!-- screenshot 3: assessment results or academic reports (mock demo data) -->
 
 > *In a child-data system, boring is a security feature.*
 
@@ -107,9 +118,21 @@ The root cause was one line of claim precedence. The token verifier derived the 
 claims.email ?? claims.preferred_username ?? claims.upn
 ```
 
-The identity provider populates `email` from the account's mailbox - and for **~99.6% of parents that is a personal address** (Gmail, Hotmail, work). A personal mailbox can never match the school directory login that the authorization resolver keys on. The school UPN - the value that *does* match - was sitting right there in the token, never consulted, because `email` was present and won the `??` chain.
+Looks harmless. Now look at what the two kinds of accounts actually carry in their ID token:
 
-Why did every earlier test pass? Because staff accounts were tested - and a staff member's `email` claim *is* their school address, so deriving identity from email happened to work. The bug was invisible to every identity except the one that mattered: a real parent with a personal mailbox.
+```ts
+// Staff member - every account we had tested with:
+{ email: "jane.doe@school.example",   // school mailbox → matches the directory login ✅
+  upn:   "jane.doe@school.example" }
+
+// Real parent - ~99.6% of the actual user base:
+{ email: "jane1975@gmail.com",        // personal mailbox → matches nothing ❌
+  upn:   "jane.doe@school.example" }  // the right value, never consulted
+```
+
+The identity provider populates `email` from the account's mailbox - and for **~99.6% of parents that is a personal address**. A personal mailbox can never match the school directory login that the authorization resolver keys on. The school UPN - the value that *does* match - was sitting right there in the token, never consulted, because `email` was present and won the `??` chain.
+
+That is also why every earlier test passed: for staff, `email` and `upn` happen to agree, so deriving from email *looked* correct on every account we could test ourselves. The bug was invisible to every identity except the one that mattered - a real parent with a personal mailbox.
 
 The fix reversed the precedence - school UPN first, email as last-resort fallback:
 
@@ -162,7 +185,7 @@ The regression net grew with every incident: **505 tests passing at 0.1.51**, in
 
 ## The pentest
 
-Before go-live, the school commissioned an independent penetration-testing firm: a **2-day authenticated external web-app test**, OWASP-based across nine categories - configuration and leakage, business logic, authentication, authorization/IDOR, session management, input validation (XSS/SQLi), DoS, web services, AJAX - with two test accounts specifically to attempt cross-account escalation.
+Before go-live, the school commissioned an independent firm for **OWASP web application penetration testing**: a 2-day authenticated external test across nine categories - configuration and leakage, business logic, authentication, authorization/IDOR, session management, input validation (XSS/SQLi), DoS, web services, AJAX - with two test accounts specifically to attempt cross-account escalation.
 
 Two things about the setup mattered as much as the test:
 
@@ -215,7 +238,7 @@ flowchart TD
 
 ## Lessons learned
 
-1. **The tenancy boundary belongs in the data layer, not the application layer.** Re-asserting the authorized scope at the query - and failing closed - is what lets the app grow new surfaces without re-litigating trust each time. This generalizes to every multi-tenant system.
+1. **The tenancy boundary belongs in the data layer, not the application layer.** Re-asserting the authorized scope at the query - and failing closed - is the multi-tenant authorization pattern that lets the app grow new surfaces without re-litigating trust each time. It generalizes to every multi-tenant system.
 2. **Test with real users, not representative accounts.** The staff account that "proved SSO worked" was structurally incapable of finding the bug that blocked go-live. The 99.6% case was invisible until an actual parent sat down.
 3. **Logout is a feature. Design it like one.** Especially anywhere shared and managed devices live - schools, hospitals, kiosks, family iPads.
 4. **Publish the caveats next to the headline.** "0 leaks at 100 concurrent parents" earns trust *because* it ships alongside "and here is where p95 got ugly."
@@ -234,8 +257,8 @@ This was built solo, end to end - data contracts, BFF, SSO, hardening, load test
 
 If you are building anything where one user must never see another user's data - multi-tenant SaaS, health, education, fintech - I'd genuinely like to compare notes.
 
-- 🌐 [luisfaria.dev](https://luisfaria.dev)
-- 💼 [LinkedIn](https://www.linkedin.com/in/lfariabr/)
-- 🐙 [GitHub](https://github.com/lfariabr)
+- [luisfaria.dev](https://luisfaria.dev)
+- [LinkedIn](https://www.linkedin.com/in/lfariabr/)
+- [GitHub](https://github.com/lfariabr)
 
 *Details in this article are de-identified: no school name, no vendor names, no internal hostnames or identifiers. All figures are aggregates or load-test results; no student, parent, or finance records appear anywhere.*
