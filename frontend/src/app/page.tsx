@@ -73,22 +73,43 @@ export default function Home() {
 
             {/* Metrics row */}
             <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {HERO_METRICS.map((metric) => (
-                <div
-                  key={metric.value}
-                  className="rounded-xl border border-border bg-muted/40 px-4 py-3 text-center"
-                >
-                  <dt
-                    className={cn(
-                      "text-lg font-bold sm:text-xl",
-                      metric.accent && "text-emerald-600 dark:text-emerald-400",
-                    )}
+              {HERO_METRICS.map((metric) => {
+                const content = (
+                  <>
+                    <dt
+                      className={cn(
+                        "text-lg font-bold sm:text-xl",
+                        metric.accent && "text-emerald-600 dark:text-emerald-400",
+                      )}
+                    >
+                      {metric.value}
+                    </dt>
+                    <dd className="mt-1 text-xs text-muted-foreground">
+                      {metric.label}
+                      {metric.href && " ↗"}
+                    </dd>
+                  </>
+                );
+
+                return metric.href ? (
+                  <a
+                    key={metric.value}
+                    href={metric.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="group rounded-xl border border-border bg-muted/40 px-4 py-3 text-center transition-colors hover:border-emerald-400"
                   >
-                    {metric.value}
-                  </dt>
-                  <dd className="mt-1 text-xs text-muted-foreground">{metric.label}</dd>
-                </div>
-              ))}
+                    {content}
+                  </a>
+                ) : (
+                  <div
+                    key={metric.value}
+                    className="rounded-xl border border-border bg-muted/40 px-4 py-3 text-center"
+                  >
+                    {content}
+                  </div>
+                );
+              })}
             </dl>
 
             {/* Primary CTAs - AI assistant gets visual priority (emerald ring + tint). */}

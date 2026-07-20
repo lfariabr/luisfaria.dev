@@ -30,12 +30,17 @@ export const HERO_FRAMES: HeroFrame[] = [
 /** Index of the canonical frame (Hybrid) used for first paint and reduced-motion. */
 export const HERO_CANONICAL_INDEX = 3;
 
-export type HeroMetric = { value: string; label: string; accent?: boolean };
+export type HeroMetric = { value: string; label: string; accent?: boolean; href?: string };
 
 /** Concrete proof points shown as a 4-card metrics row under the hero headline. */
 export const HERO_METRICS: HeroMetric[] = [
   { value: '10+ yrs', label: 'building software, data & AI systems end-to-end' },
-  { value: '2,000 users', label: 'pentested portal, shipped solo in 8 weeks', accent: true },
+  {
+    value: '2,000 users',
+    label: 'pentested portal, shipped solo in 8 weeks',
+    accent: true,
+    href: 'https://dev.to/lfariaus/2000-parents-1-rule-0-leaks-a-pentested-school-parent-portal-in-8-weeks-2bp8',
+  },
   { value: '30K+', label: 'messages automated every month' },
   { value: '1M+', label: 'client records managed in production' },
 ];

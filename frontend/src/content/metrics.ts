@@ -22,7 +22,11 @@ export const METRIC_GROUPS: MetricGroup[] = [
     label: 'Scale',
     accent: 'text-emerald-500',
     stats: [
-      { value: '2,000', caption: 'Parents served by a portal built solo in 8 weeks' },
+      {
+        value: '2,000',
+        caption: 'Parents served by a portal built solo in 8 weeks',
+        href: 'https://dev.to/lfariaus/2000-parents-1-rule-0-leaks-a-pentested-school-parent-portal-in-8-weeks-2bp8',
+      },
       {
         value: '1M+',
         caption: 'Client records managed across 20+ clinics',
@@ -39,9 +43,21 @@ export const METRIC_GROUPS: MetricGroup[] = [
     label: 'Reliability & security',
     accent: 'text-sky-500',
     stats: [
-      { value: '0', caption: 'Cross-account data leaks at 100-concurrent load' },
-      { value: 'Passed', caption: 'External OWASP pentest - no breach' },
-      { value: '500+', caption: 'Automated tests behind a CI release gate' },
+      {
+        value: '0',
+        caption: 'Cross-account data leaks at 100-concurrent load',
+        href: 'https://dev.to/lfariaus/2000-parents-1-rule-0-leaks-a-pentested-school-parent-portal-in-8-weeks-2bp8',
+      },
+      {
+        value: 'Passed',
+        caption: 'External OWASP pentest - no breach',
+        href: 'https://dev.to/lfariaus/2000-parents-1-rule-0-leaks-a-pentested-school-parent-portal-in-8-weeks-2bp8',
+      },
+      {
+        value: '500+',
+        caption: 'Automated tests behind a CI release gate',
+        href: 'https://dev.to/lfariaus/2000-parents-1-rule-0-leaks-a-pentested-school-parent-portal-in-8-weeks-2bp8',
+      },
     ],
   },
   {
