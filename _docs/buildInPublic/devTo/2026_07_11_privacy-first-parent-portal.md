@@ -4,18 +4,22 @@
 
 ---
 
-One wrong line of code could have shown one family's child to another parent. Nearly 2,000 parents were about to log in.
+I work as a Data Analyst at an independent K-12 girls' school (~1,100 students). In May the school needed a new parent portal, and I took it from an empty folder to a penetration-tested go-live in eight weeks: version 0.0.1 on 18 May, live to nearly 2,000 parents on 10 July. 282 commits, dozens of numbered releases from `0.0.1` to `0.1.59`, one rule that never bent.
 
-That was the brief. I work as a Data Analyst at an independent K-12 girls' school (~1,100 students), and in **eight weeks** I took a Next.js portal from an empty folder to a penetration-tested go-live: version 0.0.1 on 18 May, live to the full parent body on 10 July. 282 commits, dozens of numbered releases from `0.0.1` to `0.1.59`, one rule that never bent.
+In a school, a single cross-family leak is an incident involving a child's data. That one constraint drove every decision in this article.
 
-In most apps, a bug is a bug. In a school, a single cross-family leak is not a bug - it is an incident involving a child's data. That one constraint drove every decision in this article.
+| Stack | |
+|---|---|
+| Framework | Next.js App Router (standalone output) |
+| Language | TypeScript |
+| Database | SQL Server via `mssql` (tedious) |
+| Auth | Microsoft Entra ID SSO (OIDC + PKCE) |
+| Hosting | on-prem Windows VM |
+| Production dependencies | 4 total |
 
-> *"Safe" was not a feature on the list. It was the entire product.*
-
-> **Stack:** Next.js App Router (standalone) · TypeScript · SQL Server via `mssql`/tedious · Microsoft Entra ID SSO (OIDC + PKCE) · on-prem Windows VM · 4 production dependencies total
 > **Try it:** a public, mock-data demo of the real app is live at [mydashboard-demo.vercel.app](https://mydashboard-demo.vercel.app/) - fictional families, no login, same code.
 
-This is the walkthrough: the architecture rule that held everything together, the go-live blocker that only a real parent could find, why logging out was harder than logging in, and what a 2-day external pentest did (and didn't) find.
+This is the walkthrough: the architecture rule that held everything together, the go-live blocker that only a real parent could find, and what a 2-day external pentest did (and didn't) find.
 
 ---
 
@@ -25,7 +29,7 @@ This is the walkthrough: the architecture rule that held everything together, th
 - [One rule: authentication is not authorization](#one-rule-authentication-is-not-authorization) - the design idea everything hangs on
 - [Boring on purpose](#boring-on-purpose) - 4 production dependencies, read-only by construction
 - [The bug only a real parent could find](#the-bug-only-a-real-parent-could-find) - the go-live blocker hiding in a token claim
-- [Logging out is harder than logging in](#logging-out-is-harder-than-logging-in) - the family-iPad problem
+- [Sign-out on shared devices](#sign-out-on-shared-devices) - a small fix for family iPads and managed devices
 - [Prove it, don't assert it](#prove-it-dont-assert-it) - isolation under load, audit that fails closed
 - [The pentest](#the-pentest) - 2 days, 9 categories, 0 breaches
 - [Go-live](#go-live) - three gates and four days of margin
@@ -37,7 +41,7 @@ This is the walkthrough: the architecture rule that held everything together, th
 
 The school's parent-facing intranet ran on Microsoft technology that reaches end of support on **14 July 2026**. Parents' view of their daughters' information - attendance, timetables, assessment results, report PDFs, fee statements, mandatory data - was scattered across systems that the dying intranet barely surfaced.
 
-Buy or build? The vendor options were compared seriously. But the data already lived in the school's own student information system (SIS) and data warehouse, on-premises, and the hard requirement was a guarantee no brochure makes: **a signed-in parent sees their children, and only their children, every time, under load, forever.**
+Buy or build? The vendor options were compared seriously. But the data already lived in the school's own systems, on-premises, and the hard requirement was a guarantee no brochure makes: **a signed-in parent sees their children, and only their children, every time, under load, forever.**
 
 So: empty folder, 18 May. Version 0.0.1 was a dashboard shell with per-daughter cards. Fifty-three days later, version 0.1.59 went live on 10 July - four days ahead of the cliff.
 
@@ -53,7 +57,7 @@ The core design idea is that *who you are* and *which children you may see* are 
 - **Authorization (which children):** a separate query against the SIS resolves the set of children this person is a parent or guardian of - current year, active enrolment, parent flag set. That set is **re-asserted at the SQL boundary on every single read**. The database query itself is scoped to the authorized children, so even a forged child ID in a request returns nothing. The boundary fails closed.
 - **A backend-for-frontend in between:** the browser never talks to the database. Every read flows through a server layer with parameterized SQL only, and a `mock | sql` mode switch so every demo and shared surface runs on synthetic data. Live SQL exists only on the approved host.
 
-The subtle part: the `?student=` parameter in the URL is **selection state, not authorization**. It picks which authorized daughter to display. It can never expand the set. A parent editing the URL to another family's student ID falls back to her own daughter, and the attempt is audited.
+The subtle part: which daughter is currently *displayed* is **selection state, not authorization**. Early versions carried it as a `?student=` parameter in the URL - allowlist-validated and never able to expand the set; editing it to another family's student ID just fell back to her own daughter, and the attempt was audited. Later the ID left the URL entirely: a real student identifier sitting in the address bar, browser history, `Referer` headers, and screenshots is needless exposure in a child-data app, so the selection moved to per-tab `sessionStorage` and every link became a bare path. Either way, the server never trusted it - authorization is re-asserted on every API read regardless of what the client selects.
 
 ```mermaid
 flowchart TD
@@ -89,9 +93,9 @@ That is not minimalism for style points. Every dependency is attack surface, and
 Same logic elsewhere:
 
 - **Read-only by construction.** Every write path returns `405` until write-back is separately approved and governed. You cannot exploit a write that does not exist.
-- **Three read-only SQL pools** into the SIS, the warehouse, and payments. No ORM. Parameterized queries only - zero string interpolation in any SQL constant.
+- **Read-only SQL pools, no ORM.** Parameterized queries only - zero string interpolation in any SQL constant.
 - **Data minimization at the mapper boundary.** Medicare numbers masked to the last four digits, medical free-text withheld entirely, finance amounts kept inside the streamed PDF, insurance reduced to a boolean. The API never returns more than the screen needs.
-- **On-prem deployment** on a Windows VM as two services: the Next.js standalone server on loopback, and a small TLS-terminating proxy in front. A load test showed nothing heavier was needed.
+- **On-prem deployment I own end to end.** A Windows VM running the Next.js standalone server on loopback under NSSM, with a TLS-terminating proxy in front. A load test showed nothing heavier was needed.
 - **Honest degraded states.** If a data source is down, the UI says "Temporarily unavailable" - it never renders an empty list that could read as "no fees owing" or "no absences."
 
 The `mock | sql` split has a nice side effect: the exact same app runs as a [public demo on fictional families](https://mydashboard-demo.vercel.app/), so you can click through the dashboard, timetable, attendance, and reports yourself without any real child's data existing anywhere near it.
@@ -148,17 +152,9 @@ Authorization untouched. Regression tests added for exactly this token shape. Fo
 
 ---
 
-## Logging out is harder than logging in
+## Sign-out on shared devices
 
-Everyone designs the login flow. The logout flow is where two real defects hid - and in a school, logout matters more than usual, because the device is often a shared family iPad.
-
-**Defect one:** "Log out" cleared the portal's cookie but left the identity provider's web session alive. Click "Sign in" again and you were silently readmitted - as the *previous* user. On a shared device, that is one parent landing in another household's session. Fix: route sign-out through the IdP's federated end-session, not just the local cookie.
-
-**Defect two** surfaced on a school-managed device and was caught in the audit stream: a parent clicked Sign out, the logout was recorded... and 5 to 13 seconds later a fresh successful login appeared. No password prompt. Repeatedly. The managed device's own SSO session was re-vouching for her - ending the web session was futile, and from her seat, sign-out was a no-op.
-
-The fix had two parts: sign-out now lands on the app's own terminal "you are signed out" screen (no silent bounce back into SSO), and the next sign-in carries `prompt=login`, forcing a credential prompt even when a device session is live. Sign-out finally *stuck*.
-
-> *A logout that doesn't survive a managed device isn't a logout. It's a redirect.*
+A much smaller piece of the work, but worth a note because school families often share a device - a family iPad, a managed school laptop. Two sign-out issues showed up in testing and in the audit stream: clearing only the portal's cookie left the identity provider's session alive (sign in again, land in the previous user's session), and on managed devices the device's own SSO silently re-admitted a parent seconds after she signed out. The fix was a few lines: sign-out lands on a terminal "you are signed out" screen instead of bouncing back into SSO, and the next sign-in carries `prompt=login` to force a credential prompt. Small fix - it just had to be correct on the devices families actually use.
 
 <sub>[↑ Back to contents](#contents)</sub>
 
@@ -185,18 +181,13 @@ The regression net grew with every incident: **505 tests passing at 0.1.51**, in
 
 ## The pentest
 
-Before go-live, the school commissioned an independent firm for **OWASP web application penetration testing**: a 2-day authenticated external test across nine categories - configuration and leakage, business logic, authentication, authorization/IDOR, session management, input validation (XSS/SQLi), DoS, web services, AJAX - with two test accounts specifically to attempt cross-account escalation.
+Before go-live, the school commissioned an independent firm for **OWASP web application penetration testing**: a 2-day authenticated external test across nine categories - configuration and leakage, business logic, authentication, authorization/IDOR, session management, input validation (XSS/SQLi), DoS, web services, AJAX.
 
-Two things about the setup mattered as much as the test:
+A few known trade-offs were signed off before the test rather than left as surprises - things like session revocation and CSP strictness, weighed against their compensating controls. Documented trade-offs age better than hidden ones.
 
-1. **The testers attacked seeded fake families on a fake-data instance behind the real SSO.** Real attack surface, zero real children. Live student data was never in scope.
-2. **Known residual risks were signed off *before* the test**, so they would land as *accepted*, not *open*: the stateless session cookie has no server-side revocation (compensated by an 8h TTL, cookie flags, and a secret-rotation kill switch), and inline CSS styles are allowed (scripts are locked behind a per-request nonce CSP). Residuals you document are decisions. Residuals you hide are findings.
-
-Preparation was treated as a discipline, not a patch - structured hardening waves in the weeks prior: nonce-based CSP with no inline scripts, `no-store` on the child-data API surface, constant-time key comparisons on operational endpoints, request body caps, generic client errors with detail kept server-side, and logout converted from GET to POST to close a forced-logout CSRF.
+In the weeks before the test I shipped structured hardening waves: CSP tightening, `no-store` on the child-data API surface, constant-time key comparisons on operational endpoints, request body caps, generic client errors with detail kept server-side, and logout converted from GET to POST to close a forced-logout CSRF.
 
 The result: **passed - no breach**. The testers could not penetrate the application, and cross-account escalation did not succeed. The written report went into governance as the citable artifact.
-
-> *The pentest wasn't a security event. It was the audit of eight weeks of security decisions.*
 
 <sub>[↑ Back to contents](#contents)</sub>
 
@@ -208,7 +199,7 @@ Go-live was gated on three things, and nothing shipped until all three were gree
 
 1. **A real parent, supervised, signs in via SSO and sees her own daughter's data** - done 23 June (the claim-precedence validation above).
 2. **The external pentest comes back clean** - passed 27 June.
-3. **Finance co-signs the fee figures** the portal displays - confirmed 30 June, with display corrections landed in the days after.
+3. **Finance co-signs the fee figures** the portal displays - confirmed 30 June.
 
 One more number had to be checked before opening the doors: could every family actually get in? A sizing query across the full parent body found **0 families locked out** - every current student had at least one sign-in-capable authorized parent. The residual was a short, named triage list of individual records for ICT, not a launch risk.
 
@@ -240,12 +231,10 @@ flowchart TD
 
 1. **The tenancy boundary belongs in the data layer, not the application layer.** Re-asserting the authorized scope at the query - and failing closed - is the multi-tenant authorization pattern that lets the app grow new surfaces without re-litigating trust each time. It generalizes to every multi-tenant system.
 2. **Test with real users, not representative accounts.** The staff account that "proved SSO worked" was structurally incapable of finding the bug that blocked go-live. The 99.6% case was invisible until an actual parent sat down.
-3. **Logout is a feature. Design it like one.** Especially anywhere shared and managed devices live - schools, hospitals, kiosks, family iPads.
+3. **Sign-out has to stick on shared devices.** A small fix, but schools, hospitals, and kiosks are full of family iPads and managed laptops.
 4. **Publish the caveats next to the headline.** "0 leaks at 100 concurrent parents" earns trust *because* it ships alongside "and here is where p95 got ugly."
 5. **Accepted residuals beat hidden residuals.** Signing off known trade-offs before the pentest turned would-be findings into documented decisions.
 6. **Boring is a security feature.** Four production dependencies, read-only by construction, parameterized everything. The most auditable code is the code that isn't there.
-
-> *Trust isn't a launch milestone. It's the architecture.*
 
 <sub>[↑ Back to contents](#contents)</sub>
 
@@ -253,7 +242,7 @@ flowchart TD
 
 ## Let's Connect
 
-This was built solo, end to end - data contracts, BFF, SSO, hardening, load testing, deployment, runbooks - alongside a Master's in Software Engineering and AI, with AI coding agents as force multipliers on the mechanical work. The security decisions stayed human.
+This was built solo, end to end - data contracts, BFF, SSO, hardening, load testing, deployment, runbooks - alongside a Master's in Software Engineering and AI. AI coding agents sped up the mechanical work; the security decisions stayed mine.
 
 If you are building anything where one user must never see another user's data - multi-tenant SaaS, health, education, fintech - I'd genuinely like to compare notes.
 
@@ -261,4 +250,4 @@ If you are building anything where one user must never see another user's data -
 - [LinkedIn](https://www.linkedin.com/in/lfariabr/)
 - [GitHub](https://github.com/lfariabr)
 
-*Details in this article are de-identified: no school name, no vendor names, no internal hostnames or identifiers. All figures are aggregates or load-test results; no student, parent, or finance records appear anywhere.*
+*Whether it's concrete or code, structure is everything.*
