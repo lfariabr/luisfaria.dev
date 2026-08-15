@@ -18,11 +18,10 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { SOCIALS } from '@/content/profile';
 
 const navigation = [
-  { name: 'Home', href: '/' },
-  { name: 'Work', href: '/work' },
-  { name: 'Projects', href: '/projects' },
-  { name: 'Articles', href: '/articles' },
-  { name: 'About', href: '/about' },
+  { name: 'Home', href: '/', external: false },
+  { name: 'Work', href: '/work', external: false },
+  { name: 'Writing', href: SOCIALS.devto, external: true },
+  { name: 'About', href: '/about', external: false },
 ];
 
 export function Header() {
@@ -41,20 +40,32 @@ export function Header() {
             <span className="inline-block font-bold text-xl">Luis Faria</span>
           </Link>
           <nav className="hidden md:flex gap-6">
-            {navigation.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={cn(
-                  'text-sm font-medium transition-colors hover:text-foreground/80',
-                  pathname === item.href
-                    ? 'text-foreground'
-                    : 'text-foreground/60'
-                )}
-              >
-                {item.name}
-              </Link>
-            ))}
+            {navigation.map((item) => {
+              const className = cn(
+                'text-sm font-medium transition-colors hover:text-foreground/80',
+                !item.external && pathname === item.href ? 'text-foreground' : 'text-foreground/60'
+              );
+
+              if (item.external) {
+                return (
+                  <a
+                    key={item.name}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={className}
+                  >
+                    {item.name}
+                  </a>
+                );
+              }
+
+              return (
+                <Link key={item.name} href={item.href} className={className}>
+                  {item.name}
+                </Link>
+              );
+            })}
           </nav>
         </div>
         <div className="flex items-center gap-2">
@@ -158,21 +169,38 @@ export function Header() {
       {mobileMenuOpen && (
         <div className="md:hidden py-2 px-4 bg-background border-b">
           <nav className="flex flex-col space-y-3">
-            {navigation.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={cn(
-                  'text-sm font-medium transition-colors hover:text-foreground/80 py-1',
-                  pathname === item.href
-                    ? 'text-foreground'
-                    : 'text-foreground/60'
-                )}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                {item.name}
-              </Link>
-            ))}
+            {navigation.map((item) => {
+              const className = cn(
+                'text-sm font-medium transition-colors hover:text-foreground/80 py-1',
+                !item.external && pathname === item.href ? 'text-foreground' : 'text-foreground/60'
+              );
+
+              if (item.external) {
+                return (
+                  <a
+                    key={item.name}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={className}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {item.name}
+                  </a>
+                );
+              }
+
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={className}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {item.name}
+                </Link>
+              );
+            })}
             {isAuthenticated && (
               <>
                 <Link

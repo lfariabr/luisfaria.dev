@@ -60,7 +60,7 @@ export function HeroHeadline() {
 
           {/* Decorative visual layer - the anchor plus the crossfading green clause. */}
           <span aria-hidden="true">
-            <span className="block">I build systems</span>
+            <span className="block">I build data systems</span>
             <span className="grid">
               {HERO_FRAMES.map((frame, i) => (
                 <span
