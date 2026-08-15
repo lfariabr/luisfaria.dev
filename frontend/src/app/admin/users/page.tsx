@@ -96,32 +96,47 @@ export default function UsersAdminPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [actionType, setActionType] = useState<'delete' | 'role' | null>(null);
   const [targetRole, setTargetRole] = useState<UserRole | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const resetDialog = () => {
+    setSelectedUser(null);
+    setActionType(null);
+    setTargetRole(null);
+    setActionError(null);
+  };
   
   // Handle role change
   const handleRoleChange = async (user: User, newRole: string) => {
     setSelectedUser(user);
     setTargetRole(roleForApi(newRole));
     setActionType('role');
+    setActionError(null);
   };
   
   const handleDeleteUser = (user: User) => {
     setSelectedUser(user);
     setActionType('delete');
+    setActionError(null);
   };
   
   const confirmAction = async () => {
     if (!selectedUser) return;
     
     if (actionType === 'role' && targetRole) {
-      await updateUserRole(selectedUser.id, targetRole);
+      const updatedUser = await updateUserRole(selectedUser.id, targetRole);
+      if (!updatedUser) {
+        setActionError('Failed to update user role. Please try again.');
+        return;
+      }
     } else if (actionType === 'delete') {
-      await deleteUser(selectedUser.id);
+      const deleted = await deleteUser(selectedUser.id);
+      if (!deleted) {
+        setActionError('Failed to delete user. Please try again.');
+        return;
+      }
     }
     
-    // Reset state
-    setSelectedUser(null);
-    setActionType(null);
-    setTargetRole(null);
+    resetDialog();
   };
   
   return (
@@ -262,7 +277,7 @@ export default function UsersAdminPage() {
       )}
 
       {/* Confirmation Dialog */}
-      <Dialog open={!!selectedUser && !!actionType} onOpenChange={(open) => !open && setSelectedUser(null)}>
+      <Dialog open={!!selectedUser && !!actionType} onOpenChange={(open) => !open && resetDialog()}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
@@ -291,6 +306,13 @@ export default function UsersAdminPage() {
                 </div>
               </div>
             </div>
+          )}
+
+          {actionError && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{actionError}</AlertDescription>
+            </Alert>
           )}
           
           <DialogFooter>

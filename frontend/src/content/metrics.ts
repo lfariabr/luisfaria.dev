@@ -87,7 +87,7 @@ export const METRIC_GROUPS: MetricGroup[] = [
         href: 'https://github.com/lfariabr/sommelier-api',
       },
       {
-        value: '0.7231',
+        value: '0.7199',
         caption: 'ReviewPulse DistilBERT macro-F1 on the canonical ABSA test run',
         href: 'https://github.com/lfariabr/review-pulse',
       },

@@ -17,8 +17,8 @@ export const HERO_CANONICAL_PHRASE = 'I build secure data products and applied M
 export type HeroFrame = { lens: string; clause: string };
 
 /**
- * Rotating hero frames: lens label (pill) + green clause. Order is ML → Data →
- * Full-Stack → Hybrid; Hybrid is canonical and renders first (SSR + no-JS + reduced-motion).
+ * Rotating hero frames: lens label (pill) + green clause.
+ * Production Proof is canonical and renders first (SSR + no-JS + reduced-motion).
  */
 export const HERO_FRAMES: HeroFrame[] = [
   { lens: 'Education Data', clause: 'with privacy boundaries.' },
@@ -27,7 +27,7 @@ export const HERO_FRAMES: HeroFrame[] = [
   { lens: 'Production Proof', clause: 'that survives go-live.' },
 ];
 
-/** Index of the canonical frame (Hybrid) used for first paint and reduced-motion. */
+/** Index of the canonical frame used for first paint and reduced-motion. */
 export const HERO_CANONICAL_INDEX = 3;
 
 export type HeroMetric = { value: string; label: string; accent?: boolean; href?: string };
@@ -42,7 +42,7 @@ export const HERO_METRICS: HeroMetric[] = [
     href: 'https://dev.to/lfariaus/2000-parents-1-rule-0-leaks-a-pentested-school-parent-portal-in-8-weeks-2bp8',
   },
   {
-    value: '200+',
+    value: '171',
     label: 'ReviewPulse commits turning coursework into an inspectable NLP lab',
     href: 'https://github.com/lfariabr/review-pulse',
   },
@@ -119,8 +119,8 @@ export type CurrentProof = {
   eyebrow: string;
   summary: string;
   bullets: string[];
-  href: string;
-  cta: string;
+  href?: string;
+  cta?: string;
 };
 
 export const CURRENT_PROOF: CurrentProof[] = [
@@ -160,8 +160,6 @@ export const CURRENT_PROOF: CurrentProof[] = [
       'Technical reconstruction of the OpenAI-Hugging Face agent incident from public sources.',
       'Preference for explicit contracts, redaction, auditability, and default-deny thinking.',
     ],
-    href: 'https://dev.to/luisfaria/blocked-google-links-covert-mailboxes-inside-the-openai-agent-sandbox-escape',
-    cta: 'Read AI security writing',
   },
 ];
 

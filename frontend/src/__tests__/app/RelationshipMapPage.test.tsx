@@ -126,16 +126,12 @@ describe('RelationshipMapPage', () => {
   });
 
   it('shows empty state', () => {
-    mockedUseQuery.mockReturnValue({
-      data: { pins: [] },
-      loading: false,
-      error: undefined,
-      refetch: jest.fn(),
-    });
+    mockQueryResults({ pins: { data: { pins: [] } } });
 
     render(<RelationshipMapPage />);
 
-    expect(screen.getByText('No pins have been created yet.')).toBeInTheDocument();
+    expect(screen.getByText('0 places')).toBeInTheDocument();
+    expect(screen.getByText(/NEXT_PUBLIC_GOOGLE_MAPS_API_KEY/)).toBeInTheDocument();
     expect(screen.getByText('No visits to list yet.')).toBeInTheDocument();
   });
 
@@ -185,6 +181,19 @@ describe('RelationshipMapPage', () => {
 
       expect(screen.getByTestId('home-marker')).toBeInTheDocument();
       expect(screen.getByText('Home base')).toBeInTheDocument();
+    });
+
+    it('renders home marker when there are no visit pins', () => {
+      mockQueryResults({
+        pins: { data: { pins: [] } },
+        home: { data: { relationshipHomeLocation: homeLocation } },
+      });
+
+      render(<RelationshipMapPage />);
+
+      expect(screen.getByText('0 places')).toBeInTheDocument();
+      expect(screen.getByTestId('home-marker')).toBeInTheDocument();
+      expect(screen.getByText('No visits to list yet.')).toBeInTheDocument();
     });
 
     it('omits home marker when home query returns null', () => {

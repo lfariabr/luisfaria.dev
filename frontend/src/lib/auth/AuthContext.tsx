@@ -94,7 +94,15 @@ const formatError = (err: any): string => {
 const safeRedirectPath = (redirectTo?: string | null): string => {
   if (!redirectTo) return '/';
   if (!redirectTo.startsWith('/') || redirectTo.startsWith('//')) return '/';
-  return redirectTo;
+
+  try {
+    const origin = typeof window === 'undefined' ? 'https://luisfaria.dev' : window.location.origin;
+    const parsed = new URL(redirectTo, origin);
+    if (parsed.origin !== origin) return '/';
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return '/';
+  }
 };
 
 // Create context with default values

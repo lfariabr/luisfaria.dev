@@ -11,9 +11,17 @@ import { screamInputSchema } from './schemas/scream.schema';
 import { CheckoutInputSchema } from './schemas/checkout.schema';
 import { noteInputSchema, noteUpdateSchema, noteIdSchema, noteFiltersSchema } from './schemas/notes.schema';
 import { pinInputSchema } from './schemas/pin.schema';
+
+type ShieldContext = {
+  user?: {
+    id: string;
+    role: UserRole;
+  } | null;
+};
+
 // Authentication rules
 const isAuthenticated = rule({ cache: 'contextual' })(
-  async (_parent: any, _args: any, context: any) => {
+  async (_parent: unknown, _args: unknown, context: ShieldContext) => {
     try {
       checkAuth(context);
       return true;
@@ -26,7 +34,7 @@ const isAuthenticated = rule({ cache: 'contextual' })(
 );
 
 const isAdmin = rule({ cache: 'contextual' })(
-  async (_parent: any, _args: any, context: any) => {
+  async (_parent: unknown, _args: unknown, context: ShieldContext) => {
     try {
       checkRole(context, 'ADMIN');
       return true;
@@ -39,7 +47,7 @@ const isAdmin = rule({ cache: 'contextual' })(
 );
 
 const canViewRelationshipPins = rule({ cache: 'contextual' })(
-  async (_parent: any, _args: any, context: any) => {
+  async (_parent: unknown, _args: unknown, context: ShieldContext) => {
     try {
       const user = checkAuth(context);
       if (user.role === UserRole.ADMIN || user.role === UserRole.PARTNER) {

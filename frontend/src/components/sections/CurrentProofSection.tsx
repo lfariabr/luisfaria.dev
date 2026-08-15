@@ -30,12 +30,25 @@ export function CurrentProofSection() {
                   </li>
                 ))}
               </ul>
-              <span className="mt-5 inline-flex items-center gap-1 text-sm font-medium text-foreground/80 group-hover:text-foreground">
-                {item.cta}
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-              </span>
+              {item.cta && (
+                <span className="mt-5 inline-flex items-center gap-1 text-sm font-medium text-foreground/80 group-hover:text-foreground">
+                  {item.cta}
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                </span>
+              )}
             </>
           );
+
+          if (!item.href) {
+            return (
+              <article
+                key={item.title}
+                className="group rounded-2xl border bg-card p-5 text-left transition-colors"
+              >
+                {content}
+              </article>
+            );
+          }
 
           if (item.href.startsWith('http')) {
             return (

@@ -30,6 +30,7 @@ export function Header() {
   const { theme, setTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
+  const canViewRelationshipMap = user?.role === 'ADMIN' || user?.role === 'PARTNER';
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -112,7 +113,7 @@ export function Header() {
                     <Link href="/admin">Admin Dashboard</Link>
                   </DropdownMenuItem>
                 )}
-                {(user?.role === 'ADMIN' || user?.role === 'PARTNER') && (
+                {canViewRelationshipMap && (
                   <DropdownMenuItem asChild>
                     <Link href="/relationship">Relationship Map</Link>
                   </DropdownMenuItem>
@@ -173,13 +174,24 @@ export function Header() {
               </Link>
             ))}
             {isAuthenticated && (
-              <Link
-                href="/notes"
-                className="text-sm font-medium py-1"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                My Notes
-              </Link>
+              <>
+                <Link
+                  href="/notes"
+                  className="text-sm font-medium py-1"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  My Notes
+                </Link>
+                {canViewRelationshipMap && (
+                  <Link
+                    href="/relationship"
+                    className="text-sm font-medium py-1"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Relationship Map
+                  </Link>
+                )}
+              </>
             )}
             {!isAuthenticated && (
               <Link 

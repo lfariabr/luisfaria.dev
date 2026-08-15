@@ -19,7 +19,6 @@ import {
   Alert,
   AlertDescription
 } from '@/components/ui/alert';
-import { sendDiscordWebhook } from '@/utils/discord';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -42,7 +41,6 @@ export default function LoginPage() {
         ? undefined
         : new URLSearchParams(window.location.search).get('redirect');
     
-    void sendDiscordWebhook(`🔐 Login attempt: ${email}`);
     await login(email, password, redirectTo);
   };
 

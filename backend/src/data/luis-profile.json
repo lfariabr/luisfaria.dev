@@ -72,7 +72,7 @@
     {
       "name": "ReviewPulse v3",
       "description": "Aspect-based sentiment-analysis lab evolved from coursework into a six-model NLP system with Streamlit comparison mode, mixed-polarity evaluation, token-level evidence, artifact provenance, and reproducible tests.",
-      "impact": "200+ public commits, 363 passing tests, canonical DistilBERT macro-F1 of 0.7231 on the retained SemEval Restaurants test run, and visible model-disagreement/error analysis."
+      "impact": "171 public commits, 363 passing tests, canonical DistilBERT macro-F1 of 0.7199 on the retained SemEval Restaurants test run, and visible model-disagreement/error analysis."
     },
     {
       "name": "Sommelier API",

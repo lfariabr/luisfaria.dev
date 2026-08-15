@@ -13,6 +13,7 @@ const SYDNEY = { lat: -33.8688, lng: 151.2093 };
 interface RelationshipMapProps {
   title?: string;
   subtitle?: string;
+  headingLevel?: 1 | 2;
 }
 
 function formatDate(iso: string) {
@@ -36,6 +37,7 @@ function formatAmount(amount: number) {
 export function RelationshipMap({
   title = 'Our Sydney Adventures',
   subtitle = 'Private read-only map of places visited together this year',
+  headingLevel = 1,
 }: RelationshipMapProps) {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? '';
   const mapId = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID ?? '';
@@ -50,12 +52,13 @@ export function RelationshipMap({
   const home = homeData?.relationshipHomeLocation ?? null;
   const totalSpent = pins.reduce((sum, p) => sum + Math.abs(p.amount), 0);
   const latestPin = pins[0];
+  const HeadingTag = headingLevel === 1 ? 'h1' : 'h2';
 
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
+          <HeadingTag className="text-3xl font-bold tracking-tight">{title}</HeadingTag>
           <p className="text-muted-foreground">{subtitle}</p>
         </div>
         <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[520px]">
@@ -114,17 +117,17 @@ export function RelationshipMap({
                   onClick={() => {
                     setActivePin(null);
                     setHomeOpen(false);
-                    void refetch();
+                    try {
+                      void Promise.resolve(refetch()).catch(() => undefined);
+                    } catch {
+                      // Keep retry failures inside the visible GraphQL error state.
+                    }
                   }}
                   className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-foreground transition-colors hover:bg-accent"
                 >
                   <RefreshCw className="h-4 w-4" />
                   Retry
                 </button>
-              </div>
-            ) : pins.length === 0 ? (
-              <div className="flex h-[520px] items-center justify-center px-6 text-center text-sm text-muted-foreground">
-                No pins have been created yet.
               </div>
             ) : !apiKey ? (
               <div className="flex h-[520px] items-center justify-center px-6 text-center text-sm text-muted-foreground">

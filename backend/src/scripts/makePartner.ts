@@ -1,6 +1,9 @@
 import mongoose from 'mongoose';
+import { z } from 'zod';
 import config from '../config/config';
 import User, { UserRole } from '../models/User';
+
+const IDENTIFIER_MAX_LENGTH = 254;
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -14,13 +17,62 @@ function maskEmail(email: string): string {
   return `${visible}${'*'.repeat(Math.max(local.length - visible.length, 3))}@${domain}`;
 }
 
-function parseArgs(argv: string[]) {
-  const dryRun = argv.includes('--dry-run');
-  const identifier = argv.find((arg) => !arg.startsWith('--'))?.trim().toLowerCase();
-
-  if (!identifier) {
-    throw new Error('Usage: ts-node src/scripts/makePartner.ts <email-or-name-fragment> [--dry-run]');
+const scriptArgsSchema = z.array(z.string()).superRefine((args, ctx) => {
+  const unknownFlags = args.filter((arg) => arg.startsWith('--') && arg !== '--dry-run');
+  for (const flag of unknownFlags) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: `Unknown flag "${flag}"`,
+    });
   }
+
+  const dryRunFlags = args.filter((arg) => arg === '--dry-run');
+  if (dryRunFlags.length > 1) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Provide --dry-run at most once.',
+    });
+  }
+
+  const identifiers = args.filter((arg) => !arg.startsWith('--'));
+  if (identifiers.length !== 1) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Provide exactly one email or name fragment.',
+    });
+    return;
+  }
+
+  const identifier = identifiers[0].trim();
+  if (!identifier) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Identifier cannot be empty.',
+    });
+  }
+
+  if (identifier.length > IDENTIFIER_MAX_LENGTH) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.too_big,
+      maximum: IDENTIFIER_MAX_LENGTH,
+      inclusive: true,
+      type: 'string',
+      message: `Identifier must be ${IDENTIFIER_MAX_LENGTH} characters or fewer.`,
+    });
+  }
+});
+
+function parseArgs(argv: string[]) {
+  const result = scriptArgsSchema.safeParse(argv);
+  if (!result.success) {
+    const details = result.error.issues.map((issue) => issue.message).join(' ');
+    throw new Error(
+      `${details} Usage: ts-node src/scripts/makePartner.ts <email-or-name-fragment> [--dry-run]`
+    );
+  }
+
+  const dryRun = argv.includes('--dry-run');
+  const identifier = argv.find((arg) => !arg.startsWith('--'))!.trim().toLowerCase();
 
   return { dryRun, identifier };
 }

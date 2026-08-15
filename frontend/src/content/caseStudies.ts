@@ -68,8 +68,8 @@ export const CASE_STUDIES: CaseStudy[] = [
     ],
     stack: ['Python', 'scikit-learn', 'PyTorch', 'Transformers', 'pandas', 'Streamlit'],
     outcomes: [
-      '200+ public commits, 363 passing tests, six versioned inference artifacts, and a deployed Streamlit app.',
-      'Canonical DistilBERT run reached 0.7231 full-test macro-F1 and 0.6427 mixed-polarity macro-F1.',
+      '171 public commits, 363 passing tests, six versioned inference artifacts, and a deployed Streamlit app.',
+      'Canonical DistilBERT run reached 0.7199 full-test macro-F1 and 0.6427 mixed-polarity macro-F1.',
       'The UI makes model disagreement, gold-label mismatch, and artifact-size trade-offs visible.',
     ],
     links: [

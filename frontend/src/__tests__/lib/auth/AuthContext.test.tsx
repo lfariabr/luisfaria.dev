@@ -315,6 +315,55 @@ describe('AuthContext - Login Flow', () => {
     expect(mockPush).toHaveBeenCalledWith('/');
   });
 
+  it('falls back to home when login redirect uses a backslash origin escape', async () => {
+    const mocks: MockedResponse[] = [
+      {
+        request: {
+          query: ME_QUERY,
+        },
+        result: {
+          errors: [
+            new GraphQLError('Not authenticated', {
+              extensions: { code: 'UNAUTHENTICATED' },
+            }),
+          ],
+        },
+      },
+      {
+        request: {
+          query: LOGIN_MUTATION,
+          variables: {
+            input: { email: 'test@example.com', password: 'password123' },
+          },
+        },
+        result: {
+          data: {
+            login: {
+              user: mockUser,
+            },
+          },
+        },
+      },
+    ];
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <MockedProvider mocks={mocks} addTypename={false}>
+        <AuthProvider>{children}</AuthProvider>
+      </MockedProvider>
+    );
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      await result.current.login('test@example.com', 'password123', '/\\attacker.example');
+    });
+
+    expect(result.current.user).toEqual(mockUser);
+    expect(mockPush).toHaveBeenCalledWith('/');
+  });
+
   it('sets error on login failure', async () => {
     const mocks: MockedResponse[] = [
       {

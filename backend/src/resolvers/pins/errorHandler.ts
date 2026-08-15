@@ -1,15 +1,15 @@
 import { GraphQLError } from 'graphql';
 import { createErrorHandler, ErrorCodes, type ServiceError } from '../../utils/errors';
 
-type PinErrorCode = 'DATABASE_ERROR';
+export type PinErrorCode = 'DATABASE_ERROR';
 
-interface PinServiceError extends ServiceError {
+export interface PinServiceError extends ServiceError {
   code: PinErrorCode;
 }
 
-const mapPinErrorCode = () => ErrorCodes.INTERNAL_SERVER_ERROR;
+export const mapPinErrorCode = () => ErrorCodes.INTERNAL_SERVER_ERROR;
 
-const isPinServiceError = (error: unknown): error is PinServiceError =>
+export const isPinServiceError = (error: unknown): error is PinServiceError =>
   Boolean(
     error &&
       typeof error === 'object' &&
@@ -23,7 +23,7 @@ const withPinErrorHandlingBase = createErrorHandler<PinErrorCode, PinServiceErro
   'Unable to process pins request'
 );
 
-const toPinServiceError = (error: unknown): PinServiceError => {
+export const toPinServiceError = (error: unknown): PinServiceError => {
   const source = error instanceof Error ? error : new Error('Unknown pins error');
   const wrapped = new Error(source.message) as PinServiceError;
   wrapped.code = 'DATABASE_ERROR';

@@ -21,9 +21,6 @@ export function useIsEditorOrAdmin(): boolean {
   return user?.role === 'ADMIN' || user?.role === 'EDITOR';
 }
 
-/**
- * Hook to check if the current user can view the private relationship map.
- */
 export function useCanViewRelationshipPins(): boolean {
   const { user } = useAuth();
   return user?.role === 'ADMIN' || user?.role === 'PARTNER';
