@@ -2,13 +2,13 @@
 
 # luisfaria.dev
 
-A full-stack TypeScript portfolio application featuring AI-powered tools, technical articles, and project showcases.
+A full-stack TypeScript portfolio application featuring case studies, public Dev.to writing, private tools, and an AI assistant.
 
 [![Live Site](https://img.shields.io/badge/live-luisfaria.dev-000?style=for-the-badge&logo=vercel&logoColor=white)](https://luisfaria.dev)
 
 [![CI Pipeline](https://github.com/lfariabr/luisfaria.dev/actions/workflows/ci.yml/badge.svg)](https://github.com/lfariabr/luisfaria.dev/actions/workflows/ci.yml)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Next.js](https://img.shields.io/badge/Next.js-14+-000?logo=next.js&logoColor=white)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16+-000?logo=next.js&logoColor=white)](https://nextjs.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20+-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![GraphQL](https://img.shields.io/badge/GraphQL-E10098?logo=graphql&logoColor=white)](https://graphql.org/)
 ![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/lfariabr/luisfaria.dev)
@@ -19,12 +19,13 @@ A full-stack TypeScript portfolio application featuring AI-powered tools, techni
 
 ## Overview
 
-This repository powers [luisfaria.dev](https://luisfaria.dev) — a portfolio built with Next.js, Node.js, GraphQL, MongoDB, and Redis. It goes beyond a static portfolio by integrating modern patterns: an authenticated AI assistant, atomic rate limiting, CI/CD pipelines, and a layered caching strategy.
+This repository powers [luisfaria.dev](https://luisfaria.dev) — a portfolio built with Next.js, Node.js, GraphQL, MongoDB, and Redis. It goes beyond a static portfolio by integrating curated case studies, Dev.to writing, authenticated private tools, an AI assistant, atomic rate limiting, CI/CD pipelines, and a layered caching strategy.
 
 **Highlights for reviewers:**
-- [Live site](https://luisfaria.dev) — a software & data engineer's portfolio; browse case studies, projects, and the AI chatbot
-- [Case studies](https://luisfaria.dev/work) — St Catherine's data systems, an ML review-sentiment classifier, and cloud/BI work, each told as problem → approach → stack → outcome
-- [From Groomzilla to Full-Stack Engineer](https://luisfaria.dev/projects/from-groomzilla-to-full-stack-engineer-building-wedstack) — case study built on this stack
+- [Live site](https://luisfaria.dev) — portfolio for secure education data systems, applied ML, and agentic AI delivery
+- [Work](https://luisfaria.dev/work) — curated case studies told as problem → approach → stack → outcome
+- [Writing on Dev.to](https://dev.to/lfariaus) — public technical write-ups, now promoted from the primary header navigation
+- [Agentic study pipeline](https://dev.to/lfariaus/12-modules-12-weeks-1-pipeline-studying-a-masters-with-agentic-ai-1ohg) — public write-up for the open-source Master of SWE & AI workflow
 - [Security Incident Report: Cryptominer Attack](https://dev.to/lfariaus/security-incident-report-cryptominer-attack-on-nextjs-application-1df4) — led to the `feat/sec-auth` hardening milestone
 
 ---
@@ -49,7 +50,7 @@ Browser ─── Next.js (SSR/CSR) ─── Apollo Client ─── GraphQL AP
 luisfaria/
 ├── _docs/              # Feature specs, release notes, articles
 ├── backend/            # Express, Apollo Server 5, Mongoose, Redis
-├── frontend/           # Next.js 14+, React 19, Apollo Client, TailwindCSS 4, shadcn/ui
+├── frontend/           # Next.js 16+, React 19, Apollo Client, TailwindCSS 4, shadcn/ui
 └── docker-compose.yml
 ```
 
@@ -58,7 +59,7 @@ luisfaria/
 | Concern | Approach |
 |---|---|
 | **API** | GraphQL with modular schema composition and resolver-level error handling |
-| **Auth** | JWT in httpOnly cookies, role-based access (ADMIN / EDITOR / USER), GraphQL Shield, Turnstile-protected registration |
+| **Auth** | JWT in httpOnly cookies, role-based access (ADMIN / EDITOR / USER / PARTNER), GraphQL Shield, Turnstile-protected registration, partner read-only relationship-map access |
 | **Rate Limiting** | Redis + atomic Lua scripts — sliding window per user per feature |
 | **Caching** | Multi-layer: Redis (server), Apollo Client cache (client) |
 | **Validation** | Zod schemas for all GraphQL inputs |
@@ -72,7 +73,7 @@ luisfaria/
 
 | Layer | Technologies |
 |---|---|
-| **Frontend** | Next.js 14+, React 19, TypeScript, Apollo Client, TailwindCSS 4, shadcn/ui |
+| **Frontend** | Next.js 16+, React 19, TypeScript, Apollo Client, TailwindCSS 4, shadcn/ui |
 | **Backend** | Node.js, Express, Apollo Server 5, GraphQL, Mongoose |
 | **Data** | MongoDB, Redis |
 | **Integrations** | OpenAI (chatbot), Resend (email), NASA API (APOD), Stripe (payments), Cloudflare Turnstile |
@@ -114,6 +115,27 @@ luisfaria/
 | v3.11 | Impact Metrics Curation | Curated home metrics for freshness + credibility; data moved to `content/metrics.ts` |
 | v3.12 | Backend Cleanup | Removed dead resolver files, `checkRole` on the `UserRole` enum, and unified the rate-limit error code on `RATE_LIMITED` |
 | v3.13 | Error Handling Standardization | `screams` / `resend` resolvers migrated to the shared `Errors.*` factories |
+| v3.14 | Rotating Hero Headline | Hybrid hero headline with rotating proof lenses, reduced-motion support, and progress-bar polish |
+| v3.15 | Homepage Proof Points | Evidence-first hero metrics, pillars, stack, and Impact metrics rebuilt around stronger proof |
+| v3.16 | Profile Positioning Refresh | Header simplified to Home / Work / Writing / About; Dev.to promoted; homepage copy aligned to secure education systems, SQL/Power BI, applied ML, and agentic AI |
+
+---
+
+## Documentation Map
+
+| Area | Location |
+|---|---|
+| Latest release notes | `_docs/releaseNotes/` |
+| Feature breakdowns | `_docs/featureBreakdown/` |
+| Build-in-public Dev.to drafts | `_docs/buildInPublic/devTo/` |
+| Build-in-public LinkedIn drafts | `_docs/buildInPublic/linkedIn/` |
+| Backend implementation notes | `backend/docs/` |
+| Frontend implementation notes | `frontend/docs/` |
+
+Latest positioning docs:
+
+- `_docs/releaseNotes/v.3.16.0_Profile-Positioning-Refresh.md`
+- `_docs/featureBreakdown/v3.16-profile-positioning-refresh.md`
 
 ---
 
@@ -121,7 +143,7 @@ luisfaria/
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20.9+
 - MongoDB (local or Atlas)
 - Redis
 
