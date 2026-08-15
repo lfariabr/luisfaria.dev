@@ -12,7 +12,7 @@ export const POSITIONING = {
 } as const;
 
 /** Full, static canonical phrase - the accessible/SEO text rendered in the hero <h1>. */
-export const HERO_CANONICAL_PHRASE = 'I build secure data products and applied ML systems that survive production.';
+export const HERO_CANONICAL_PHRASE = POSITIONING.headline;
 
 export type HeroFrame = { lens: string; clause: string };
 
@@ -24,7 +24,7 @@ export const HERO_FRAMES: HeroFrame[] = [
   { lens: 'Education Data', clause: 'with privacy boundaries.' },
   { lens: 'Applied ML', clause: 'with honest metrics.' },
   { lens: 'Agentic AI', clause: 'with public receipts.' },
-  { lens: 'Production Proof', clause: 'that survives go-live.' },
+  { lens: 'Production Proof', clause: 'that survive go-live.' },
 ];
 
 /** Index of the canonical frame used for first paint and reduced-motion. */

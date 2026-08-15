@@ -10,7 +10,7 @@ describe('Home Page', () => {
     const heroHeading = screen.getByRole('heading', { level: 1 });
     expect(heroHeading).toBeInTheDocument();
     expect(heroHeading).toHaveTextContent(
-      /I build secure data products and applied ML systems that survive production\./i
+      /I build data systems that survive real users, audits, and handover\./i
     );
   });
 
