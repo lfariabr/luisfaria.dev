@@ -1,6 +1,7 @@
 import { shield, rule, allow, and } from 'graphql-shield';
 import { GraphQLError } from 'graphql';
 import { checkAuth, checkRole } from '../utils/authUtils';
+import { UserRole } from '../models/User';
 import { validateInput } from './middleware';
 import { registerSchema, loginSchema } from './schemas/user.schema';
 import { projectInputSchema, projectUpdateSchema } from './schemas/project.schema';
@@ -32,6 +33,24 @@ const isAdmin = rule({ cache: 'contextual' })(
     } catch (error) {
       return new GraphQLError('Not authorized', {
         extensions: { code: 'FORBIDDEN' }
+      });
+    }
+  }
+);
+
+const canViewRelationshipPins = rule({ cache: 'contextual' })(
+  async (_parent: any, _args: any, context: any) => {
+    try {
+      const user = checkAuth(context);
+      if (user.role === UserRole.ADMIN || user.role === UserRole.PARTNER) {
+        return true;
+      }
+      return new GraphQLError('Not authorized', {
+        extensions: { code: 'FORBIDDEN' }
+      });
+    } catch (error) {
+      return new GraphQLError('Not authenticated', {
+        extensions: { code: 'UNAUTHENTICATED' }
       });
     }
   }
@@ -125,8 +144,8 @@ export const permissions = shield(
       testRateLimit: isAuthenticated,
       myNotes: and(isAuthenticated, validateNoteFilters),
       note: and(isAuthenticated, validateNoteId),
-      pins: isAdmin,
-      relationshipHomeLocation: isAdmin,
+      pins: canViewRelationshipPins,
+      relationshipHomeLocation: canViewRelationshipPins,
     },
     Mutation: {
       // Public mutations

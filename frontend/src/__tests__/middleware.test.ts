@@ -10,7 +10,7 @@ interface MockNextRequest {
   cookies: { get: (name: string) => { value: string } | undefined };
 }
 
-// Mock next/server before importing middleware
+// Mock next/server before importing proxy
 const mockRedirect = jest.fn<MockResponse, [URL]>((url: URL) => ({
   status: 307,
   headers: { get: (key: string) => key === 'location' ? url.toString() : null },
@@ -28,11 +28,11 @@ jest.mock('next/server', () => ({
   },
 }));
 
-import { middleware } from '../middleware';
+import { proxy } from '../proxy';
 
 // Helper to create a typed mock NextRequest
-// Uses type assertion since we only mock the properties the middleware actually uses
-function createMockRequest(pathname: string, token?: string): Parameters<typeof middleware>[0] {
+// Uses type assertion since we only mock the properties the proxy actually uses
+function createMockRequest(pathname: string, token?: string): Parameters<typeof proxy>[0] {
   const url = new URL(pathname, 'http://localhost:3000');
   
   return {
@@ -48,7 +48,7 @@ function createMockRequest(pathname: string, token?: string): Parameters<typeof 
         return undefined;
       },
     },
-  } as Parameters<typeof middleware>[0];
+  } as Parameters<typeof proxy>[0];
 }
 
 // Helper to create a valid JWT token (base64 encoded, not cryptographically signed)
@@ -74,7 +74,7 @@ describe('Middleware - Admin Route Protection', () => {
   describe('No cookie scenarios', () => {
     it('redirects to /login when no token cookie is present on admin route', () => {
       const request = createMockRequest('/admin');
-      const response = middleware(request);
+      const response = proxy(request);
 
       expect(response.status).toBe(307); // Temporary redirect
       expect(response.headers.get('location')).toContain('/login');
@@ -83,7 +83,7 @@ describe('Middleware - Admin Route Protection', () => {
 
     it('redirects to /login with redirect param preserving full path', () => {
       const request = createMockRequest('/admin/users');
-      const response = middleware(request);
+      const response = proxy(request);
 
       expect(response.status).toBe(307);
       expect(response.headers.get('location')).toContain('redirect=%2Fadmin%2Fusers');
@@ -91,18 +91,27 @@ describe('Middleware - Admin Route Protection', () => {
 
     it('allows access to non-admin routes without token', () => {
       const request = createMockRequest('/');
-      const response = middleware(request);
+      const response = proxy(request);
 
       expect(response.status).toBe(200);
     });
 
     it('redirects to /login when no token cookie is present on notes route', () => {
       const request = createMockRequest('/notes');
-      const response = middleware(request);
+      const response = proxy(request);
 
       expect(response.status).toBe(307);
       expect(response.headers.get('location')).toContain('/login');
       expect(response.headers.get('location')).toContain('redirect=%2Fnotes');
+    });
+
+    it('redirects to /login when no token cookie is present on relationship route', () => {
+      const request = createMockRequest('/relationship');
+      const response = proxy(request);
+
+      expect(response.status).toBe(307);
+      expect(response.headers.get('location')).toContain('/login');
+      expect(response.headers.get('location')).toContain('redirect=%2Frelationship');
     });
   });
 
@@ -115,7 +124,7 @@ describe('Middleware - Admin Route Protection', () => {
         exp: futureExp,
       });
       const request = createMockRequest('/admin', token);
-      const response = middleware(request);
+      const response = proxy(request);
 
       expect(response.status).toBe(200);
     });
@@ -128,7 +137,20 @@ describe('Middleware - Admin Route Protection', () => {
         exp: futureExp,
       });
       const request = createMockRequest('/admin/users/edit', token);
-      const response = middleware(request);
+      const response = proxy(request);
+
+      expect(response.status).toBe(200);
+    });
+
+    it('allows access to relationship route with valid ADMIN token', () => {
+      const token = createMockToken({
+        id: '1',
+        email: 'admin@test.com',
+        role: 'ADMIN',
+        exp: futureExp,
+      });
+      const request = createMockRequest('/relationship', token);
+      const response = proxy(request);
 
       expect(response.status).toBe(200);
     });
@@ -143,7 +165,7 @@ describe('Middleware - Admin Route Protection', () => {
         exp: futureExp,
       });
       const request = createMockRequest('/admin', token);
-      const response = middleware(request);
+      const response = proxy(request);
 
       expect(response.status).toBe(307);
       expect(response.headers.get('location')).toBe('http://localhost:3000/');
@@ -157,7 +179,21 @@ describe('Middleware - Admin Route Protection', () => {
         exp: futureExp,
       });
       const request = createMockRequest('/admin', token);
-      const response = middleware(request);
+      const response = proxy(request);
+
+      expect(response.status).toBe(307);
+      expect(response.headers.get('location')).toBe('http://localhost:3000/');
+    });
+
+    it('redirects to / when PARTNER role accesses admin route', () => {
+      const token = createMockToken({
+        id: '4',
+        email: 'partner@test.com',
+        role: 'PARTNER',
+        exp: futureExp,
+      });
+      const request = createMockRequest('/admin', token);
+      const response = proxy(request);
 
       expect(response.status).toBe(307);
       expect(response.headers.get('location')).toBe('http://localhost:3000/');
@@ -171,9 +207,36 @@ describe('Middleware - Admin Route Protection', () => {
         exp: futureExp,
       });
       const request = createMockRequest('/notes', token);
-      const response = middleware(request);
+      const response = proxy(request);
 
       expect(response.status).toBe(200);
+    });
+
+    it('allows access to relationship route with PARTNER role token', () => {
+      const token = createMockToken({
+        id: '4',
+        email: 'partner@test.com',
+        role: 'PARTNER',
+        exp: futureExp,
+      });
+      const request = createMockRequest('/relationship', token);
+      const response = proxy(request);
+
+      expect(response.status).toBe(200);
+    });
+
+    it('redirects to / when USER role accesses relationship route', () => {
+      const token = createMockToken({
+        id: '2',
+        email: 'user@test.com',
+        role: 'USER',
+        exp: futureExp,
+      });
+      const request = createMockRequest('/relationship', token);
+      const response = proxy(request);
+
+      expect(response.status).toBe(307);
+      expect(response.headers.get('location')).toBe('http://localhost:3000/');
     });
   });
 
@@ -186,7 +249,7 @@ describe('Middleware - Admin Route Protection', () => {
         exp: pastExp,
       });
       const request = createMockRequest('/admin', token);
-      const response = middleware(request);
+      const response = proxy(request);
 
       expect(response.status).toBe(307);
       expect(response.headers.get('location')).toContain('/login');
@@ -195,7 +258,7 @@ describe('Middleware - Admin Route Protection', () => {
 
     it('redirects to /login with redirect param when token is malformed', () => {
       const request = createMockRequest('/admin/users', 'invalid.token.here');
-      const response = middleware(request);
+      const response = proxy(request);
 
       expect(response.status).toBe(307);
       expect(response.headers.get('location')).toContain('/login');
@@ -204,7 +267,7 @@ describe('Middleware - Admin Route Protection', () => {
 
     it('redirects to /login with redirect param when token is empty string', () => {
       const request = createMockRequest('/admin/settings', '');
-      const response = middleware(request);
+      const response = proxy(request);
 
       expect(response.status).toBe(307);
       expect(response.headers.get('location')).toContain('/login');
@@ -215,14 +278,14 @@ describe('Middleware - Admin Route Protection', () => {
   describe('Non-admin routes', () => {
     it('allows access to home page without token', () => {
       const request = createMockRequest('/');
-      const response = middleware(request);
+      const response = proxy(request);
 
       expect(response.status).toBe(200);
     });
 
     it('allows access to login page without token', () => {
       const request = createMockRequest('/login');
-      const response = middleware(request);
+      const response = proxy(request);
 
       expect(response.status).toBe(200);
     });
@@ -235,7 +298,7 @@ describe('Middleware - Admin Route Protection', () => {
         exp: futureExp,
       });
       const request = createMockRequest('/projects', token);
-      const response = middleware(request);
+      const response = proxy(request);
 
       expect(response.status).toBe(200);
     });
@@ -243,9 +306,9 @@ describe('Middleware - Admin Route Protection', () => {
   
   describe('Error handling', () => {
     it('handles token decoding errors gracefully', () => {
-      // This test ensures the middleware doesn't crash on invalid tokens
+      // This test ensures the proxy doesn't crash on invalid tokens
       const request = createMockRequest('/admin', 'not.a.valid.token');
-      const response = middleware(request);
+      const response = proxy(request);
       // Should redirect to login due to invalid token
       expect(response.status).toBe(307);
       expect(response.headers.get('location')).toContain('/login');

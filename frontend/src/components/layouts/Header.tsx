@@ -112,6 +112,11 @@ export function Header() {
                     <Link href="/admin">Admin Dashboard</Link>
                   </DropdownMenuItem>
                 )}
+                {(user?.role === 'ADMIN' || user?.role === 'PARTNER') && (
+                  <DropdownMenuItem asChild>
+                    <Link href="/relationship">Relationship Map</Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
                   className="text-red-500 focus:text-red-500" 

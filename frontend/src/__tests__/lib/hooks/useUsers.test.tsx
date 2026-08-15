@@ -218,6 +218,51 @@ describe('useUserMutations Hook', () => {
     expect(toast.success).toHaveBeenCalledWith('User role updated successfully!');
   });
 
+  it('updates user role to PARTNER successfully', async () => {
+    const userId = '2';
+    const newRole = 'partner';
+    const updatedUser = { ...mockUsers[1], role: 'PARTNER' };
+
+    const mocks: MockedResponse[] = [
+      {
+        request: {
+          query: UPDATE_USER_ROLE,
+          variables: { id: userId, role: 'PARTNER' },
+        },
+        result: {
+          data: {
+            updateUserRole: updatedUser,
+          },
+        },
+      },
+      {
+        request: {
+          query: GET_USERS,
+        },
+        result: {
+          data: {
+            users: [mockUsers[0], updatedUser],
+          },
+        },
+      },
+    ];
+
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <MockedProvider mocks={mocks} addTypename={false}>
+        {children}
+      </MockedProvider>
+    );
+
+    const { result } = renderHook(() => useUserMutations(), { wrapper });
+
+    await act(async () => {
+      const response = await result.current.updateUserRole(userId, newRole);
+      expect(response?.role).toBe('PARTNER');
+    });
+
+    expect(toast.success).toHaveBeenCalledWith('User role updated successfully!');
+  });
+
   // Test for deleteUser mutation
   it('deletes a user successfully', async () => {
     const userId = '2';

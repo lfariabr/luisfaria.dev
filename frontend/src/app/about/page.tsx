@@ -11,7 +11,7 @@ import { sanitizeJsonLd } from '@/lib/seo/metadata';
 export const metadata: Metadata = {
   title: 'About - Luis Faria',
   description:
-    'Luis Faria - software and data engineer in Sydney. 10+ years turning manual workflows into automated, KPI-driven systems across software, data, automation, and AI.',
+    'Luis Faria - software and data engineer in Sydney building secure education data products, applied ML systems, and production automation.',
   alternates: { canonical: 'https://luisfaria.dev/about' },
 };
 
@@ -19,7 +19,7 @@ const personLd = {
   '@context': 'https://schema.org',
   '@type': 'Person',
   name: 'Luis Faria',
-  jobTitle: 'Software & Data Engineer',
+  jobTitle: 'Software & Data Engineer / Data & Systems Specialist',
   url: 'https://luisfaria.dev/about',
   address: { '@type': 'PostalAddress', addressLocality: 'Sydney', addressCountry: 'AU' },
   sameAs: [SOCIALS.github, SOCIALS.linkedin, SOCIALS.devto],
@@ -56,11 +56,12 @@ export default function AboutPage() {
             Currently
           </h2>
           <p className="text-sm leading-relaxed">
-            Building data systems at <strong>St Catherine’s School, Sydney</strong> - SQL Server
-            pipelines and Power BI reporting - while completing a{' '}
+            Building secure data systems at <strong>St Catherine’s School, Sydney</strong> -
+            Next.js products, SQL Server pipelines, Power BI reporting, and academic data
+            modernisation - while completing a{' '}
             <strong>Master of Software Engineering with AI</strong>. I keep the coursework applied:
-            secure cloud architectures on AWS, a self-hosted Apache Superset BI deployment, applied
-            machine learning (scikit-learn, CRISP-DM, Spark), and LLM tooling on OpenAI and Claude -
+            ReviewPulse for inspectable sentiment analysis, Sommelier API for model governance,
+            churn modelling with PySpark, secure cloud architectures, and LLM/agent workflows -
             much of it open-sourced in my{' '}
             <a
               href={SOCIALS.mastersRepo}

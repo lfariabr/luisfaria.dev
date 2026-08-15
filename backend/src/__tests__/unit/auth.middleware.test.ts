@@ -197,6 +197,15 @@ describe('Auth Middleware - getUser', () => {
       expect(user?.role).toBe('EDITOR');
     });
 
+    it('should normalize lowercase partner role to PARTNER', () => {
+      const token = jwt.sign({ ...mockPayload, role: 'partner' }, jwtSecret);
+      const req = createMockRequest({ authorization: `Bearer ${token}` });
+
+      const user = getUser(req);
+
+      expect(user?.role).toBe('PARTNER');
+    });
+
     it('should normalize lowercase user role to USER', () => {
       const token = jwt.sign({ ...mockPayload, role: 'user' }, jwtSecret);
       const req = createMockRequest({ authorization: `Bearer ${token}` });

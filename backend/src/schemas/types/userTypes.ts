@@ -2,6 +2,7 @@ export const userTypes = `#graphql
   enum Role {
     ADMIN
     EDITOR
+    PARTNER
     USER
   }
 

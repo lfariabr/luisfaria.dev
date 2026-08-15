@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react';
-import { useIsAdmin, useIsEditorOrAdmin } from '@/lib/auth/isAdmin';
+import { useCanViewRelationshipPins, useIsAdmin, useIsEditorOrAdmin } from '@/lib/auth/isAdmin';
 import { useAuth, User } from '@/lib/auth/AuthContext';
 import { UserRole } from '@/lib/graphql/types/user.types';
 
@@ -15,6 +15,7 @@ function createMockAuthContext(user: User | null) {
   return {
     user,
     loading: false,
+    status: user ? 'authenticated' as const : 'unauthenticated' as const,
     error: null,
     login: jest.fn(),
     register: jest.fn(),
@@ -50,6 +51,15 @@ describe('useIsAdmin Hook', () => {
   it('returns false when user role is EDITOR', () => {
     mockUseAuth.mockReturnValue(
       createMockAuthContext({ id: '1', email: 'editor@test.com', name: 'Editor', role: UserRole.EDITOR })
+    );
+
+    const { result } = renderHook(() => useIsAdmin());
+    expect(result.current).toBe(false);
+  });
+
+  it('returns false when user role is PARTNER', () => {
+    mockUseAuth.mockReturnValue(
+      createMockAuthContext({ id: '1', email: 'partner@test.com', name: 'Partner', role: UserRole.PARTNER })
     );
 
     const { result } = renderHook(() => useIsAdmin());
@@ -100,6 +110,46 @@ describe('useIsEditorOrAdmin Hook', () => {
     mockUseAuth.mockReturnValue(createMockAuthContext(null));
 
     const { result } = renderHook(() => useIsEditorOrAdmin());
+    expect(result.current).toBe(false);
+  });
+});
+
+describe('useCanViewRelationshipPins Hook', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('returns true when user role is ADMIN', () => {
+    mockUseAuth.mockReturnValue(
+      createMockAuthContext({ id: '1', email: 'admin@test.com', name: 'Admin', role: UserRole.ADMIN })
+    );
+
+    const { result } = renderHook(() => useCanViewRelationshipPins());
+    expect(result.current).toBe(true);
+  });
+
+  it('returns true when user role is PARTNER', () => {
+    mockUseAuth.mockReturnValue(
+      createMockAuthContext({ id: '1', email: 'partner@test.com', name: 'Partner', role: UserRole.PARTNER })
+    );
+
+    const { result } = renderHook(() => useCanViewRelationshipPins());
+    expect(result.current).toBe(true);
+  });
+
+  it('returns false when user role is USER', () => {
+    mockUseAuth.mockReturnValue(
+      createMockAuthContext({ id: '1', email: 'user@test.com', name: 'User', role: UserRole.USER })
+    );
+
+    const { result } = renderHook(() => useCanViewRelationshipPins());
+    expect(result.current).toBe(false);
+  });
+
+  it('returns false when user is null', () => {
+    mockUseAuth.mockReturnValue(createMockAuthContext(null));
+
+    const { result } = renderHook(() => useCanViewRelationshipPins());
     expect(result.current).toBe(false);
   });
 });

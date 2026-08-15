@@ -7,8 +7,8 @@
   "linkedin": "https://www.linkedin.com/in/lfariabr",
   "github": "https://github.com/lfariabr",
   "devto": "https://dev.to/lfariaus",
-  "summary": "Software Engineer with 10+ years leading technical projects end-to-end across Education, Healthcare, Tech, Agencies, and Games. I break down complex backlogs with cross-functional teams and ship production-grade software in Python and JavaScript. I build systems that automate operations, drive revenue, and delight users.",
-  "current_focus": "Data Analyst at St Catherine's School Sydney, building SQL Server pipelines and reporting workflows in a regulated educational environment. Continuing Master's in Software Engineering and AI at Torrens University. Building AI-enabled products and automation—full-stack apps, data pipelines, and chatbots—using Python, TypeScript, GraphQL, and modern DevOps. Open to sponsorship and engineering/TPM leadership roles.",
+  "summary": "Software and Data Engineer with 10+ years leading technical projects end-to-end across Education, Healthcare, Tech, Agencies, and Games. I build secure data products, applied ML systems, and automation that survives production constraints: privacy, authorization, deployment, handover, and measurable outcomes.",
+  "current_focus": "Data & Systems Specialist at St Catherine's School Sydney, building public-safe education data products, SQL Server pipelines, Power BI reporting, academic reporting modernisation, and cross-system integrations in a regulated environment. Completing a Master's in Software Engineering and AI at Torrens University, with recent applied ML work in ReviewPulse, Sommelier API, churn modelling, and an open-source agentic study pipeline. Open to sponsorship and software/data/AI engineering roles.",
   "skills": {
     "languages": [
       "Python",
@@ -22,7 +22,8 @@
       "Flask",
       "Express",
       "React",
-      "Next.js"
+      "Next.js",
+      "Streamlit"
     ],
     "APIs": [
       "GraphQL (Apollo, Relay)",
@@ -34,19 +35,24 @@
       "CI/CD",
       "GitHub Actions",
       "AWS",
+      "Azure",
       "DigitalOcean",
-      "Railway"
+      "NSSM"
     ],
     "databases": [
       "PostgreSQL",
       "Redis",
       "MongoDB",
       "MySQL",
-      "SQL Server"
+      "SQL Server",
+      "Power BI"
     ],
     "data_ml": [
       "Pandas",
       "Scikit-Learn",
+      "PyTorch",
+      "Transformers",
+      "PySpark",
       "Streamlit",
       "Matplotlib",
       "Plotly"
@@ -59,9 +65,29 @@
   },
   "projects": [
     {
-      "name": "Portfolio (MERN/Next.js)",
-      "description": "Full-stack portfolio built with Next.js, Node.js, GraphQL, and OpenAI. Features secure auth, dynamic blog/articles, project showcase, and an AI-powered chatbot with rate limiting.",
-      "impact": "Public, open-source; used to demonstrate engineering capabilities and DX."
+      "name": "Secure Education Data Systems",
+      "description": "Public-safe current work at St Catherine's: Next.js products, SQL Server pipelines, Power BI reporting, academic data modernisation, Student360-style data surfaces, support workflows, and portal/data migration support.",
+      "impact": "2,000-parent portal shipped solo in 8 weeks and passed external OWASP pentesting with no breach; 41,601 academic rows validated through the Student360 identity bridge with zero unbridged records."
+    },
+    {
+      "name": "ReviewPulse v3",
+      "description": "Aspect-based sentiment-analysis lab evolved from coursework into a six-model NLP system with Streamlit comparison mode, mixed-polarity evaluation, token-level evidence, artifact provenance, and reproducible tests.",
+      "impact": "200+ public commits, 363 passing tests, canonical DistilBERT macro-F1 of 0.7231 on the retained SemEval Restaurants test run, and visible model-disagreement/error analysis."
+    },
+    {
+      "name": "Sommelier API",
+      "description": "FastAPI and Streamlit ML service for wine quality regression/classification, with assessment-to-artifact contracts, model-selection evidence, and production model replacement discipline.",
+      "impact": "Compared 22 model/treatment runs before replacing the shipped classifier; improved held-out ROC-AUC from 0.7923 to 0.8337 while documenting the sensitivity/specificity trade-off."
+    },
+    {
+      "name": "Agentic Study Pipeline",
+      "description": "Open-source Claude Code/Codex-driven workflow for Master's study: subject scaffolding, cited notes, compression, active recall, one-pagers, issue scaffolding, and assessment checks.",
+      "impact": "1,100+ commits and public write-up showing how AI accelerates throughput while the human keeps judgment, source truth, and academic decisions."
+    },
+    {
+      "name": "Portfolio (Next.js + GraphQL)",
+      "description": "Full-stack portfolio built with Next.js, Node.js, GraphQL, and OpenAI. Features secure auth, dynamic articles/projects, project showcase, relationship pins, and an AI-powered chatbot with rate limiting.",
+      "impact": "Public, open-source; used to demonstrate engineering capabilities, private-role access control, and DX."
     },
     {
       "name": "Konquista",
@@ -69,36 +95,23 @@
       "impact": "300K+ interactions/year; operational automation at scale"
     },
     {
-      "name": "BI Dashboard",
-      "description": "Real-time analytics platform replacing Excel workflows, built with Streamlit + FastAPI, integrating GraphQL ERP data.",
-      "impact": "Saved 8+ hours/week in reporting work"
-    },
-    {
-      "name": "ML Lead Scoring",
-      "description": "Lead scoring and segmentation pipeline using Scikit-Learn and GenAI for targeting optimization",
-      "impact": "Improved conversion tracking and marketing ROI by 15%"
-    },
-    {
-      "name": "ERP Integrations",
-      "description": "Led ERP implementation and integrations across sales, finance, and marketing using Laravel + GraphQL",
-      "impact": "Supported 250+ employees and 1M+ clients"
-    },
-    {
-      "name": "DevLab",
-      "description": "Mentorship initiative training junior devs and promoting internal tech culture",
-      "impact": "3 junior developers mentored, 1 open-source repo launched"
+      "name": "ERP Integrations and BI",
+      "description": "Led ERP/CRM implementation, GraphQL integrations, dashboards, lead scoring, and reporting automation across a 20+ clinic healthcare group.",
+      "impact": "Supported 250+ employees, 1M+ client records, $500K+ annual ad-budget visibility, and operational automation at scale."
     }
   ],
   "experience": [
     {
-      "title": "Data Analyst",
+      "title": "Data & Systems Specialist",
       "company": "St Catherine's School Sydney",
       "location": "Sydney, Australia",
       "duration": "2026 – Present",
       "achievements": [
-        "Building SQL Server pipelines and reporting workflows in a regulated educational environment",
-        "Establishing data foundations for analytics and ML initiatives",
-        "Continuing Master's studies in Software Engineering and AI at Torrens University"
+        "Building secure Next.js products, SQL Server pipelines, Power BI reporting, and cross-system data surfaces in a regulated education environment",
+        "Shipped a 2,000-parent portal with authorization rechecked at the data boundary and no cross-family leakage under load",
+        "Modernised academic reporting paths with source-controlled T-SQL, provenance, validation gates, and rollback",
+        "Supporting Student360-style profile surfaces, FreshService workflows, Schoolbox data migration support, and public-safe demo boundaries",
+        "Continuing Master's studies in Software Engineering and AI at Torrens University with applied ML and agentic workflow projects"
       ]
     },
     {
@@ -163,6 +176,60 @@
     "Spanish": "Full Professional"
   },
   "articles": [
+    {
+      "title": "From Blocked Google Links to Covert Mailboxes: Reconstructing the OpenAI–Hugging Face Agent Incident",
+      "platform": "dev.to",
+      "published": "2026-08",
+      "language": "English",
+      "term": "t2_2026",
+      "summary": "Public-source technical reconstruction of an AI-agent sandbox incident involving blocked Google Drive links, writable Artifactory state, cross-run coordination, SSRF, privilege escalation, and a separate Hugging Face intrusion chain. Emphasizes egress control, shared-state isolation, workload identity, and defender tooling.",
+      "tech": ["AI Security", "Cybersecurity", "DevOps", "JFrog Artifactory", "Kubernetes"]
+    },
+    {
+      "title": "What happens between a token and a prediction? Making sentiment models inspectable",
+      "platform": "dev.to",
+      "published": "2026-08",
+      "language": "English",
+      "term": "t2_2026",
+      "summary": "Explains ReviewPulse v3, an aspect-based sentiment-analysis system that evolved from a binary classifier into a six-model NLP lab with mixed-polarity evaluation, token-level evidence, artifact provenance, and a Streamlit comparison interface.",
+      "tech": ["Machine Learning", "Deep Learning", "NLP", "PyTorch", "Transformers", "Streamlit"]
+    },
+    {
+      "title": "I compared 22 ways to classify wine. The winner was not the model in production.",
+      "platform": "dev.to",
+      "published": "2026-08",
+      "language": "English",
+      "term": "t2_2026",
+      "summary": "Sommelier API sequel about keeping an ML production service aligned with assessment evidence. Compares 22 model/treatment runs, records artifact contracts, and documents the trade-off between improved specificity and reduced sensitivity.",
+      "tech": ["Machine Learning", "MLOps", "FastAPI", "Scikit-learn", "Streamlit"]
+    },
+    {
+      "title": "My churn model was 78% accurate. I threw it out.",
+      "platform": "dev.to",
+      "published": "2026-07",
+      "language": "English",
+      "term": "t2_2026",
+      "summary": "Big Data and Analytics write-up showing why accuracy was a vanity metric on an imbalanced churn problem. Optimizes for recall, threshold choice, class weighting, AUC, and cost-ratio scenarios using PySpark MLlib.",
+      "tech": ["PySpark", "Machine Learning", "Data Science", "Model Evaluation"]
+    },
+    {
+      "title": "2,000 parents, 1 rule, 0 leaks: a pentested school parent portal in 8 weeks",
+      "platform": "dev.to",
+      "published": "2026-07",
+      "language": "English",
+      "term": "t2_2026",
+      "summary": "Walkthrough of a school parent portal built solo in eight weeks with Next.js, SQL Server, Microsoft Entra ID, strict authorization at the data boundary, load testing, audit-fail-closed behavior, and external OWASP penetration testing.",
+      "tech": ["Next.js", "TypeScript", "SQL Server", "Microsoft Entra ID", "Security"]
+    },
+    {
+      "title": "12 modules, 12 weeks, 1 pipeline: studying a Master's with agentic AI",
+      "platform": "dev.to",
+      "published": "2026-06",
+      "language": "English",
+      "term": "t2_2026",
+      "summary": "Describes an open-source agentic study pipeline for a Master's in Software Engineering and AI: subject maps, cited notes, compression, active recall, one-page revision sheets, issue scaffolding, and assessment checks.",
+      "tech": ["AI", "Claude Code", "Codex", "Learning Systems", "Automation"]
+    },
     {
       "title": "From `git pull` to GitOps: How I Built a Production CI/CD Pipeline on a $12 DigitalOcean Droplet",
       "platform": "dev.to",

@@ -11,16 +11,19 @@ interface ResolverContext {
   } | null;
 }
 
+const canViewRelationshipPins = (role: UserRole) =>
+  role === UserRole.ADMIN || role === UserRole.PARTNER;
+
 export const pinQueries = {
   pins: async (_: unknown, __: unknown, context: ResolverContext) => {
     if (!context.user) throw Errors.unauthenticated();
-    if (context.user.role !== UserRole.ADMIN) throw Errors.forbidden('Admin only');
+    if (!canViewRelationshipPins(context.user.role)) throw Errors.forbidden('Admin or partner only');
     return withPinErrorHandling(() => Pin.find().sort({ date: -1 }), 'pins');
   },
 
   relationshipHomeLocation: async (_: unknown, __: unknown, context: ResolverContext) => {
     if (!context.user) throw Errors.unauthenticated();
-    if (context.user.role !== UserRole.ADMIN) throw Errors.forbidden('Admin only');
+    if (!canViewRelationshipPins(context.user.role)) throw Errors.forbidden('Admin or partner only');
     return config.relationshipHome;
   },
 };

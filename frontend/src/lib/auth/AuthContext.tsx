@@ -41,7 +41,7 @@ interface AuthContextType {
   loading: boolean;
   status: AuthStatus;
   error: string | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, redirectTo?: string | null) => Promise<void>;
   register: (credentials: { name: string, email: string, password: string, captchaToken: string }) => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
@@ -89,6 +89,12 @@ const formatError = (err: any): string => {
   
   // Default error message
   return err.message || 'An unexpected error occurred. Please try again.';
+};
+
+const safeRedirectPath = (redirectTo?: string | null): string => {
+  if (!redirectTo) return '/';
+  if (!redirectTo.startsWith('/') || redirectTo.startsWith('//')) return '/';
+  return redirectTo;
 };
 
 // Create context with default values
@@ -176,7 +182,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [registerMutation] = useMutation(REGISTER_MUTATION);
   const [logoutMutation] = useMutation(LOGOUT_MUTATION);
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string, redirectTo?: string | null) => {
     setError(null);
   
     try {
@@ -192,7 +198,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Just update local state with user data
         setUser(data.login.user);
         setStatus('authenticated');
-        router.push('/');
+        router.push(safeRedirectPath(redirectTo));
       } else {
         const errorMessage =
           errors?.[0]?.message || 'Login failed. Please try again.';
