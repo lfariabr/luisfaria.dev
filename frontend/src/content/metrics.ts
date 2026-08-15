@@ -39,7 +39,7 @@ export const METRIC_GROUPS: MetricGroup[] = [
     ],
   },
   {
-    label: 'Reliability & security',
+    label: 'Reliability & delivery',
     accent: 'text-sky-500',
     stats: [
       {
@@ -55,12 +55,12 @@ export const METRIC_GROUPS: MetricGroup[] = [
       {
         value: '500+',
         caption: 'Automated tests behind a CI release gate',
-        href: 'https://dev.to/lfariaus/2000-parents-1-rule-0-leaks-a-pentested-school-parent-portal-in-8-weeks-2bp8',
+        href: 'https://dev.to/lfariaus/from-git-pull-to-gitops-how-i-built-a-production-cicd-pipeline-on-a-12-digitalocean-droplet-34gn',
       },
       {
-        value: '4 deps',
-        caption: 'Production dependencies in the parent portal runtime',
-        href: 'https://dev.to/lfariaus/2000-parents-1-rule-0-leaks-a-pentested-school-parent-portal-in-8-weeks-2bp8',
+        value: 'CI/CD',
+        caption: 'Automated deploy path with GHCR, Docker Compose, and rollback',
+        href: 'https://dev.to/lfariaus/from-git-pull-to-gitops-how-i-built-a-production-cicd-pipeline-on-a-12-digitalocean-droplet-34gn',
       },
     ],
   },
@@ -92,7 +92,7 @@ export const METRIC_GROUPS: MetricGroup[] = [
         href: 'https://github.com/lfariabr/review-pulse',
       },
       {
-        value: '1,100+',
+        value: '1,400+',
         caption: 'Commits on an open-source agentic study pipeline',
         href: 'https://dev.to/lfariaus/12-modules-12-weeks-1-pipeline-studying-a-masters-with-agentic-ai-1ohg',
       },

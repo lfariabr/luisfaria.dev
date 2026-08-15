@@ -71,7 +71,7 @@ export default function AboutPage() {
             >
               Master’s repo
             </a>{' '}
-            (1,100+ commits, mostly Jupyter notebooks).
+            (1,400+ commits, mostly Jupyter notebooks).
           </p>
         </section>
 

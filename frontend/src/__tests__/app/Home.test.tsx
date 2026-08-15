@@ -19,13 +19,15 @@ describe('Home Page', () => {
 
     // All frames are in the DOM (grid-stacked); the canonical one is shown on first paint.
     expect(screen.getByText('Production Proof')).toBeInTheDocument();
-    expect(screen.getByText('Applied ML')).toBeInTheDocument();
+    expect(screen.getAllByText('Applied ML').length).toBeGreaterThan(0);
   });
 
   it('renders the hero subline', () => {
     renderWithProviders(<HomePage />);
 
-    expect(screen.getByText(/production Next\.js, SQL Server, Power BI, and ML systems/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/SQL Server, Power BI, Next\.js, secure school data products/i)
+    ).toBeInTheDocument();
   });
 
   it('renders CTA buttons', () => {
@@ -42,8 +44,8 @@ describe('Home Page', () => {
     renderWithProviders(<HomePage />);
 
     expect(screen.getByText('What I do')).toBeInTheDocument();
-    expect(screen.getByText('Software Engineering')).toBeInTheDocument();
-    expect(screen.getByText('Data Engineering')).toBeInTheDocument();
+    expect(screen.getByText('Secure education systems')).toBeInTheDocument();
+    expect(screen.getByText('Data engineering & analytics')).toBeInTheDocument();
   });
 
   it('renders the core stack grouped by pillar', () => {
@@ -79,14 +81,12 @@ describe('Home Page', () => {
 
     const homeLink = within(navigation).getByText(/^home$/i);
     const workLink = within(navigation).getByText(/^work$/i);
-    const projectsLink = within(navigation).getByText(/^projects$/i);
-    const articlesLink = within(navigation).getByText(/^articles$/i);
+    const writingLink = within(navigation).getByText(/^writing$/i);
     const aboutLink = within(navigation).getByText(/^about$/i);
 
     expect(homeLink).toHaveAttribute('href', '/');
     expect(workLink).toHaveAttribute('href', '/work');
-    expect(projectsLink).toHaveAttribute('href', '/projects');
-    expect(articlesLink).toHaveAttribute('href', '/articles');
+    expect(writingLink).toHaveAttribute('href', 'https://dev.to/lfariaus');
     expect(aboutLink).toHaveAttribute('href', '/about');
   });
 });

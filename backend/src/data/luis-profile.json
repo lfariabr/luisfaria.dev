@@ -72,7 +72,7 @@
     {
       "name": "ReviewPulse v3",
       "description": "Aspect-based sentiment-analysis lab evolved from coursework into a six-model NLP system with Streamlit comparison mode, mixed-polarity evaluation, token-level evidence, artifact provenance, and reproducible tests.",
-      "impact": "171 public commits, 363 passing tests, canonical DistilBERT macro-F1 of 0.7199 on the retained SemEval Restaurants test run, and visible model-disagreement/error analysis."
+      "impact": "200+ public commits, 363 passing tests, canonical DistilBERT macro-F1 of 0.7199 on the retained SemEval Restaurants test run, and visible model-disagreement/error analysis."
     },
     {
       "name": "Sommelier API",
@@ -82,7 +82,7 @@
     {
       "name": "Agentic Study Pipeline",
       "description": "Open-source Claude Code/Codex-driven workflow for Master's study: subject scaffolding, cited notes, compression, active recall, one-pagers, issue scaffolding, and assessment checks.",
-      "impact": "1,100+ commits and public write-up showing how AI accelerates throughput while the human keeps judgment, source truth, and academic decisions."
+      "impact": "1,400+ commits and public write-up showing how AI accelerates throughput while the human keeps judgment, source truth, and academic decisions."
     },
     {
       "name": "Portfolio (Next.js + GraphQL)",

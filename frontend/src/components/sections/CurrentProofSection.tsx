@@ -8,8 +8,8 @@ export function CurrentProofSection() {
       <div className="mb-6 text-center">
         <h2 className="text-2xl font-bold tracking-tight">Current proof</h2>
         <p className="mx-auto mt-2 max-w-2xl text-sm text-muted-foreground">
-          The work I want judged on now: secure education data products, applied ML systems,
-          and AI tooling with explicit boundaries.
+          Recent proof across secure education systems, SQL/Power BI data work, applied ML,
+          and agentic AI workflows documented in public.
         </p>
       </div>
 

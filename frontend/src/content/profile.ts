@@ -5,10 +5,10 @@
  */
 
 export const POSITIONING = {
-  badge: 'Software · Data Systems · Applied AI',
-  headline: 'I build secure data products and applied ML systems.',
+  badge: 'Education Data · Applied ML · Agentic Delivery',
+  headline: 'I build data systems that survive real users, audits, and handover.',
   subline:
-    'Sydney-based Software & Data Engineer / Data & Systems Specialist. I ship production Next.js, SQL Server, Power BI, and ML systems across education and operations - then document the trade-offs in public.',
+    'Sydney-based Senior Software Engineer and Data & Systems Specialist. Current work spans SQL Server, Power BI, Next.js, secure school data products, applied ML, and agentic AI workflows documented in public.',
 } as const;
 
 /** Full, static canonical phrase - the accessible/SEO text rendered in the hero <h1>. */
@@ -23,7 +23,7 @@ export type HeroFrame = { lens: string; clause: string };
 export const HERO_FRAMES: HeroFrame[] = [
   { lens: 'Education Data', clause: 'with privacy boundaries.' },
   { lens: 'Applied ML', clause: 'with honest metrics.' },
-  { lens: 'Full-Stack Systems', clause: 'from UI to SQL.' },
+  { lens: 'Agentic AI', clause: 'with public receipts.' },
   { lens: 'Production Proof', clause: 'that survives go-live.' },
 ];
 
@@ -42,14 +42,14 @@ export const HERO_METRICS: HeroMetric[] = [
     href: 'https://dev.to/lfariaus/2000-parents-1-rule-0-leaks-a-pentested-school-parent-portal-in-8-weeks-2bp8',
   },
   {
-    value: '171',
+    value: '200+',
     label: 'ReviewPulse commits turning coursework into an inspectable NLP lab',
     href: 'https://github.com/lfariabr/review-pulse',
   },
   {
-    value: '22 runs',
-    label: 'Sommelier model comparison before production model replacement',
-    href: 'https://github.com/lfariabr/sommelier-api',
+    value: '1,400+',
+    label: 'commits on an open-source agentic study pipeline',
+    href: 'https://dev.to/lfariaus/12-modules-12-weeks-1-pipeline-studying-a-masters-with-agentic-ai-1ohg',
   },
 ];
 
@@ -66,30 +66,30 @@ export const PILLARS: Pillar[] = [
   {
     key: 'software',
     icon: 'Code2',
-    title: 'Software Engineering',
-    blurb: 'Full-stack products shipped end-to-end - from a pentested 2,000-parent portal to internal Next.js tools backed by SQL Server and Microsoft Graph.',
-    tags: ['Next.js', 'React', 'Node.js', 'GraphQL', 'Python', 'TypeScript'],
+    title: 'Secure education systems',
+    blurb: 'School-facing products and internal tools where authorization, privacy, auditability, and handover are part of the design - not cleanup work after launch.',
+    tags: ['Next.js', 'TypeScript', 'SQL Server', 'Microsoft Entra ID', 'Python'],
   },
   {
     key: 'data',
     icon: 'Database',
-    title: 'Data Engineering',
-    blurb: 'Pipelines and reporting people trust - source-controlled academic models, Power BI surfaces, and privacy-aware student data products.',
-    tags: ['SQL Server', 'PostgreSQL', 'Power BI', 'Apache Superset', 'ETL'],
+    title: 'Data engineering & analytics',
+    blurb: 'SQL Server, Power BI, ETL, and reporting workflows built close to operations: finance, enrolments, academic data, support, and stakeholder dashboards.',
+    tags: ['SQL Server', 'T-SQL', 'Power BI', 'Power Query', 'ETL'],
   },
   {
     key: 'automation',
     icon: 'Workflow',
-    title: 'Automation & DevOps',
-    blurb: 'I remove operational drag - self-service support kiosks, repeatable reporting runs, CI/CD gates, and production services that restart cleanly.',
-    tags: ['Docker', 'GitHub Actions', 'NSSM', 'Nginx', 'Sentry'],
+    title: 'Applied ML systems',
+    blurb: 'Models handled like production assets: evaluation contracts, artifact provenance, failure visibility, and interfaces that make trade-offs inspectable.',
+    tags: ['PyTorch', 'scikit-learn', 'Transformers', 'Streamlit', 'FastAPI'],
   },
   {
     key: 'ai',
     icon: 'Sparkles',
-    title: 'AI / ML',
-    blurb: 'Applied ML with honest metrics - ReviewPulse ABSA, Sommelier model governance, churn recall trade-offs, and a public agentic study pipeline.',
-    tags: ['scikit-learn', 'PyTorch', 'FastAPI', 'Streamlit', 'LLM agents'],
+    title: 'Agentic AI delivery',
+    blurb: 'Claude Code and Codex workflows used with explicit source truth, review gates, redaction, and public write-ups showing what the agent did and what stayed human-owned.',
+    tags: ['Claude Code', 'Codex', 'GitHub', 'Dev.to', 'AI security'],
   },
 ];
 
@@ -97,20 +97,20 @@ export type StackGroup = { label: string; items: string[] };
 
 export const STACK_GROUPS: StackGroup[] = [
   {
-    label: 'Software',
-    items: ['TypeScript', 'React', 'Next.js', 'Node.js', 'GraphQL', 'Python'],
+    label: 'Production systems',
+    items: ['Next.js', 'TypeScript', 'Python', 'SQL Server', 'Microsoft Entra ID'],
   },
   {
-    label: 'Data',
-    items: ['SQL Server', 'T-SQL', 'Power BI', 'Apache Superset', 'pandas', 'PySpark'],
+    label: 'Data & analytics',
+    items: ['T-SQL', 'Power BI', 'Power Query', 'SSIS / ETL', 'pandas', 'PySpark'],
   },
   {
-    label: 'Automation & DevOps',
-    items: ['Docker', 'GitHub Actions', 'NSSM', 'Nginx', 'Sentry'],
+    label: 'Applied ML',
+    items: ['PyTorch', 'scikit-learn', 'Transformers', 'Streamlit', 'FastAPI'],
   },
   {
-    label: 'AI / ML',
-    items: ['scikit-learn', 'PyTorch', 'Transformers', 'FastAPI', 'Streamlit', 'Claude Code / Codex'],
+    label: 'Delivery & agents',
+    items: ['Docker', 'GitHub Actions', 'Nginx', 'Sentry', 'Claude Code / Codex'],
   },
 ];
 
@@ -152,7 +152,7 @@ export const CURRENT_PROOF: CurrentProof[] = [
   },
   {
     eyebrow: 'Agentic AI + security',
-    title: 'AI tooling with boundaries, evidence, and failure modes',
+    title: 'Agentic AI workflows with public receipts',
     summary:
       'I use agents to compress throughput, but I document where the human owns judgment: assessment decisions, source truth, defensive controls, and privacy boundaries.',
     bullets: [
@@ -160,6 +160,8 @@ export const CURRENT_PROOF: CurrentProof[] = [
       'Technical reconstruction of the OpenAI-Hugging Face agent incident from public sources.',
       'Preference for explicit contracts, redaction, auditability, and default-deny thinking.',
     ],
+    href: 'https://dev.to/lfariaus/12-modules-12-weeks-1-pipeline-studying-a-masters-with-agentic-ai-1ohg',
+    cta: 'Read agentic AI write-up',
   },
 ];
 
