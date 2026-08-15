@@ -62,4 +62,4 @@ Fixed in follow-up commit `d34ef17`:
 
 Homepage positioning now reflects the current public story: secure school data systems, SQL/Power BI delivery, applied ML with evidence, and public agentic AI workflows. Dev.to is promoted in the primary nav, stale proof counts are updated, CI/CD gets its own Impact receipt, and the hero H1 now has one source of truth.
 
-**Full Changelog:** https://github.com/lfariabr/luisfaria.dev/compare/v3.15.0...v3.16.0
+**Implementation PR:** https://github.com/lfariabr/luisfaria.dev/pull/274

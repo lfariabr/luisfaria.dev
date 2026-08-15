@@ -59,7 +59,7 @@ luisfaria/
 | Concern | Approach |
 |---|---|
 | **API** | GraphQL with modular schema composition and resolver-level error handling |
-| **Auth** | JWT in httpOnly cookies, role-based access (ADMIN / EDITOR / USER), GraphQL Shield, Turnstile-protected registration |
+| **Auth** | JWT in httpOnly cookies, role-based access (ADMIN / EDITOR / USER / PARTNER), GraphQL Shield, Turnstile-protected registration, partner read-only relationship-map access |
 | **Rate Limiting** | Redis + atomic Lua scripts — sliding window per user per feature |
 | **Caching** | Multi-layer: Redis (server), Apollo Client cache (client) |
 | **Validation** | Zod schemas for all GraphQL inputs |
@@ -143,7 +143,7 @@ Latest positioning docs:
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20.9+
 - MongoDB (local or Atlas)
 - Redis
 
