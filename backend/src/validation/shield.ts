@@ -1,6 +1,7 @@
 import { shield, rule, allow, and } from 'graphql-shield';
 import { GraphQLError } from 'graphql';
 import { checkAuth, checkRole } from '../utils/authUtils';
+import { UserRole } from '../models/User';
 import { validateInput } from './middleware';
 import { registerSchema, loginSchema } from './schemas/user.schema';
 import { projectInputSchema, projectUpdateSchema } from './schemas/project.schema';
@@ -10,9 +11,17 @@ import { screamInputSchema } from './schemas/scream.schema';
 import { CheckoutInputSchema } from './schemas/checkout.schema';
 import { noteInputSchema, noteUpdateSchema, noteIdSchema, noteFiltersSchema } from './schemas/notes.schema';
 import { pinInputSchema } from './schemas/pin.schema';
+
+type ShieldContext = {
+  user?: {
+    id: string;
+    role: UserRole;
+  } | null;
+};
+
 // Authentication rules
 const isAuthenticated = rule({ cache: 'contextual' })(
-  async (_parent: any, _args: any, context: any) => {
+  async (_parent: unknown, _args: unknown, context: ShieldContext) => {
     try {
       checkAuth(context);
       return true;
@@ -25,13 +34,31 @@ const isAuthenticated = rule({ cache: 'contextual' })(
 );
 
 const isAdmin = rule({ cache: 'contextual' })(
-  async (_parent: any, _args: any, context: any) => {
+  async (_parent: unknown, _args: unknown, context: ShieldContext) => {
     try {
       checkRole(context, 'ADMIN');
       return true;
     } catch (error) {
       return new GraphQLError('Not authorized', {
         extensions: { code: 'FORBIDDEN' }
+      });
+    }
+  }
+);
+
+const canViewRelationshipPins = rule({ cache: 'contextual' })(
+  async (_parent: unknown, _args: unknown, context: ShieldContext) => {
+    try {
+      const user = checkAuth(context);
+      if (user.role === UserRole.ADMIN || user.role === UserRole.PARTNER) {
+        return true;
+      }
+      return new GraphQLError('Not authorized', {
+        extensions: { code: 'FORBIDDEN' }
+      });
+    } catch (error) {
+      return new GraphQLError('Not authenticated', {
+        extensions: { code: 'UNAUTHENTICATED' }
       });
     }
   }
@@ -125,8 +152,8 @@ export const permissions = shield(
       testRateLimit: isAuthenticated,
       myNotes: and(isAuthenticated, validateNoteFilters),
       note: and(isAuthenticated, validateNoteId),
-      pins: isAdmin,
-      relationshipHomeLocation: isAdmin,
+      pins: canViewRelationshipPins,
+      relationshipHomeLocation: canViewRelationshipPins,
     },
     Mutation: {
       // Public mutations

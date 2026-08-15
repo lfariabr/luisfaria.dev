@@ -11,7 +11,7 @@ import { CASE_STUDIES } from '@/content/caseStudies';
 const BASE_URL = 'https://luisfaria.dev';
 const STATIC_LAST_MODIFIED = new Date('2026-03-03T00:00:00.000Z');
 // Pages introduced after STATIC_LAST_MODIFIED carry their own ship date.
-const ABOUT_LAST_MODIFIED = new Date('2026-06-29T00:00:00.000Z');
+const ABOUT_LAST_MODIFIED = new Date('2026-08-15T00:00:00.000Z');
 
 function safeDate(value: string): Date {
   const d = new Date(value);

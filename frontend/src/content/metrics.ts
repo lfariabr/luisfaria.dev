@@ -28,9 +28,8 @@ export const METRIC_GROUPS: MetricGroup[] = [
         href: 'https://dev.to/lfariaus/2000-parents-1-rule-0-leaks-a-pentested-school-parent-portal-in-8-weeks-2bp8',
       },
       {
-        value: '1M+',
-        caption: 'Client records managed across 20+ clinics',
-        href: 'https://dev.to/lfariaus/clinictrends-ai-transforming-customer-feedback-into-intelligent-insights-47en',
+        value: '41,601',
+        caption: 'Academic rows validated through the Student360 identity bridge',
       },
       {
         value: '30K+',
@@ -58,6 +57,11 @@ export const METRIC_GROUPS: MetricGroup[] = [
         caption: 'Automated tests behind a CI release gate',
         href: 'https://dev.to/lfariaus/2000-parents-1-rule-0-leaks-a-pentested-school-parent-portal-in-8-weeks-2bp8',
       },
+      {
+        value: '4 deps',
+        caption: 'Production dependencies in the parent portal runtime',
+        href: 'https://dev.to/lfariaus/2000-parents-1-rule-0-leaks-a-pentested-school-parent-portal-in-8-weeks-2bp8',
+      },
     ],
   },
   {
@@ -70,17 +74,22 @@ export const METRIC_GROUPS: MetricGroup[] = [
         caption: 'Deploy downtime, down from 10+ minutes',
         href: 'https://dev.to/lfariaus/from-git-pull-to-gitops-how-i-built-a-production-cicd-pipeline-on-a-12-digitalocean-droplet-34gn',
       },
-      { value: '11 → 0', caption: 'Manual query edits per finance reporting cycle' },
+      { value: 'Minutes', caption: 'Modern academic Excel exports after legacy ETL replacement' },
     ],
   },
   {
-    label: 'Building in public',
+    label: 'Applied AI / ML',
     accent: 'text-violet-500',
     stats: [
       {
-        value: '30+',
-        caption: 'Engineering write-ups published on dev.to',
-        href: 'https://dev.to/lfariaus',
+        value: '22',
+        caption: 'Sommelier classifier model/treatment runs compared before replacement',
+        href: 'https://github.com/lfariabr/sommelier-api',
+      },
+      {
+        value: '0.7199',
+        caption: 'ReviewPulse DistilBERT macro-F1 on the canonical ABSA test run',
+        href: 'https://github.com/lfariabr/review-pulse',
       },
       {
         value: '1,100+',

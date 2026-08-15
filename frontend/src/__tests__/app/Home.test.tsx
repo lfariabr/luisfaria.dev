@@ -9,22 +9,23 @@ describe('Home Page', () => {
 
     const heroHeading = screen.getByRole('heading', { level: 1 });
     expect(heroHeading).toBeInTheDocument();
-    expect(heroHeading).toHaveTextContent(/I build systems that pay for themselves\./i);
+    expect(heroHeading).toHaveTextContent(
+      /I build secure data products and applied ML systems that survive production\./i
+    );
   });
 
-  it('renders the rotating lens pill frames (canonical Hybrid first)', () => {
+  it('renders the rotating lens pill frames (canonical Production Proof first)', () => {
     renderWithProviders(<HomePage />);
 
     // All frames are in the DOM (grid-stacked); the canonical one is shown on first paint.
-    expect(screen.getByText('Hybrid')).toBeInTheDocument();
-    expect(screen.getByText('ML Engineer')).toBeInTheDocument();
+    expect(screen.getByText('Production Proof')).toBeInTheDocument();
+    expect(screen.getByText('Applied ML')).toBeInTheDocument();
   });
 
   it('renders the hero subline', () => {
     renderWithProviders(<HomePage />);
 
-    // Phrase unique to the hero subline (the footer tagline also mentions KPI-driven systems).
-    expect(screen.getByText(/messy, manual work into automated/i)).toBeInTheDocument();
+    expect(screen.getByText(/production Next\.js, SQL Server, Power BI, and ML systems/i)).toBeInTheDocument();
   });
 
   it('renders CTA buttons', () => {

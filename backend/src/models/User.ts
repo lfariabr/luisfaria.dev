@@ -6,6 +6,7 @@ import config from '../config/config';
 export enum UserRole {
   ADMIN = 'ADMIN',
   EDITOR = 'EDITOR',
+  PARTNER = 'PARTNER',
   USER = 'USER'
 }
 

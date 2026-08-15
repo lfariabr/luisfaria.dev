@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { HERO_METRICS } from "@/content/profile";
 import { HeroHeadline } from "@/components/sections/HeroHeadline";
+import { CurrentProofSection } from "@/components/sections/CurrentProofSection";
 import { PillarsSection } from "@/components/sections/PillarsSection";
 import { StackSection } from "@/components/sections/StackSection";
 import { MetricsSection } from "@/components/sections/MetricsSection";
@@ -19,7 +20,7 @@ const personLd = {
   '@context': 'https://schema.org',
   '@type': 'Person',
   name: 'Luis Faria',
-  jobTitle: 'Software & Data Engineer',
+  jobTitle: 'Software & Data Engineer / Data & Systems Specialist',
   url: 'https://luisfaria.dev',
   sameAs: [
     'https://github.com/lfariabr',
@@ -34,7 +35,7 @@ const websiteLd = {
   name: 'Luis Faria',
   url: 'https://luisfaria.dev',
   description:
-    'Portfolio of Luis Faria - software and data engineer who solves real business problems with software, data, automation, and AI.',
+    'Portfolio of Luis Faria - software and data engineer building secure education data products, applied ML systems, and production automation.',
 };
 
 const organizationLd = {
@@ -129,6 +130,8 @@ export default function Home() {
               </Button>
             </div>
           </div>
+
+          <CurrentProofSection />
 
           {/* What I do - pillars */}
           <PillarsSection />

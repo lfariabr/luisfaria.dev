@@ -4,8 +4,8 @@ import { useState } from "react";
 import { 
   AlertCircle, 
   Loader2, 
-  Shield, 
   ShieldAlert, 
+  HeartHandshake,
   Trash2, 
   User as UserIcon
 } from "lucide-react";
@@ -58,10 +58,12 @@ const formatDateSafe = (dateString: string) => {
 // When checking user roles
 const isAdmin = (role?: UserRole | string | null) => role === UserRole.ADMIN || role === 'admin';
 const isUser = (role?: UserRole | string | null) => role === UserRole.USER || role === 'user';
+const isPartner = (role?: UserRole | string | null) => role === UserRole.PARTNER || role === 'partner';
 
 // Display roles with proper capitalization
 const formatRole = (role: UserRole | string) => {
   if (isAdmin(role)) return 'ADMIN';
+  if (isPartner(role)) return 'PARTNER';
   if (isUser(role)) return 'USER';
   if (role === UserRole.EDITOR || role === 'editor') return 'EDITOR';
   return role.toUpperCase(); // Fallback
@@ -72,7 +74,20 @@ const roleForApi = (role: string): UserRole => {
   const normalized = role.toUpperCase();
   if (normalized === UserRole.ADMIN) return UserRole.ADMIN;
   if (normalized === UserRole.EDITOR) return UserRole.EDITOR;
+  if (normalized === UserRole.PARTNER) return UserRole.PARTNER;
   return UserRole.USER;
+};
+
+const roleDialogTitle = (role: UserRole | null) => {
+  if (role === UserRole.ADMIN) return 'Promote to Admin';
+  if (role === UserRole.PARTNER) return 'Grant Partner Access';
+  return 'Set Regular User';
+};
+
+const roleDialogDescription = (role: UserRole | null) => {
+  if (role === UserRole.ADMIN) return 'This will give the user administrative privileges.';
+  if (role === UserRole.PARTNER) return 'This will give the user read-only access to the private relationship map, without admin privileges.';
+  return 'This will remove elevated access from this user.';
 };
 
 export default function UsersAdminPage() {
@@ -81,32 +96,47 @@ export default function UsersAdminPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [actionType, setActionType] = useState<'delete' | 'role' | null>(null);
   const [targetRole, setTargetRole] = useState<UserRole | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const resetDialog = () => {
+    setSelectedUser(null);
+    setActionType(null);
+    setTargetRole(null);
+    setActionError(null);
+  };
   
   // Handle role change
   const handleRoleChange = async (user: User, newRole: string) => {
     setSelectedUser(user);
     setTargetRole(roleForApi(newRole));
     setActionType('role');
+    setActionError(null);
   };
   
   const handleDeleteUser = (user: User) => {
     setSelectedUser(user);
     setActionType('delete');
+    setActionError(null);
   };
   
   const confirmAction = async () => {
     if (!selectedUser) return;
     
     if (actionType === 'role' && targetRole) {
-      await updateUserRole(selectedUser.id, targetRole);
+      const updatedUser = await updateUserRole(selectedUser.id, targetRole);
+      if (!updatedUser) {
+        setActionError('Failed to update user role. Please try again.');
+        return;
+      }
     } else if (actionType === 'delete') {
-      await deleteUser(selectedUser.id);
+      const deleted = await deleteUser(selectedUser.id);
+      if (!deleted) {
+        setActionError('Failed to delete user. Please try again.');
+        return;
+      }
     }
     
-    // Reset state
-    setSelectedUser(null);
-    setActionType(null);
-    setTargetRole(null);
+    resetDialog();
   };
   
   return (
@@ -172,6 +202,11 @@ export default function UsersAdminPage() {
                         <ShieldAlert className="h-3 w-3 mr-1" />
                         Admin
                       </Badge>
+                    ) : isPartner(user.role) ? (
+                      <Badge className="bg-rose-600">
+                        <HeartHandshake className="h-3 w-3 mr-1" />
+                        Partner
+                      </Badge>
                     ) : (
                       <Badge variant="outline">
                         <UserIcon className="h-3 w-3 mr-1" />
@@ -206,12 +241,19 @@ export default function UsersAdminPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        {isUser(user.role) ? (
+                        {!isAdmin(user.role) && (
                           <DropdownMenuItem onClick={() => handleRoleChange(user, 'ADMIN')}>
                             <ShieldAlert className="h-4 w-4 mr-2" />
                             Make Admin
                           </DropdownMenuItem>
-                        ) : (
+                        )}
+                        {!isPartner(user.role) && (
+                          <DropdownMenuItem onClick={() => handleRoleChange(user, 'PARTNER')}>
+                            <HeartHandshake className="h-4 w-4 mr-2" />
+                            Make Partner
+                          </DropdownMenuItem>
+                        )}
+                        {!isUser(user.role) && (
                           <DropdownMenuItem onClick={() => handleRoleChange(user, 'USER')}>
                             <UserIcon className="h-4 w-4 mr-2" />
                             Make Regular User
@@ -235,23 +277,19 @@ export default function UsersAdminPage() {
       )}
 
       {/* Confirmation Dialog */}
-      <Dialog open={!!selectedUser && !!actionType} onOpenChange={(open) => !open && setSelectedUser(null)}>
+      <Dialog open={!!selectedUser && !!actionType} onOpenChange={(open) => !open && resetDialog()}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
               {actionType === 'delete' 
                 ? 'Delete User' 
-                : actionType === 'role' && isAdmin(targetRole)
-                  ? 'Promote to Admin'
-                  : 'Demote to Regular User'
+                : roleDialogTitle(targetRole)
               }
             </DialogTitle>
             <DialogDescription>
               {actionType === 'delete' 
                 ? 'This action cannot be undone. The user account will be permanently deleted.'
-                : actionType === 'role' && isAdmin(targetRole)
-                  ? 'This will give the user administrative privileges.'
-                  : 'This will remove administrative privileges from this user.'
+                : roleDialogDescription(targetRole)
               }
             </DialogDescription>
           </DialogHeader>
@@ -269,6 +307,13 @@ export default function UsersAdminPage() {
               </div>
             </div>
           )}
+
+          {actionError && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{actionError}</AlertDescription>
+            </Alert>
+          )}
           
           <DialogFooter>
             <DialogClose asChild>
@@ -282,9 +327,7 @@ export default function UsersAdminPage() {
               {mutationLoading.any && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {actionType === 'delete' 
                 ? 'Delete' 
-                : actionType === 'role' && isAdmin(targetRole)
-                  ? 'Promote'
-                  : 'Demote'
+                : `Set ${targetRole ? formatRole(targetRole) : 'Role'}`
               }
             </Button>
           </DialogFooter>

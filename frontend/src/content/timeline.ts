@@ -55,6 +55,20 @@ export const TIMELINE: TimelineEntry[] = [
   },
   {
     period: '2026',
-    body: 'Joined St Catherine’s School, Sydney as a Data Analyst, now Data & Systems Specialist - building SQL Server pipelines, Power BI reporting, and cross-system integrations in a regulated educational environment, and laying data foundations for analytics and ML, while continuing the Master’s.',
+    body: 'Joined St Catherine’s School, Sydney and moved into Data & Systems Specialist work: secure Next.js products, SQL Server pipelines, Power BI reporting, academic-data modernisation, FreshService and Schoolbox support, and Student360-style data surfaces - while completing ML, Deep Learning, and Big Data subjects in the Master’s.',
+    links: [
+      {
+        label: 'Parent portal write-up',
+        href: 'https://dev.to/lfariaus/2000-parents-1-rule-0-leaks-a-pentested-school-parent-portal-in-8-weeks-2bp8',
+      },
+      {
+        label: 'ReviewPulse',
+        href: 'https://github.com/lfariabr/review-pulse',
+      },
+      {
+        label: 'Sommelier API',
+        href: 'https://github.com/lfariabr/sommelier-api',
+      },
+    ],
   },
 ];

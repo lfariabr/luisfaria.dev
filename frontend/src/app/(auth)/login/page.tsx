@@ -19,7 +19,6 @@ import {
   Alert,
   AlertDescription
 } from '@/components/ui/alert';
-import { sendDiscordWebhook } from '@/utils/discord';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -37,9 +36,12 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const redirectTo =
+      typeof window === 'undefined'
+        ? undefined
+        : new URLSearchParams(window.location.search).get('redirect');
     
-    void sendDiscordWebhook(`🔐 Login attempt: ${email}`);
-    await login(email, password);
+    await login(email, password, redirectTo);
   };
 
   return (

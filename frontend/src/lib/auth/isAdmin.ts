@@ -20,3 +20,8 @@ export function useIsEditorOrAdmin(): boolean {
   const { user } = useAuth();
   return user?.role === 'ADMIN' || user?.role === 'EDITOR';
 }
+
+export function useCanViewRelationshipPins(): boolean {
+  const { user } = useAuth();
+  return user?.role === 'ADMIN' || user?.role === 'PARTNER';
+}

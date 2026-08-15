@@ -65,6 +65,7 @@ const PIN_INPUT = {
 
 describe('Pin Resolvers', () => {
   let adminContext: { user: { id: string; email: string; role: UserRole } };
+  let partnerContext: { user: { id: string; email: string; role: UserRole } };
   let userContext: { user: { id: string; email: string; role: UserRole } };
 
   beforeAll(async () => {
@@ -76,9 +77,11 @@ describe('Pin Resolvers', () => {
 
     const hash = await bcrypt.hash('Pass1234!', 10);
     const admin = await User.create({ name: 'Admin', email: 'admin@example.com', password: hash, role: UserRole.ADMIN });
+    const partner = await User.create({ name: 'Partner', email: 'partner@example.com', password: hash, role: UserRole.PARTNER });
     const user = await User.create({ name: 'User', email: 'user@example.com', password: hash, role: UserRole.USER });
 
     adminContext = { user: { id: getDocId(admin as { _id: unknown }), email: admin.email, role: UserRole.ADMIN } };
+    partnerContext = { user: { id: getDocId(partner as { _id: unknown }), email: partner.email, role: UserRole.PARTNER } };
     userContext = { user: { id: getDocId(user as { _id: unknown }), email: user.email, role: UserRole.USER } };
   });
 
@@ -118,6 +121,19 @@ describe('Pin Resolvers', () => {
       expect(pins.map((pin) => pin.placeName)).toEqual(['Newer place', 'Older place']);
     });
 
+    it('returns pins for PARTNER', async () => {
+      await Pin.create({ ...PIN_INPUT, date: new Date(PIN_INPUT.date) });
+
+      const response = await executeOperation(PINS_QUERY, {}, partnerContext);
+
+      expect(response.body.kind).toBe('single');
+      if (response.body.kind !== 'single') return;
+      expect(response.body.singleResult.errors).toBeUndefined();
+      const pins = (response.body.singleResult.data as unknown as PinsQueryData).pins;
+      expect(pins).toHaveLength(1);
+      expect(pins[0].placeName).toBe('Bistro Rex');
+    });
+
     it('returns empty array when no pins exist', async () => {
       const response = await executeOperation(PINS_QUERY, {}, adminContext);
 
@@ -133,7 +149,7 @@ describe('Pin Resolvers', () => {
       expect(response.body.kind).toBe('single');
       if (response.body.kind !== 'single') return;
       expect(response.body.singleResult.errors).toBeTruthy();
-      expect(response.body.singleResult.errors?.[0].message).toMatch(/not author/i);
+      expect(response.body.singleResult.errors?.[0].message).toMatch(/not authenticated/i);
     });
 
     it('rejects USER role', async () => {
@@ -200,6 +216,17 @@ describe('Pin Resolvers', () => {
 
       expect(await Pin.countDocuments()).toBe(0);
     });
+
+    it('rejects PARTNER role', async () => {
+      const response = await executeOperation(CREATE_PIN_MUTATION, { input: PIN_INPUT }, partnerContext);
+
+      expect(response.body.kind).toBe('single');
+      if (response.body.kind !== 'single') return;
+      expect(response.body.singleResult.errors).toBeTruthy();
+      expect(response.body.singleResult.errors?.[0].message).toMatch(/not author/i);
+
+      expect(await Pin.countDocuments()).toBe(0);
+    });
   });
 
   // ── relationshipHomeLocation query ────────────────────────────────────────────
@@ -241,6 +268,18 @@ describe('Pin Resolvers', () => {
       expect(home).toEqual({ label: 'Home base', lat: 1.23, lng: 2.34 });
     });
 
+    it('returns coordinates for PARTNER when configured', async () => {
+      config.relationshipHome = { label: 'Home base', lat: 1.23, lng: 2.34 };
+
+      const response = await executeOperation(HOME_QUERY, {}, partnerContext);
+
+      expect(response.body.kind).toBe('single');
+      if (response.body.kind !== 'single') return;
+      expect(response.body.singleResult.errors).toBeUndefined();
+      const home = (response.body.singleResult.data as unknown as HomeData).relationshipHomeLocation;
+      expect(home).toEqual({ label: 'Home base', lat: 1.23, lng: 2.34 });
+    });
+
     it('returns null when home env is not configured', async () => {
       config.relationshipHome = null;
 
@@ -260,7 +299,7 @@ describe('Pin Resolvers', () => {
       expect(response.body.kind).toBe('single');
       if (response.body.kind !== 'single') return;
       expect(response.body.singleResult.errors).toBeTruthy();
-      expect(response.body.singleResult.errors?.[0].message).toMatch(/not author/i);
+      expect(response.body.singleResult.errors?.[0].message).toMatch(/not authenticated/i);
     });
 
     it('rejects USER role', async () => {

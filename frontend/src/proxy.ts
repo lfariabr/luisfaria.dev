@@ -10,15 +10,19 @@ interface DecodedToken {
   exp: number;
 }
 
-export function middleware(request: NextRequest) {
+const normalizeRole = (role?: string) => role?.toUpperCase();
+const canViewRelationshipPins = (role?: string) => role === 'ADMIN' || role === 'PARTNER';
+
+export function proxy(request: NextRequest) {
   // Get token from httpOnly cookie only (no more Authorization header)
   const token = request.cookies.get('token')?.value;
-  
+
   // Check if the path is a protected route
   const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
   const isNotesRoute = request.nextUrl.pathname.startsWith('/notes');
-  const isProtectedRoute = isAdminRoute || isNotesRoute;
-  
+  const isRelationshipRoute = request.nextUrl.pathname.startsWith('/relationship');
+  const isProtectedRoute = isAdminRoute || isNotesRoute || isRelationshipRoute;
+
   if (isProtectedRoute) {
     // No token - redirect to login
     if (!token) {
@@ -26,11 +30,11 @@ export function middleware(request: NextRequest) {
       loginUrl.searchParams.set('redirect', request.nextUrl.pathname);
       return NextResponse.redirect(loginUrl);
     }
-    
+
     try {
       // Decode and verify the token
       const decoded = jwtDecode<DecodedToken>(token);
-      
+
       // Check if token is expired
       const currentTime = Math.floor(Date.now() / 1000);
       if (decoded.exp < currentTime) {
@@ -39,12 +43,17 @@ export function middleware(request: NextRequest) {
         loginUrl.searchParams.set('redirect', request.nextUrl.pathname);
         return NextResponse.redirect(loginUrl);
       }
-      
+
+      const role = normalizeRole(decoded.role);
+
       // Admin route requires admin role
-      if (isAdminRoute && decoded.role !== 'ADMIN') {
+      if (isAdminRoute && role !== 'ADMIN') {
         return NextResponse.redirect(new URL('/', request.url));
       }
-      
+
+      if (isRelationshipRoute && !canViewRelationshipPins(role)) {
+        return NextResponse.redirect(new URL('/', request.url));
+      }
     } catch (error) {
       logger.error('Token decoding failed', {
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -55,11 +64,11 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
   }
-  
+
   return NextResponse.next();
 }
 
-// Configure which paths this middleware applies to
+// Configure which paths this proxy applies to
 export const config = {
-  matcher: ['/admin/:path*', '/notes/:path*']
+  matcher: ['/admin/:path*', '/notes/:path*', '/relationship/:path*'],
 };

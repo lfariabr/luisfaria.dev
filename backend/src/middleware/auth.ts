@@ -41,6 +41,9 @@ export const getUser = (req: Request): JWTPayload | null => {
                 case 'editor':
                     decoded.role = UserRole.EDITOR;
                     break;
+                case 'partner':
+                    decoded.role = UserRole.PARTNER;
+                    break;
                 case 'user':
                     decoded.role = UserRole.USER;
                     break;
