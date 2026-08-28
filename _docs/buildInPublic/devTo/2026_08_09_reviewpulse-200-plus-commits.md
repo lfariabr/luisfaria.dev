@@ -2,36 +2,33 @@
 
 **Tags:** `machinelearning` `deeplearning` `nlp` `showdev`
 
-<!--
-Draft version: v2 · 2026-08-09.
-Draft status: publish after the final ReviewPulse v3.0.0 tag.
-Before publishing: verify the live and release URLs and remove this comment.
--->
-
 > *"Great food but the service was dreadful!"*
 
-That is not a polished example invented for this article. It is a literal sentence from the SemEval test split that later became one of ReviewPulse v3's traceable demo cases.
+This is a verbatim sentence from the [SemEval-2014 Restaurants](https://alt.qcri.org/semeval2014/task4/) test split. It contains two aspects with opposite sentiments: `food` is positive, while `service` is negative.
 
-ReviewPulse v2 had one job: decide whether that review was positive or negative. Whatever label it returned, one opinion disappeared.
+ReviewPulse v2 had one job: assign one sentiment label to an entire review. For this sentence, whichever label it chose, one opinion disappeared.
 
-That limitation followed me from **ISY503 Intelligent Systems** into **DLE602 Deep Learning**. Across two university subjects and four months of public development, I rebuilt the same product from a binary Amazon-review classifier into a six-model aspect-based sentiment laboratory.
+Over four months and two master's subjects — from **ISY503 Intelligent Systems** to **DLE602 Deep Learning** — I rebuilt ReviewPulse from a binary Amazon-review classifier into a six-model aspect-based sentiment system.
 
-The [ReviewPulse repository](https://github.com/lfariabr/review-pulse) starts on 14 April 2026. By the v3 release it had crossed **200 public commits**, alongside 363 passing tests, three documented dataset-dependent skips, six versioned inference artifacts, reproducible evaluations, token-level evidence, and a deployed Streamlit application.
+The first public commit landed on 14 April 2026. By the v3 release, the project had crossed **200 public commits**, with 363 passing tests, 3 documented dataset-dependent skips, 6 versioned inference artifacts, reproducible evaluations, token-level evidence, and a deployed Streamlit application.
 
-This is not a story about replacing a small model with a bigger one and watching every number go up. The baseline beat my first neural network. A trigram memorised its training set and generalised worse. A lightweight attention model improved the exact subset I cared about while still losing the overall benchmark to the Transformer. The Transformer won the benchmark and forced me to confront what predictive performance costs in storage, delivery, and inspectability.
+This is not a story about replacing a small model with a bigger one and watching every number improve. The baseline beat my first neural network. A trigram nearly memorised its training set and generalised worse. A lightweight attention model improved the subset I cared about while still losing the overall benchmark to the Transformer. The Transformer eventually won — and turned predictive performance into a trade-off involving storage, delivery, and inspectability.
 
-That messiness is the useful part.
+That made the central question personal: **what happens between the text and the label?**
 
-The question that became personal for me was what happens between the text and the label. Most sentiment interfaces behave like black boxes: they receive language, return a class and confidence, and hide which tokens shaped that output. ReviewPulse v3 became my attempt to make part of that hidden behaviour inspectable. ATAE-LSTM exposes attention weights; DistilBERT exposes token-attribution scores. I was not trying to display a model's private reasoning. I wanted to show, token by token and aspect by aspect, what signal each supported model assigned to the text — especially when its final prediction was wrong.
+Many sentiment demos receive language, return a class and confidence, and hide which tokens influenced the output. ReviewPulse v3 became my attempt to expose part of that hidden behaviour:
 
-![ReviewPulse logo](figures/2026_08_09_reviewpulse_logo.png)
+- ATAE-LSTM exposes attention weights.
+- DistilBERT exposes token-attribution scores.
+
+These views do not reveal a model's private reasoning. They provide indicative, token-level evidence that can be inspected aspect by aspect — especially when the final prediction is wrong.
 
 ---
 
 ## Contents
 
 - [The sentence that broke v2](#the-sentence-that-broke-v2)
-- [Three assessments, one evolving product](#three-assessments-one-evolving-product)
+- [Two subjects, one evolving product](#two-subjects-one-evolving-product)
 - [Where deep learning earned its cost](#where-deep-learning-earned-its-cost)
 - [The demo became part of the evidence](#the-demo-became-part-of-the-evidence)
 - [What building in public actually meant](#what-building-in-public-actually-meant)
@@ -61,7 +58,7 @@ food    -> positive
 service -> negative
 ```
 
-This is **aspect-based sentiment analysis (ABSA)**. The difference looks small in the interface. Architecturally, it changes the task. A review-only model sees identical input for `food` and `service`, so it has no basis for changing its answer. An aspect-conditioned model receives `(review, aspect)` and can construct a different representation for each target.
+This is **aspect-based sentiment analysis (ABSA)**. The difference looks small in the interface, but architecturally, it changes the task: a review-only model sees identical input for `food` and `service`, so it has no basis for changing its answer while an aspect-conditioned model receives `(review, aspect)` and can construct a different representation for each target.
 
 That one missing input became the research problem for the next version.
 
@@ -69,7 +66,7 @@ That one missing input became the research problem for the next version.
 
 ---
 
-## Three assessments, one evolving product
+## Two subjects, one evolving product
 
 ### ISY503: the first working product
 
@@ -83,6 +80,8 @@ ISY503 Assessment 3 began with **8,000 labelled Amazon reviews** across four dom
 
 The baseline beat the neural network. DistilBERT later beat both through contextual pretraining, not self-attention alone. More importantly, the interface exposed negation, sarcasm, short ambiguous inputs, and mixed sentiment that would otherwise remain buried in a CSV.
 
+---
+
 ### DLE602 A1: the N-Gram warning
 
 Assessment 1 was a separate Twitter exercise, but it became the intellectual bridge. The same probabilistic bigram reached `0.719` accuracy and `0.726` macro-F1 on binary STS-Gold, yet only `0.452` and `0.401` on three-class STS-Test, where neutral existed only as a threshold outcome. A capacity sweep then pushed trigram training accuracy to `0.99` while test accuracy fell to `0.42` on STS-Test and `0.55` on STS-Gold. More capacity meant more memorisation, not more understanding.
@@ -91,7 +90,9 @@ Assessment 1 was a separate Twitter exercise, but it became the intellectual bri
 
 *Fig 1 — DLE602 A1 capacity and add-k regularisation sweep. The trigram nearly memorises the training set while test performance falls.*
 
-Two rules carried into ReviewPulse v3: a score belongs to the dataset and slice where it was measured, and additional capacity deserves suspicion until held-out evidence proves otherwise.
+Two rules carried into ReviewPulse v3: (1) a score belongs to the dataset and slice where it was measured, (2) and additional capacity deserves suspicion until held-out evidence proves otherwise.
+
+---
 
 ### DLE602 A2: turning weakness into research questions
 
@@ -118,6 +119,8 @@ flowchart LR
 The comparison was about **input information**, not just architecture. TF-IDF and LSTM receive only the review. ATAE-LSTM and DistilBERT receive the review-aspect pair. Optional GRU and TextCNN variants could be added later, but they were not allowed to replace the canonical experiment.
 
 ReviewPulse moved from whole Amazon reviews to **SemEval-2014 Task 4 Restaurants**, where one sentence can carry several gold aspect terms and polarities. The implementation now had to prove the proposal, not merely resemble it.
+
+---
 
 ### DLE602 A3: building the experiment
 
@@ -182,7 +185,7 @@ The larger model was better, but the smaller aspect-aware model demonstrated som
 
 The table is pinned to the canonical artifact commit `bf36c3b`. A later six-model retraining produced `0.7199` DistilBERT macro-F1 instead of `0.7231`. Both runs used seed 42 and the same dataset checksum, but they are different frozen MPS-trained artifacts. Fixed seeds support provenance; they do not make Apple MPS retraining bit-identical.
 
-The deployment cost then became real. Fresh package builds measured **51.53 MiB** for the lightweight ZIP and **287.28 MiB** for the complete ZIP. The DistilBERT directory is **256.11 MiB uncompressed**, but ZIP deflation reduces its files to about **235.75 MiB**; that compressed payload accounts for essentially the entire **235.75 MiB difference** between the two archives. A model-selection decision had become a packaging and delivery decision.
+The deployment cost then became real. The tagged v3.0.0 archives measure **51.54 MiB** for the lightweight ZIP and **287.30 MiB** for the complete ZIP. The DistilBERT directory is **256.11 MiB uncompressed**, but ZIP deflation reduces its files to about **235.75 MiB**; that compressed payload accounts for essentially the entire **235.75 MiB difference** between the two archives. A model-selection decision had become a packaging and delivery decision.
 
 That is ML engineering: the best metric does not cancel storage, delivery, or reproducibility constraints.
 
@@ -230,7 +233,9 @@ Building in public meant leaving the uncomfortable parts visible in Git history:
 - clean-room skip differences documented instead of rounded away;
 - a 256 MiB Transformer turning model choice into a delivery trade-off.
 
-Issues became bounded contracts; branches isolated changes; PRs carried evidence and review. Codex and Claude helped inspect, implement, and reconcile bounded work, while CodeRabbit reviewed pull requests. I remained responsible for the architecture, executed commands, source claims, training, merge decisions, and final writing.
+Issues became bounded contracts; branches isolated changes; PRs carried evidence and review. Codex and Claude implemented and reconciled bounded work under my direction, and CodeRabbit reviewed pull requests. I owned the architecture, the research questions, and every merge. I verified claims against source and rejected agent output that was wrong, including a confident, correct-looking citation "correction" that would have introduced an error into the report. The decisions, and the mistakes, are mine.
+
+A3 was assessed as a group, and two people tested work I could not mark my own homework on. Juan Martinez ran independent acceptance QA against the deployed application. Victor Dorantes independently reproduced the results on different hardware, including a CUDA retrain that diverged from my frozen DistilBERT metrics; that run is versioned separately rather than quietly merged over the canonical numbers.
 
 > Building in public is not evidence that every decision was right. It is evidence that the decisions, corrections, and trade-offs can be inspected.
 
@@ -250,14 +255,13 @@ I would keep Streamlit as the demonstration client and put a versioned FastAPI s
 
 ## Try it yourself
 
-- **Live application:** [review-pulse.streamlit.app](https://review-pulse.streamlit.app/)
+- **Live application:** [ReviewPulse v3.0.0](https://review-pulse.streamlit.app/ReviewPulse_v3_0_0)
 - **ReviewPulse source:** [github.com/lfariabr/review-pulse](https://github.com/lfariabr/review-pulse)
 - **Public Master's repository:** [github.com/lfariabr/masters-swe-ai](https://github.com/lfariabr/masters-swe-ai)
 - **ISY503 project history:** [2026-T1/ISY/Assessment 3](https://github.com/lfariabr/masters-swe-ai/tree/master/2026-T1/ISY/assignments/Assessment3)
 - **DLE602 A1 N-Gram study:** [2026-T2/DLE/Assessment 1](https://github.com/lfariabr/masters-swe-ai/tree/master/2026-T2/DLE/assignments/Assessment1)
 - **DLE602 A2 proposal and A3 report:** [2026-T2/DLE assignments](https://github.com/lfariabr/masters-swe-ai/tree/master/2026-T2/DLE/assignments)
-
-<!-- Add the final v3.0.0 release and marker quick-start links after tagging. -->
+- **v3.0.0 release, with both archive SHA-256 digests:** [review-pulse/releases/tag/v3.0.0](https://github.com/lfariabr/review-pulse/releases/tag/v3.0.0)
 
 If you have built an NLP system, which result taught you more: the model that won, or the one that failed in a way you could finally explain?
 
@@ -279,6 +283,4 @@ If you have built an NLP system, which result taught you more: the model that wo
 - **LinkedIn:** [linkedin.com/in/lfariabr](https://www.linkedin.com/in/lfariabr/)
 - **Portfolio:** [luisfaria.dev](https://luisfaria.dev)
 
----
-
-> *The model is only one commit. The system is everything that happened around it.*
+*The model is only one commit. The system is everything that happened around it.*
