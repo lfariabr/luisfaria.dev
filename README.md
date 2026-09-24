@@ -118,6 +118,7 @@ luisfaria/
 | v3.14 | Rotating Hero Headline | Hybrid hero headline with rotating proof lenses, reduced-motion support, and progress-bar polish |
 | v3.15 | Homepage Proof Points | Evidence-first hero metrics, pillars, stack, and Impact metrics rebuilt around stronger proof |
 | v3.16 | Profile Positioning Refresh | Header simplified to Home / Work / Writing / About; Dev.to promoted; homepage copy aligned to secure education systems, SQL/Power BI, applied ML, and agentic AI |
+| v3.17 | Security & Platform Maintenance | 11 Dependabot PRs consolidated, 27 security alerts → 0 (incl. Next.js critical fixes); production moved to Ubuntu 26.04 LTS with Docker 29 |
 
 ---
 
@@ -132,10 +133,10 @@ luisfaria/
 | Backend implementation notes | `backend/docs/` |
 | Frontend implementation notes | `frontend/docs/` |
 
-Latest positioning docs:
+Latest release docs:
 
-- `_docs/releaseNotes/v.3.16.0_Profile-Positioning-Refresh.md`
-- `_docs/featureBreakdown/v3.16-profile-positioning-refresh.md`
+- `_docs/releaseNotes/v.3.17.0_Security-Maintenance.md`
+- `_docs/featureBreakdown/v3.17-security-maintenance.md`
 
 ---
 
