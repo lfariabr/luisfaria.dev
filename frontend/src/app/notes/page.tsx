@@ -136,10 +136,10 @@ export default function NotesPage() {
               <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">At a glance</p>
               <dl className="grid grid-cols-4 gap-2 lg:grid-cols-2 lg:gap-3">
                 {[
-                  { label: 'Checkpoints', value: notes.length },
+                  { label: 'Notes', value: notes.length },
                   { label: 'Wins', value: totalAccomplishments },
                   { label: 'Weekly', value: weeklyCount },
-                  { label: 'Next moves', value: totalPlans },
+                  { label: 'Plans', value: totalPlans },
                 ].map((stat) => (
                   <div
                     key={stat.label}
