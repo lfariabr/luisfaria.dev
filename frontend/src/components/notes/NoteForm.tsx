@@ -16,19 +16,22 @@ interface NoteFormProps {
   onSubmit: (input: NoteInput) => Promise<void>;
 }
 
-const parseCsv = (value: string): string[] =>
+// One item per line; single-line input falls back to comma-separated for quick entry.
+export const parseListInput = (value: string): string[] =>
   value
-    .split(',')
-    .map((item) => item.trim())
+    .split(/\r?\n/.test(value) ? /\r?\n/ : ',')
+    .map((item) => item.replace(/^\s*[-•*]\s+/, '').trim())
     .filter(Boolean);
+
+const toListInput = (items: string[] | undefined) => (items ?? []).join('\n');
 
 export function NoteForm({ note, loading = false, onSubmit }: NoteFormProps) {
   const [title, setTitle] = useState(note?.title ?? '');
   const [content, setContent] = useState(note?.content ?? '');
   const [date, setDate] = useState(toDateInputValue(note?.date));
   const [periodType, setPeriodType] = useState<NotePeriodType>(note?.periodType ?? 'WEEKLY');
-  const [accomplishments, setAccomplishments] = useState((note?.accomplishments ?? []).join(', '));
-  const [nextPlans, setNextPlans] = useState((note?.nextPlans ?? []).join(', '));
+  const [accomplishments, setAccomplishments] = useState(toListInput(note?.accomplishments));
+  const [nextPlans, setNextPlans] = useState(toListInput(note?.nextPlans));
   const [tags, setTags] = useState((note?.tags ?? []).join(', '));
 
   useEffect(() => {
@@ -37,8 +40,8 @@ export function NoteForm({ note, loading = false, onSubmit }: NoteFormProps) {
     setContent(note.content ?? '');
     setDate(toDateInputValue(note.date));
     setPeriodType(note.periodType);
-    setAccomplishments((note.accomplishments ?? []).join(', '));
-    setNextPlans((note.nextPlans ?? []).join(', '));
+    setAccomplishments(toListInput(note.accomplishments));
+    setNextPlans(toListInput(note.nextPlans));
     setTags((note.tags ?? []).join(', '));
   }, [note]);
 
@@ -52,9 +55,9 @@ export function NoteForm({ note, loading = false, onSubmit }: NoteFormProps) {
       content: normalizedContent,
       date: `${date}T00:00:00.000Z`,
       periodType,
-      accomplishments: parseCsv(accomplishments),
-      nextPlans: parseCsv(nextPlans),
-      tags: parseCsv(tags),
+      accomplishments: parseListInput(accomplishments),
+      nextPlans: parseListInput(nextPlans),
+      tags: parseListInput(tags),
     });
   };
 
@@ -127,10 +130,10 @@ export function NoteForm({ note, loading = false, onSubmit }: NoteFormProps) {
             id="note-accomplishments"
             value={accomplishments}
             onChange={(event) => setAccomplishments(event.target.value)}
-            placeholder="gym consistency, savings goal, reading progress"
-            className="min-h-[112px] rounded-2xl bg-background/90"
+            placeholder={'Gym 5x this week\nHit savings goal\nFinished chapter 4'}
+            className="min-h-[140px] rounded-2xl bg-background/90 leading-relaxed"
           />
-          <p className="mt-2 text-xs text-muted-foreground">Comma-separated. Focus on the outcomes worth remembering.</p>
+          <p className="mt-2 text-xs text-muted-foreground">One per line. Focus on the outcomes worth remembering.</p>
         </div>
 
         <div className="rounded-3xl border border-sky-500/15 bg-sky-500/[0.06] p-4">
@@ -144,10 +147,10 @@ export function NoteForm({ note, loading = false, onSubmit }: NoteFormProps) {
             id="note-plans"
             value={nextPlans}
             onChange={(event) => setNextPlans(event.target.value)}
-            placeholder="sleep routine, continue reading, keep budgeting"
-            className="min-h-[112px] rounded-2xl bg-background/90"
+            placeholder={'Fix sleep routine\nRead 30 pages\nKeep budgeting'}
+            className="min-h-[140px] rounded-2xl bg-background/90 leading-relaxed"
           />
-          <p className="mt-2 text-xs text-muted-foreground">Comma-separated. Keep the next moves concrete and small enough to act on.</p>
+          <p className="mt-2 text-xs text-muted-foreground">One per line. Keep the next moves concrete and small enough to act on.</p>
         </div>
       </div>
 
