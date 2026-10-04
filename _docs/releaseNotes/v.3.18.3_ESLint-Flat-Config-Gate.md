@@ -8,7 +8,7 @@
 - **Lint works again** — native `eslint-config-next` 16 flat config replaces the crashing `FlatCompat` wrapper; `npm run lint` is now `eslint .`.
 - **Lint gates CI** — `|| true` removed; a lint error now fails the Frontend Tests job.
 - **44 → 0 errors** — escaped entities, real types instead of `any`, and React hooks refactors.
-- **Latent bug fixed** — editing a note no longer loses unsaved input if the notes list refetches while the dialog is open.
+- **Note editing pinned by tests** — the edit form now remounts per note instead of syncing props in an effect; new tests prove unsaved edits survive a refetch and switching notes loads fresh values.
 - **Reduced-motion is live** — the rotating hero text now responds immediately if the OS motion preference changes.
 
 ## Files Changed
@@ -19,13 +19,13 @@
 | Hooks refactors | `NoteForm.tsx`, `notes/page.tsx`, `useRotatingText.ts`, `useIsClient.ts` (new), `ProjectForm.tsx`, `login/page.tsx`, `ApodDialog.tsx`, `chatbot/page.tsx` |
 | Typing | `AuthContext.tsx`, `GogginsDialog.tsx`, `MarkdownMessage.tsx`, `analytics.ts`, `textarea.tsx`, `article.types.ts`, `project.types.ts` |
 | Entities | `admin/page.tsx`, `admin/projects/[id]/edit/page.tsx`, `test-sentry/page.tsx`, `InfoRail.tsx` |
-| Tests | `Apod.test.tsx`, `analytics.test.ts`, `useStripeCheckout.test.tsx` |
+| Tests | `Apod.test.tsx`, `analytics.test.ts`, `useStripeCheckout.test.tsx`, `NotesPage.test.tsx`, `NoteForm.test.tsx` |
 
 ## Tests
 
 - `npm run lint` → ✅ 0 errors, 68 warnings
 - `npx tsc --noEmit` → ✅
-- `npx jest` (frontend) → ✅ 24 suites, 175 passed, 5 skipped
+- `npx jest` (frontend) → ✅ 24 suites, 179 passed, 5 skipped
 - `npm run build` → ✅
 
 ## Before / After
@@ -35,7 +35,7 @@
 | `npm run lint` | Crashes (`Converting circular structure to JSON`) | Runs: 0 errors, 68 warnings |
 | CI lint step | Always passes (`\|\| true`) | Fails the job on any error |
 | Lint errors | 44 (hidden) | 0 |
-| Note edit during refetch | Unsaved input wiped | Input preserved |
+| `NoteForm` prop sync | Redundant effect, untested | Remount by `key`, covered by tests |
 
 ## TL;DR Changelog
 
