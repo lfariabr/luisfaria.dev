@@ -74,13 +74,48 @@ describe('NotesPage', () => {
     expect(screen.getByText('By week')).toBeInTheDocument();
   });
 
-  it('deletes a note from timeline action', async () => {
+  it('asks for confirmation before deleting a note', async () => {
     render(<NotesPage />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
 
+    expect(screen.getByRole('dialog', { name: 'Delete this note?' })).toBeInTheDocument();
+    expect(screen.getByText(/Weekly checkpoint.*will be permanently removed/)).toBeInTheDocument();
+    expect(mockDeleteNote).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete note' }));
+
     await waitFor(() => {
       expect(mockDeleteNote).toHaveBeenCalledWith('n1');
     });
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+  });
+
+  it('cancelling the confirmation keeps the note', async () => {
+    render(<NotesPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+    expect(mockDeleteNote).not.toHaveBeenCalled();
+    expect(screen.getByText('Weekly checkpoint')).toBeInTheDocument();
+  });
+
+  it('keeps the confirmation open when deletion fails', async () => {
+    mockDeleteNote.mockResolvedValueOnce(false);
+    render(<NotesPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Delete note' }));
+
+    await waitFor(() => {
+      expect(mockDeleteNote).toHaveBeenCalledWith('n1');
+    });
+    expect(screen.getByRole('dialog', { name: 'Delete this note?' })).toBeInTheDocument();
   });
 });
