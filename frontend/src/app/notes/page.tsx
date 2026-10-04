@@ -1,13 +1,21 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { BookOpenText, CalendarRange, LayoutGrid, Plus, Search, Sparkles, TimerReset } from 'lucide-react';
+import { BookOpenText, CalendarRange, LayoutGrid, Plus, Search, Sparkles, TimerReset, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { MainLayout } from '@/components/layouts/MainLayout';
 import { SessionRetry } from '@/components/auth/SessionRetry';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/lib/auth/AuthContext';
@@ -31,6 +39,7 @@ export default function NotesPage() {
   const [openCreate, setOpenCreate] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<Note | null>(null);
 
   const filters = useMemo(
     () => ({
@@ -50,6 +59,24 @@ export default function NotesPage() {
   const totalPlans = useMemo(() => notes.reduce((count, note) => count + note.nextPlans.length, 0), [notes]);
   const monthlyCount = useMemo(() => notes.filter((note) => note.periodType === 'MONTHLY').length, [notes]);
   const weeklyCount = useMemo(() => notes.length - monthlyCount, [notes.length, monthlyCount]);
+
+  const confirmDelete = async () => {
+    if (!pendingDelete) return;
+    const noteId = pendingDelete.id;
+    setDeletingId(noteId);
+    try {
+      const deleted = await deleteNote(noteId);
+      if (deleted) {
+        setPendingDelete(null);
+        await refetch();
+      } else {
+        logger.warn('Delete note mutation returned false', { noteId });
+        toast.error('Failed to delete note. Please try again.');
+      }
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   useEffect(() => {
     // Redirect only once auth is definitively resolved as logged-out, so a transient
@@ -280,19 +307,7 @@ export default function NotesPage() {
                 deletingId={deletingId}
                 expandAll={Boolean(filters.search)}
                 onEdit={(note) => setEditingNote(note)}
-                onDelete={async (noteId) => {
-                  setDeletingId(noteId);
-                  try {
-                    const deleted = await deleteNote(noteId);
-                    if (deleted) {
-                      await refetch();
-                    } else {
-                      logger.warn('Delete note mutation returned false', { noteId });
-                    }
-                  } finally {
-                    setDeletingId(null);
-                  }
-                }}
+                onDelete={(noteId) => setPendingDelete(notes.find((note) => note.id === noteId) ?? null)}
               />
             ) : (
               <NotesPeriodView notes={notes} />
@@ -324,6 +339,31 @@ export default function NotesPage() {
               }}
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(pendingDelete)} onOpenChange={(open) => !open && !deletingId && setPendingDelete(null)}>
+        <DialogContent className="border-border/60 bg-background/95 sm:max-w-md">
+          <DialogHeader className="space-y-2">
+            <DialogTitle>Delete this note?</DialogTitle>
+            <DialogDescription>
+              &ldquo;{pendingDelete?.title || 'Untitled note'}&rdquo; will be permanently removed. This can&apos;t be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              className="rounded-xl"
+              onClick={() => setPendingDelete(null)}
+              disabled={Boolean(deletingId)}
+            >
+              Cancel
+            </Button>
+            <Button variant="destructive" className="rounded-xl" onClick={confirmDelete} disabled={Boolean(deletingId)}>
+              <Trash2 className="size-4" />
+              {deletingId ? 'Deleting...' : 'Delete note'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </MainLayout>
