@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -25,14 +25,13 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const { login, loading, error } = useAuth();
 
-  // Local error state to trigger re-render
-  const [localError, setLocalError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (error) {
-      setLocalError(error);
-    }
-  }, [error]);
+  // Mirror each new auth error locally so typing can dismiss it
+  const [localError, setLocalError] = useState<string | null>(error || null);
+  const [lastError, setLastError] = useState(error);
+  if (error !== lastError) {
+    setLastError(error);
+    if (error) setLocalError(error);
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

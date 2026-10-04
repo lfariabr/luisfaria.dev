@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, X } from 'lucide-react';
+import { useIsClient } from '@/lib/hooks/useIsClient';
 
 // Schema for project form validation
 const projectSchema = z.object({
@@ -30,7 +31,7 @@ interface ProjectFormProps {
 }
 
 export default function ProjectForm({ project, onSubmit, isSubmitting }: ProjectFormProps) {
-  const [isMounted, setIsMounted] = useState(false);
+  const isMounted = useIsClient();
   const [newTech, setNewTech] = useState('');
   
   // Initialize the form with default values or existing project data
@@ -45,11 +46,6 @@ export default function ProjectForm({ project, onSubmit, isSubmitting }: Project
     }
   });
 
-  // Handle hydration mismatch by ensuring component is mounted before rendering
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-  
   // Add a new technology to the list
   const handleAddTechnology = () => {
     if (!newTech.trim()) return;

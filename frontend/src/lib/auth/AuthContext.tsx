@@ -64,7 +64,14 @@ interface AuthProviderProps {
 }
 
 // Format error message for better UX
-const formatError = (err: any): string => {
+type ErrorLike = {
+  message?: string;
+  networkError?: unknown;
+  graphQLErrors?: ReadonlyArray<{ message?: string; extensions?: { code?: unknown } }>;
+};
+
+const formatError = (error: unknown): string => {
+  const err = (error ?? {}) as ErrorLike;
   // Check if it's an Apollo error with GraphQL errors
   if (err.graphQLErrors && err.graphQLErrors.length > 0) {
     const graphQLError = err.graphQLErrors[0];

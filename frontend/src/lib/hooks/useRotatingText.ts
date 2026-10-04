@@ -1,8 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 
 const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
+
+const subscribeToMotionPreference = (onChange: () => void) => {
+  const query = window.matchMedia(REDUCED_MOTION);
+  query.addEventListener('change', onChange);
+  return () => query.removeEventListener('change', onChange);
+};
 
 type Options = {
   /** Index rendered on first paint (SSR) and kept when motion is reduced. */
@@ -19,22 +25,20 @@ type Options = {
  */
 export function useRotatingText(length: number, { start = 0, intervalMs = 2950 }: Options = {}) {
   const [index, setIndex] = useState(start);
-  const [isRotating, setIsRotating] = useState(false);
+  const motionAllowed = useSyncExternalStore(
+    subscribeToMotionPreference,
+    () => !window.matchMedia(REDUCED_MOTION).matches,
+    () => false
+  );
+  const isRotating = motionAllowed && length > 1;
 
   useEffect(() => {
-    if (length <= 1 || typeof window === 'undefined') return;
-    if (window.matchMedia(REDUCED_MOTION).matches) return;
-
-    setIsRotating(true);
+    if (!isRotating) return;
     const id = window.setInterval(() => {
       setIndex((i) => (i + 1) % length);
     }, intervalMs);
-
-    return () => {
-      window.clearInterval(id);
-      setIsRotating(false);
-    };
-  }, [length, intervalMs]);
+    return () => window.clearInterval(id);
+  }, [isRotating, length, intervalMs]);
 
   return { index, isRotating };
 }

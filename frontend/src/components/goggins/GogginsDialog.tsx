@@ -30,6 +30,8 @@ const schema = z.object({
   explicitMode: z.boolean().default(false),
 });
 
+type GraphQLErrorLike = { message?: string; extensions?: Record<string, unknown> };
+
 export type GogginsDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -61,7 +63,7 @@ export function GogginsDialog({ open, onOpenChange }: GogginsDialogProps) {
   // useForm generics: <Input, Context, Output>
   // With zod default(), input type has optional fields while output is required.
   // Align them to fix the Resolver type mismatch.
-  const form = useForm<z.input<typeof schema>, any, z.output<typeof schema>>({
+  const form = useForm<z.input<typeof schema>, unknown, z.output<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: { userEmail: '', explicitMode: false },
     mode: 'onSubmit',
@@ -144,6 +146,11 @@ export function GogginsDialog({ open, onOpenChange }: GogginsDialogProps) {
     setShowEmail(false);
     // Clear any stale countdown before a new attempt
     setSecondsUntilReset(null);
+    const applyRateLimitExtensions = (ext: Record<string, unknown> | undefined) => {
+      if (typeof ext?.limit === 'number') setLimit(ext.limit);
+      if (typeof ext?.remaining === 'number') setRemaining(ext.remaining);
+      if (typeof ext?.resetIn === 'number') setSecondsUntilReset(ext.resetIn);
+    };
     try {
       const { data, errors } = await mutate({
         variables: { input: values },
@@ -152,12 +159,8 @@ export function GogginsDialog({ open, onOpenChange }: GogginsDialogProps) {
 
       // If GraphQL returned errors with 200 OK (e.g., Shield rate limit), surface them
       const gqError = errors?.[0];
-      const ext: any = gqError?.extensions;
       if (gqError) {
-        if (typeof ext?.limit === 'number') setLimit(ext.limit);
-        if (typeof ext?.remaining === 'number') setRemaining(ext.remaining);
-        const resetInErr: number | undefined = ext?.resetIn;
-        if (typeof resetInErr === 'number') setSecondsUntilReset(resetInErr);
+        applyRateLimitExtensions(gqError.extensions);
         setErrorText(gqError.message || 'Something went wrong');
         return; // stop; we already showed the error
       }
@@ -182,14 +185,10 @@ export function GogginsDialog({ open, onOpenChange }: GogginsDialogProps) {
           setSecondsUntilReset(null);
         }
       }
-    } catch (e: any) {
-      const ext = e?.graphQLErrors?.[0]?.extensions as any;
-      if (typeof ext?.limit === 'number') setLimit(ext.limit);
-      if (typeof ext?.remaining === 'number') setRemaining(ext.remaining);
-      const resetIn: number | undefined = ext?.resetIn;
-      if (typeof resetIn === 'number') setSecondsUntilReset(resetIn);
-      const message = e?.graphQLErrors?.[0]?.message || 'Something went wrong';
-      setErrorText(message);
+    } catch (e) {
+      const gqError = (e as { graphQLErrors?: ReadonlyArray<GraphQLErrorLike> } | null)?.graphQLErrors?.[0];
+      applyRateLimitExtensions(gqError?.extensions);
+      setErrorText(gqError?.message || 'Something went wrong');
     }
   };
 

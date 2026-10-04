@@ -1,12 +1,14 @@
 import { trackClientEvent } from '@/utils/analytics';
 
+type GtagWindow = Window & { gtag?: (...args: unknown[]) => void };
+
 describe('trackClientEvent', () => {
   let consoleSpy: jest.SpyInstance;
 
   beforeEach(() => {
     consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
     // Start each test with no gtag
-    delete (window as any).gtag;
+    delete (window as GtagWindow).gtag;
   });
 
   afterEach(() => {
@@ -15,7 +17,7 @@ describe('trackClientEvent', () => {
 
   it('calls window.gtag when it is defined', () => {
     const gtag = jest.fn();
-    (window as any).gtag = gtag;
+    (window as GtagWindow).gtag = gtag;
 
     trackClientEvent('stripe_fab_opened', { foo: 'bar' });
 
@@ -35,7 +37,7 @@ describe('trackClientEvent', () => {
 
   it('uses empty object as default payload when none is provided', () => {
     const gtag = jest.fn();
-    (window as any).gtag = gtag;
+    (window as GtagWindow).gtag = gtag;
 
     trackClientEvent('stripe_checkout_started');
 
@@ -43,7 +45,7 @@ describe('trackClientEvent', () => {
   });
 
   it('swallows errors thrown by gtag and does not propagate', () => {
-    (window as any).gtag = () => {
+    (window as GtagWindow).gtag = () => {
       throw new Error('gtag exploded');
     };
 

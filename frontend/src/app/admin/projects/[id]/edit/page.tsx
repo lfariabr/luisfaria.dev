@@ -71,7 +71,7 @@ export default function EditProjectPage({ params }: EditProjectPageProps) {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Edit Project</h1>
         <p className="text-muted-foreground">
-          Update project "{project.title}"
+          Update project &quot;{project.title}&quot;
         </p>
       </div>
       

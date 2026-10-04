@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { CalendarDays, Goal, Sparkles, Target, WandSparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,17 +41,6 @@ export function NoteForm({ note, loading = false, onSubmit }: NoteFormProps) {
   const [accomplishments, setAccomplishments] = useState(toListInput(note?.accomplishments));
   const [nextPlans, setNextPlans] = useState(toListInput(note?.nextPlans));
   const [tags, setTags] = useState(toListInput(note?.tags));
-
-  useEffect(() => {
-    if (!note) return;
-    setTitle(note.title ?? '');
-    setContent(note.content ?? '');
-    setDate(toDateInputValue(note.date));
-    setPeriodType(note.periodType);
-    setAccomplishments(toListInput(note.accomplishments));
-    setNextPlans(toListInput(note.nextPlans));
-    setTags(toListInput(note.tags));
-  }, [note]);
 
   const suggestedTitle = buildSuggestedTitle(periodType, date);
 

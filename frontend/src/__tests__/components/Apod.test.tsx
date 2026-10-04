@@ -10,7 +10,7 @@ import { GraphQLError } from "graphql";
 
 const mockTrackClientEvent = jest.fn();
 jest.mock("@/utils/analytics", () => ({
-  trackClientEvent: (...args: any[]) => mockTrackClientEvent(...args),
+  trackClientEvent: (...args: unknown[]) => mockTrackClientEvent(...args),
 }));
 
 jest.mock("@/utils/discord", () => ({

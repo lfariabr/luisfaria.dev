@@ -57,6 +57,5 @@ export interface ProjectInput {
  * Matches the GraphQL ProjectUpdateInput type from the backend
  * This is likely the same structure as ProjectInput but as a separate type in the GraphQL schema
  */
-export interface ProjectUpdateInput extends ProjectInput {
-  // Same fields as ProjectInput, but as a separate type for the GraphQL schema
-}
+// Same fields as ProjectInput, but a separate name for the GraphQL schema
+export type ProjectUpdateInput = ProjectInput;

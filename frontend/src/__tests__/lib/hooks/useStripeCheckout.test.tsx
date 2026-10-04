@@ -121,11 +121,12 @@ const networkErrorMock: MockedResponse = {
 };
 
 function wrapper(mocks: MockedResponse[]) {
-  return ({ children }: { children: React.ReactNode }) => (
+  const Wrapper = ({ children }: { children: React.ReactNode }) => (
     <MockedProvider mocks={mocks} addTypename={false}>
       {children}
     </MockedProvider>
   );
+  return Wrapper;
 }
 
 describe('useStripeCheckout', () => {

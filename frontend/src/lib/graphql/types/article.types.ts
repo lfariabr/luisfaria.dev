@@ -48,9 +48,8 @@ export interface ArticleInput {
  * Input type for updating an existing article
  * Matches the GraphQL ArticleUpdateInput type from the backend
  */
-export interface ArticleUpdateInput extends ArticleInput {
-  // Same fields as ArticleInput, but as a separate type for the GraphQL schema
-}
+// Same fields as ArticleInput, but a separate name for the GraphQL schema
+export type ArticleUpdateInput = ArticleInput;
 
 /**
  * Response from article mutations
