@@ -105,7 +105,7 @@ export function InfoRail({
             <div className="space-y-3">
               <div>
                 <h3 className="font-semibold text-blue-900 dark:text-blue-100">
-                  Sign in to chat with Luis' AI Assistant
+                  Sign in to chat with Luis&apos; AI Assistant
                 </h3>
                 <p className="text-sm text-blue-800/80 dark:text-blue-200/80">
                   Create an account to unlock full conversations ({defaultLimit} messages/hour).

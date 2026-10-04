@@ -74,6 +74,20 @@ describe('NotesPage', () => {
     expect(screen.getByText('By week')).toBeInTheDocument();
   });
 
+  it('keeps unsaved edits when the notes list re-renders with fresh objects', () => {
+    const { rerender } = render(<NotesPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+    const title = screen.getByLabelText('Title');
+    expect(title).toHaveValue('Weekly checkpoint');
+
+    fireEvent.change(title, { target: { value: 'Unsaved title' } });
+    // useNotes returns new note objects on every render, like an Apollo refetch
+    rerender(<NotesPage />);
+
+    expect(screen.getByLabelText('Title')).toHaveValue('Unsaved title');
+  });
+
   it('asks for confirmation before deleting a note', async () => {
     render(<NotesPage />);
 

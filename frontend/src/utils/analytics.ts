@@ -4,7 +4,7 @@ export function trackClientEvent(eventName: string, payload?: ClientEventPayload
   try {
     if (typeof window === 'undefined') return;
     const w = window as unknown as {
-      gtag?: (...args: any[]) => void;
+      gtag?: (...args: unknown[]) => void;
     };
 
     if (typeof w.gtag === 'function') {

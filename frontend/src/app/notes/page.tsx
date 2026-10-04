@@ -324,6 +324,7 @@ export default function NotesPage() {
           </DialogHeader>
           {editingNote && (
             <NoteForm
+              key={editingNote.id}
               note={editingNote}
               loading={mutationLoading.update}
               onSubmit={async (input) => {

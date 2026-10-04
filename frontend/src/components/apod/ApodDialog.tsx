@@ -49,7 +49,7 @@ export function ApodDialog({ open, onOpenChange }: ApodDialogProps) {
   const { isAuthenticated } = useAuth();
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [shouldShowReadMore, setShouldShowReadMore] = useState(false);
+  const [hasVisualOverflow, setHasVisualOverflow] = useState(false);
   const explanationRef = useRef<HTMLDivElement>(null);
   
   // Rate limit state (for authenticated historical browsing)
@@ -61,13 +61,28 @@ export function ApodDialog({ open, onOpenChange }: ApodDialogProps) {
   const [secondsUntilReset, setSecondsUntilReset] = useState<number | null>(null);
   const [previousDate, setPreviousDate] = useState<string | null>(null);
   
-  useEffect(() => {
+  // Clear historical browsing state on logout
+  const [prevIsAuthenticated, setPrevIsAuthenticated] = useState(isAuthenticated);
+  if (isAuthenticated !== prevIsAuthenticated) {
+    setPrevIsAuthenticated(isAuthenticated);
     if (!isAuthenticated) {
       setSelectedDate(null);
       setRateLimitInfo(null);
       setSecondsUntilReset(null);
     }
-  }, [isAuthenticated]);
+  }
+
+  // Reset rate limit and expansion state when the dialog closes
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (!open) {
+      setRateLimitInfo(null);
+      setSecondsUntilReset(null);
+      setPreviousDate(null);
+      setIsExpanded(false);
+    }
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -108,6 +123,8 @@ export function ApodDialog({ open, onOpenChange }: ApodDialogProps) {
         const limit = ext.limit as number;
         const remaining = ext.remaining as number;
         const resetTime = ext.resetTime as string;
+        // Syncing from Apollo's error (external) into a wall-clock countdown; Date.now() can't run during render.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setRateLimitInfo({ limit, remaining, resetTime });
         // Calculate seconds until reset
         const resetMs = new Date(resetTime).getTime() - Date.now();
@@ -166,42 +183,23 @@ export function ApodDialog({ open, onOpenChange }: ApodDialogProps) {
     return () => clearInterval(id);
   }, [secondsUntilReset]);
 
-  // Reset rate limit state when dialog closes
-  useEffect(() => {
-    if (!open) {
-      setRateLimitInfo(null);
-      setSecondsUntilReset(null);
-      setPreviousDate(null);
-    }
-  }, [open]);
+  // Show "Read more" when the explanation is long by character count, or visually overflows
+  const explanation = apod?.explanation;
+  const isLongExplanation = Boolean(explanation && explanation.length > READ_MORE_CHAR_THRESHOLD);
+  const shouldShowReadMore = Boolean(explanation) && (isLongExplanation || hasVisualOverflow);
 
-  // Check if explanation text exceeds threshold
-  useEffect(() => {
-    if (apod?.explanation) {
-      // Primary check: character count threshold
-      const isLong = apod.explanation.length > READ_MORE_CHAR_THRESHOLD;
-      
-      // Secondary check: visual overflow (scroll height vs client height)
-      if (explanationRef.current) {
-        const scrollHeight = explanationRef.current.scrollHeight;
-        const clientHeight = explanationRef.current.clientHeight;
-        const hasVisualOverflow = scrollHeight > clientHeight;
-        setShouldShowReadMore(isLong || hasVisualOverflow);
-      } else {
-        setShouldShowReadMore(isLong);
-      }
-    } else {
-      setShouldShowReadMore(false);
-      setIsExpanded(false);
-    }
-  }, [apod?.explanation]);
+  const [prevExplanation, setPrevExplanation] = useState(explanation);
+  if (explanation !== prevExplanation) {
+    setPrevExplanation(explanation);
+    setHasVisualOverflow(false);
+    if (!explanation) setIsExpanded(false);
+  }
 
-  // Reset expansion state when dialog closes or apod changes
   useEffect(() => {
-    if (!open) {
-      setIsExpanded(false);
-    }
-  }, [open]);
+    const element = explanationRef.current;
+    if (!explanation || !element) return;
+    setHasVisualOverflow(element.scrollHeight > element.clientHeight);
+  }, [explanation]);
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;

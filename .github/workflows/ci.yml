@@ -138,8 +138,7 @@ jobs:
         # --force needed for React 19 peer dependency resolution
 
       - name: Run linting
-        run: npm run lint || true
-        # TODO: Fix eslint-config-next version mismatch, then remove '|| true'
+        run: npm run lint
 
       - name: Run tests
         run: npm test

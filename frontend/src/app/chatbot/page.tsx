@@ -56,10 +56,44 @@ export default function ChatbotPage() {
   const previousStatusRef = useRef<RateStatus>('guest');
   const usageEventCounterRef = useRef(0);
 
+  const pushUsageEvent = useCallback((description: string) => {
+    usageEventCounterRef.current += 1;
+    const uniqueId = `usage-${Date.now()}-${usageEventCounterRef.current}`;
+    setUsageHistory((prev) => {
+      const next: UsageHistoryEntry[] = [
+        ...prev,
+        { id: uniqueId, description, timestamp: new Date() },
+      ];
+      return next.slice(-5);
+    });
+  }, []);
+
+  const activeTimeoutsRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
+
+  useEffect(() => {
+    return () => {
+      // Clear all pending timeouts on unmount
+      activeTimeoutsRef.current.forEach((timeoutId) => clearTimeout(timeoutId));
+      activeTimeoutsRef.current.clear();
+    }
+  }, []);
+
+  const pushRateNotice = useCallback((notice: Omit<RateNotice, 'id'>) => {
+    const id = `notice-${Date.now()}`;
+    setRateNotices((prev) => [...prev, { ...notice, id }]);
+    const timeoutId = setTimeout(() => {
+      setRateNotices((prev) => prev.filter((n) => n.id !== id));
+      activeTimeoutsRef.current.delete(id);
+    }, 4000);
+    activeTimeoutsRef.current.set(id, timeoutId);
+  }, []);
+
   // Update countdown timer for rate limit reset
   useEffect(() => {
     const resetTime = rateLimitInfo?.resetTime;
     if (!resetTime) {
+      // Wall-clock countdown synced from rate-limit data; Date.now() can't run during render.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTimeUntilReset('');
       return;
     }
@@ -172,38 +206,6 @@ export default function ChatbotPage() {
     }
   });
 
-  const pushUsageEvent = useCallback((description: string) => {
-    usageEventCounterRef.current += 1;
-    const uniqueId = `usage-${Date.now()}-${usageEventCounterRef.current}`;
-    setUsageHistory((prev) => {
-      const next: UsageHistoryEntry[] = [
-        ...prev,
-        { id: uniqueId, description, timestamp: new Date() },
-      ];
-      return next.slice(-5);
-    });
-  }, []);
-
-  const activeTimeoutsRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
-  
-  useEffect(() => {
-    return () => {
-      // Clear all pending timeouts on unmount
-      activeTimeoutsRef.current.forEach((timeoutId) => clearTimeout(timeoutId));
-      activeTimeoutsRef.current.clear();
-    }
-  }, []);
-
-  const pushRateNotice = useCallback((notice: Omit<RateNotice, 'id'>) => {
-    const id = `notice-${Date.now()}`;
-    setRateNotices((prev) => [...prev, { ...notice, id }]);
-    const timeoutId = setTimeout(() => {
-      setRateNotices((prev) => prev.filter((n) => n.id !== id));
-      activeTimeoutsRef.current.delete(id);
-    }, 4000);
-    activeTimeoutsRef.current.set(id, timeoutId);
-  }, []);
-
   const handleSendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
@@ -282,6 +284,8 @@ export default function ChatbotPage() {
     if (rateStatus !== previous) {
       previousStatusRef.current = rateStatus;
       if (rateStatus === 'warning') {
+        // Transition notice (sets state via a stable callback); move into the mutation handlers in a follow-up.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         pushRateNotice({
           tone: 'warning',
           message: `You're nearing the hourly cap. ${remaining} message(s) left.`,
@@ -373,7 +377,7 @@ export default function ChatbotPage() {
               </div>
             </div>
             <div className="text-xs md:text-sm text-muted-foreground text-center space-y-1 md:space-y-2">
-              <p className="hidden md:block">This AI assistant is powered by a custom model trained on Luis' technical expertise and preferences.</p>
+              <p className="hidden md:block">This AI assistant is powered by a custom model trained on Luis&apos; technical expertise and preferences.</p>
               <p className="hidden md:block">All conversations are private and not stored longer than needed to provide the service.</p>
               {rateLimitInfo?.resetTime && rateLimitInfo.remaining <= 0 && (
                 <p className="text-amber-500">Rate limit reached. Next message available in {timeUntilReset}.</p>

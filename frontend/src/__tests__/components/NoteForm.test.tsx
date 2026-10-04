@@ -78,6 +78,27 @@ describe('NoteForm', () => {
     });
   });
 
+  it('loads the new note when remounted with a different key', () => {
+    const base = {
+      userId: 'u1',
+      date: '2026-03-15T00:00:00.000Z',
+      periodType: 'WEEKLY' as const,
+      accomplishments: [],
+      nextPlans: [],
+      tags: [],
+      createdAt: '',
+      updatedAt: '',
+    };
+    const { rerender } = render(
+      <NoteForm key="n1" onSubmit={jest.fn()} note={{ ...base, id: 'n1', title: 'First' }} />
+    );
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Edited first' } });
+
+    rerender(<NoteForm key="n2" onSubmit={jest.fn()} note={{ ...base, id: 'n2', title: 'Second' }} />);
+
+    expect(screen.getByLabelText('Title')).toHaveValue('Second');
+  });
+
   it('prefills edit form one item per line', () => {
     render(
       <NoteForm

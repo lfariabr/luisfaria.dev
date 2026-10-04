@@ -7,11 +7,11 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import remarkGfm from 'remark-gfm';
 import { cn } from '@/lib/utils';
-import type { Components } from 'react-markdown';
+import type { Components, ExtraProps } from 'react-markdown';
 
 type CodeProps = React.HTMLAttributes<HTMLElement> & {
   inline?: boolean;
-  node?: any;
+  node?: unknown;
   className?: string;
   children?: React.ReactNode;
 };
@@ -44,9 +44,11 @@ export function MarkdownMessage({
   };
 
   // Custom component to handle paragraphs and their children
-  const Paragraph = ({ node, children, ...props }: any) => {
+  const Paragraph = ({ node, children, ...props }: React.ComponentProps<'p'> & ExtraProps) => {
     // Check if this paragraph contains only an image
-    const hasOnlyImage = node?.children?.length === 1 && node?.children?.[0]?.tagName === 'img';
+    const firstChild = node?.children?.[0];
+    const hasOnlyImage =
+      node?.children?.length === 1 && firstChild?.type === 'element' && firstChild.tagName === 'img';
     
     // Check if any direct child is a block-level element or an image
     const hasBlockChild = Children.toArray(children).some(child => {

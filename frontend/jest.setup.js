@@ -24,9 +24,7 @@ class ResizeObserverMock {
   disconnect() {}
 }
 if (typeof window.ResizeObserver === 'undefined') {
-  // @ts-ignore
   window.ResizeObserver = ResizeObserverMock;
-  // @ts-ignore
   global.ResizeObserver = ResizeObserverMock;
 }
 
