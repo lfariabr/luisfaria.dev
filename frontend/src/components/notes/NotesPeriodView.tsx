@@ -50,7 +50,7 @@ export function NotesPeriodView({ notes }: NotesPeriodViewProps) {
           : 'Mixed';
 
       return (
-        <section key={key} className="rounded-3xl border border-border/60 bg-background/80 p-4 shadow-sm">
+        <section key={key} className="min-w-0 rounded-3xl border border-border/60 bg-background/80 p-3 shadow-sm sm:p-4">
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
               <p className="text-sm font-semibold">{formatLabel(key)}</p>
@@ -62,27 +62,27 @@ export function NotesPeriodView({ notes }: NotesPeriodViewProps) {
               {groupLabel}
             </Badge>
           </div>
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             {groupNotes.map((note) => (
               <div
                 key={note.id}
                 className="rounded-2xl border border-border/50 bg-card/90 px-3 py-3 transition-colors hover:border-border"
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="font-medium">
+                  <p className="min-w-0 font-medium">
                     {note.title || (note.periodType === 'MONTHLY' ? 'Monthly update' : 'Weekly update')}
                   </p>
                   <span className="text-xs text-muted-foreground">{formatSafeDate(note.date, 'dd MMM')}</span>
                 </div>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {note.accomplishments.slice(0, 2).map((item, index) => (
-                    <Badge key={`${note.id}-accomplishment-${index}`} variant="secondary" className="max-w-full truncate">
-                      {item}
+                    <Badge key={`${note.id}-accomplishment-${index}`} variant="secondary" className="max-w-full">
+                      <span className="truncate">{item}</span>
                     </Badge>
                   ))}
                   {note.nextPlans.slice(0, 1).map((item, index) => (
-                    <Badge key={`${note.id}-plan-${index}`} variant="outline" className="max-w-full truncate">
-                      Next: {item}
+                    <Badge key={`${note.id}-plan-${index}`} variant="outline" className="max-w-full">
+                      <span className="truncate">Next: {item}</span>
                     </Badge>
                   ))}
                 </div>
@@ -95,9 +95,9 @@ export function NotesPeriodView({ notes }: NotesPeriodViewProps) {
   };
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
       <Card className="border-border/60 bg-gradient-to-br from-amber-500/[0.08] via-card to-card py-0 shadow-sm">
-        <CardHeader className="border-b border-border/60 pb-5 pt-6">
+        <CardHeader className="border-b border-border/60 px-4 pb-4 pt-5 sm:px-6 sm:pb-5 sm:pt-6">
           <div className="flex items-center gap-3">
             <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-3 text-amber-700 dark:text-amber-300">
               <CalendarRange className="size-5" />
@@ -108,7 +108,7 @@ export function NotesPeriodView({ notes }: NotesPeriodViewProps) {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-3 px-3 pb-4 sm:space-y-4 sm:px-6 sm:pb-6">
           {renderGroup(
             monthEntries,
             'No monthly grouping available yet.',
@@ -119,7 +119,7 @@ export function NotesPeriodView({ notes }: NotesPeriodViewProps) {
       </Card>
 
       <Card className="border-border/60 bg-gradient-to-br from-sky-500/[0.08] via-card to-card py-0 shadow-sm">
-        <CardHeader className="border-b border-border/60 pb-5 pt-6">
+        <CardHeader className="border-b border-border/60 px-4 pb-4 pt-5 sm:px-6 sm:pb-5 sm:pt-6">
           <div className="flex items-center gap-3">
             <div className="rounded-2xl border border-sky-500/20 bg-sky-500/10 p-3 text-sky-700 dark:text-sky-300">
               <Layers3 className="size-5" />
@@ -130,7 +130,7 @@ export function NotesPeriodView({ notes }: NotesPeriodViewProps) {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-3 px-3 pb-4 sm:space-y-4 sm:px-6 sm:pb-6">
           {renderGroup(weekEntries, 'No weekly grouping available yet.', (key) => (key === 'unknown' ? 'Unknown week' : key), 'outline')}
         </CardContent>
       </Card>

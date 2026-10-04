@@ -1,19 +1,20 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { NoteForm, parseListInput } from '@/components/notes/NoteForm';
+import { buildSuggestedTitle, NoteForm, parseListInput } from '@/components/notes/NoteForm';
 
 describe('NoteForm', () => {
   it('omits empty hidden content on submit', async () => {
     const onSubmit = jest.fn().mockResolvedValue(undefined);
 
     render(<NoteForm onSubmit={onSubmit} />);
+    fireEvent.change(screen.getByLabelText(/Checkpoint date/), { target: { value: '2026-10-05' } });
 
     fireEvent.click(screen.getByRole('button', { name: 'Create note' }));
 
     await waitFor(() => {
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
-          title: 'Weekly update',
+          title: 'Weekly update 05/10/2026',
           content: undefined,
           periodType: 'WEEKLY',
           accomplishments: [],
@@ -97,6 +98,26 @@ describe('NoteForm', () => {
     );
 
     expect(screen.getByLabelText('Accomplishments')).toHaveValue('A, with comma\nB');
+  });
+});
+
+describe('title autofill', () => {
+  it('suggests a dated title as placeholder and fills it on Autofill', () => {
+    render(<NoteForm onSubmit={jest.fn()} />);
+    fireEvent.change(screen.getByLabelText(/Checkpoint date/), { target: { value: '2026-10-05' } });
+
+    const title = screen.getByLabelText('Title');
+    expect(title).toHaveAttribute('placeholder', 'Weekly update 05/10/2026');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Autofill' }));
+    expect(title).toHaveValue('Weekly update 05/10/2026');
+    expect(screen.queryByRole('button', { name: 'Autofill' })).not.toBeInTheDocument();
+  });
+
+  it('builds weekly and monthly suggestions from the date input', () => {
+    expect(buildSuggestedTitle('WEEKLY', '2026-10-05')).toBe('Weekly update 05/10/2026');
+    expect(buildSuggestedTitle('MONTHLY', '2026-09-30')).toBe('Monthly update 30/09/2026');
+    expect(buildSuggestedTitle('WEEKLY', '')).toBe('Weekly update');
   });
 });
 

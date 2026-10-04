@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { CalendarDays, Goal, Sparkles, Target } from 'lucide-react';
+import { CalendarDays, Goal, Sparkles, Target, WandSparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,6 +26,13 @@ export const parseListInput = (value: string, { commaFallback = true } = {}): st
 
 const toListInput = (items: string[] | undefined) => (items ?? []).join('\n');
 
+// e.g. "Weekly update 05/10/2026", built from the checkpoint date (defaults to today).
+export const buildSuggestedTitle = (periodType: NotePeriodType, dateInputValue: string) => {
+  const [year, month, day] = dateInputValue.split('-');
+  const label = periodType === 'MONTHLY' ? 'Monthly update' : 'Weekly update';
+  return year && month && day ? `${label} ${day}/${month}/${year}` : label;
+};
+
 export function NoteForm({ note, loading = false, onSubmit }: NoteFormProps) {
   const [title, setTitle] = useState(note?.title ?? '');
   const [content, setContent] = useState(note?.content ?? '');
@@ -46,14 +53,15 @@ export function NoteForm({ note, loading = false, onSubmit }: NoteFormProps) {
     setTags(toListInput(note.tags));
   }, [note]);
 
+  const suggestedTitle = buildSuggestedTitle(periodType, date);
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    const defaultTitle = periodType === 'MONTHLY' ? 'Monthly update' : 'Weekly update';
     const normalizedContent = content.trim() || undefined;
     const listOptions = { commaFallback: !note };
 
     await onSubmit({
-      title: title.trim() || defaultTitle,
+      title: title.trim() || suggestedTitle,
       content: normalizedContent,
       date: `${date}T00:00:00.000Z`,
       periodType,
@@ -81,12 +89,26 @@ export function NoteForm({ note, loading = false, onSubmit }: NoteFormProps) {
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="note-title">Title</Label>
+          <div className="flex items-center justify-between gap-2">
+            <Label htmlFor="note-title">Title</Label>
+            {title !== suggestedTitle && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setTitle(suggestedTitle)}
+                className="h-7 rounded-full px-2.5 text-xs text-primary"
+              >
+                <WandSparkles className="size-3.5" />
+                Autofill
+              </Button>
+            )}
+          </div>
           <Input
             id="note-title"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
-            placeholder="Weekly update"
+            placeholder={suggestedTitle}
             className="rounded-2xl"
           />
         </div>
