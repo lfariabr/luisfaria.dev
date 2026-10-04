@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { MainLayout } from '@/components/layouts/MainLayout';
 import { SessionRetry } from '@/components/auth/SessionRetry';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -78,17 +78,17 @@ export default function NotesPage() {
 
   return (
     <MainLayout>
-      <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-10 sm:px-6 lg:px-8">
-        <section className="overflow-hidden rounded-[2rem] border border-border/60 bg-gradient-to-br from-sky-500/[0.16] via-background to-amber-500/[0.12] shadow-sm">
-          <div className="grid gap-8 px-6 py-8 lg:grid-cols-[minmax(0,1.25fr)_360px] lg:px-8 lg:py-10">
-            <div className="space-y-6">
-              <div className="inline-flex w-fit items-center gap-2 rounded-full border border-white/60 bg-white/70 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-foreground/80 backdrop-blur dark:border-white/10 dark:bg-white/5">
+      <div className="mx-auto w-full max-w-7xl space-y-4 px-4 py-6 sm:space-y-6 sm:px-6 sm:py-10 lg:px-8">
+        <section className="overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br sm:rounded-[2rem] from-sky-500/[0.16] via-background to-amber-500/[0.12] shadow-sm">
+          <div className="grid gap-5 px-5 py-6 sm:gap-8 sm:px-6 sm:py-8 lg:grid-cols-[minmax(0,1.25fr)_360px] lg:px-8 lg:py-10">
+            <div className="space-y-4 sm:space-y-6">
+              <div className="inline-flex w-fit items-center gap-2 rounded-full border border-white/60 bg-white/70 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.24em] text-foreground/80 backdrop-blur dark:border-white/10 dark:bg-white/5">
                 <Sparkles className="size-4" />
                 Private study cockpit
               </div>
-              <div className="space-y-4">
-                <h1 className="text-4xl font-black tracking-tight sm:text-5xl">My Notes & Flashcards</h1>
-                <p className="max-w-2xl text-base text-muted-foreground sm:text-lg">
+              <div className="space-y-2 sm:space-y-4">
+                <h1 className="text-3xl font-black tracking-tight sm:text-5xl">My Notes & Flashcards</h1>
+                <p className="max-w-2xl text-sm text-muted-foreground sm:text-lg">
                   Review your weekly and monthly checkpoints in a premium workspace built for quick scanning, cleaner recall,
                   and sharper next moves.
                 </p>
@@ -123,7 +123,7 @@ export default function NotesPage() {
                 </Dialog>
                 <Button
                   variant="outline"
-                  className="rounded-full border-white/60 bg-white/60 px-5 backdrop-blur dark:border-white/10 dark:bg-white/5"
+                  className="hidden rounded-full border-white/60 bg-white/60 px-5 backdrop-blur sm:inline-flex dark:border-white/10 dark:bg-white/5"
                   onClick={() => setViewMode(viewMode === 'timeline' ? 'period' : 'timeline')}
                 >
                   {viewMode === 'timeline' ? <CalendarRange className="size-4" /> : <LayoutGrid className="size-4" />}
@@ -132,34 +132,32 @@ export default function NotesPage() {
               </div>
             </div>
 
-            <Card className="border-white/50 bg-white/75 py-0 shadow-lg backdrop-blur dark:border-white/10 dark:bg-white/6">
-              <CardHeader className="border-b border-border/50 pb-5 pt-6">
-                <CardTitle className="text-lg">At a glance</CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-3 py-6 sm:grid-cols-2">
-                <div className="rounded-2xl border border-border/60 bg-background/85 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Checkpoints</p>
-                  <p className="mt-2 text-3xl font-bold">{notes.length}</p>
-                </div>
-                <div className="rounded-2xl border border-border/60 bg-background/85 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Accomplishments</p>
-                  <p className="mt-2 text-3xl font-bold">{totalAccomplishments}</p>
-                </div>
-                <div className="rounded-2xl border border-border/60 bg-background/85 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Weekly cards</p>
-                  <p className="mt-2 text-3xl font-bold">{weeklyCount}</p>
-                </div>
-                <div className="rounded-2xl border border-border/60 bg-background/85 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Next moves</p>
-                  <p className="mt-2 text-3xl font-bold">{totalPlans}</p>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="lg:self-end">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">At a glance</p>
+              <dl className="grid grid-cols-4 gap-2 lg:grid-cols-2 lg:gap-3">
+                {[
+                  { label: 'Checkpoints', value: notes.length },
+                  { label: 'Wins', value: totalAccomplishments },
+                  { label: 'Weekly', value: weeklyCount },
+                  { label: 'Next moves', value: totalPlans },
+                ].map((stat) => (
+                  <div
+                    key={stat.label}
+                    className="flex min-w-0 flex-col-reverse gap-1.5 rounded-2xl border border-border/60 bg-background/70 px-2 py-2.5 text-center backdrop-blur lg:p-4 lg:text-left"
+                  >
+                    <dt className="truncate text-[10px] font-medium uppercase tracking-wide text-muted-foreground lg:text-xs">
+                      {stat.label}
+                    </dt>
+                    <dd className="text-xl font-bold leading-none lg:text-3xl">{stat.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
           </div>
         </section>
 
         <Card className="border-border/60 bg-card/95 py-0 shadow-sm">
-          <CardContent className="grid gap-4 px-5 py-5 md:grid-cols-[minmax(0,1.4fr)_220px_auto] md:items-center">
+          <CardContent className="grid gap-3 p-3 sm:gap-4 sm:px-5 sm:py-5 md:grid-cols-[minmax(0,1.4fr)_220px_auto] md:items-center">
             <label className="relative block">
               <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -221,7 +219,7 @@ export default function NotesPage() {
                 : 'Compare momentum across weeks and months.'}
             </p>
           </div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/80 px-4 py-2 text-sm text-muted-foreground">
+          <div className="hidden items-center gap-2 rounded-full border border-border/60 bg-background/80 px-4 py-2 text-sm sm:inline-flex text-muted-foreground">
             <TimerReset className="size-4" />
             {periodType ? `${periodType.toLowerCase()} notes only` : 'All periods visible'}
           </div>
@@ -280,6 +278,7 @@ export default function NotesPage() {
               <NotesTimelineView
                 notes={notes}
                 deletingId={deletingId}
+                expandAll={Boolean(filters.search)}
                 onEdit={(note) => setEditingNote(note)}
                 onDelete={async (noteId) => {
                   setDeletingId(noteId);

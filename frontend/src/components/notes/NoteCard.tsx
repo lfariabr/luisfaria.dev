@@ -81,7 +81,7 @@ export function NoteCard({ note, onEdit, onDelete, deleting = false }: NoteCardP
             <ul className="space-y-2 text-sm text-muted-foreground">
               {note.accomplishments.map((item, index) => (
                 <li key={`accomplishment-${item}-${index}`} className="flex gap-2">
-                  <span className="mt-1 size-1.5 rounded-full bg-emerald-500" />
+                  <span className="mt-[0.45rem] size-1.5 shrink-0 rounded-full bg-emerald-500" />
                   <span>{item}</span>
                 </li>
               ))}
@@ -97,7 +97,7 @@ export function NoteCard({ note, onEdit, onDelete, deleting = false }: NoteCardP
             <ul className="space-y-2 text-sm text-muted-foreground">
               {note.nextPlans.map((item, index) => (
                 <li key={`plan-${item}-${index}`} className="flex gap-2">
-                  <span className="mt-1 size-1.5 rounded-full bg-sky-500" />
+                  <span className="mt-[0.45rem] size-1.5 shrink-0 rounded-full bg-sky-500" />
                   <span>{item}</span>
                 </li>
               ))}
