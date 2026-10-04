@@ -31,6 +31,10 @@
 - `npx tsc --noEmit` → ✅
 - `npx jest` (frontend) → ✅ 24 suites, 171 passed, 5 skipped
 
+## Review Follow-up
+
+PR review found a data-loss path: editing a note whose single item contained commas split that item into several on save. Fixed by enabling the comma fallback only when creating a note; edit forms always parse one item per line. A round-trip regression test covers it.
+
 ## Before / After
 
 | Surface | Before | After |

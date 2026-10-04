@@ -41,6 +41,42 @@ describe('NoteForm', () => {
     });
   });
 
+  it('round-trips a single stored item containing commas when editing', async () => {
+    const onSubmit = jest.fn().mockResolvedValue(undefined);
+
+    render(
+      <NoteForm
+        onSubmit={onSubmit}
+        note={{
+          id: 'n1',
+          userId: 'u1',
+          title: 'Week',
+          date: '2026-03-15T00:00:00.000Z',
+          periodType: 'WEEKLY',
+          accomplishments: ['Double shift (Tue, Wed, Thu)'],
+          nextPlans: ['Read, rest'],
+          tags: ['health', 'work'],
+          createdAt: '',
+          updatedAt: '',
+        }}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Week renamed' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: 'Week renamed',
+          accomplishments: ['Double shift (Tue, Wed, Thu)'],
+          nextPlans: ['Read, rest'],
+          tags: ['health', 'work'],
+        })
+      );
+    });
+  });
+
   it('prefills edit form one item per line', () => {
     render(
       <NoteForm
@@ -67,6 +103,10 @@ describe('NoteForm', () => {
 describe('parseListInput', () => {
   it('falls back to commas for single-line input', () => {
     expect(parseListInput('gym, savings ,  reading')).toEqual(['gym', 'savings', 'reading']);
+  });
+
+  it('never splits on commas when the fallback is disabled', () => {
+    expect(parseListInput('Tue, Wed, Thu', { commaFallback: false })).toEqual(['Tue, Wed, Thu']);
   });
 
   it('keeps leading minus that is not a bullet', () => {
