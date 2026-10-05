@@ -7,7 +7,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import remarkGfm from 'remark-gfm';
 import { cn } from '@/lib/utils';
-import type { Components, ExtraProps } from 'react-markdown';
+import type { ExtraProps } from 'react-markdown';
 
 type CodeProps = React.HTMLAttributes<HTMLElement> & {
   inline?: boolean;
@@ -100,6 +100,8 @@ export function MarkdownMessage({
           // Images - Render as figure to avoid nesting issues
           img: ({ node, alt, src, ...props }) => (
             <figure className="my-6">
+              {/* Markdown images can point anywhere with unknown size; next/image needs known hosts */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img 
                 src={src} 
                 alt={alt || 'Image'} 

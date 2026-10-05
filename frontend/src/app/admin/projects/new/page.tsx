@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useProjectMutations } from '@/lib/hooks/useProjectMutations';
 import { ProjectInput } from '@/lib/graphql/types/project.types';
 import ProjectForm from '@/components/projects/ProjectForm';
-import { toast } from 'sonner';
 
 export default function NewProjectPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);

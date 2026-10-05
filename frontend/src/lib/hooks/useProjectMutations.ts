@@ -2,7 +2,7 @@ import { useMutation } from '@apollo/client';
 import { logger } from '@/lib/logger';
 import { CREATE_PROJECT, UPDATE_PROJECT, DELETE_PROJECT } from '../graphql/mutations/project.mutations';
 import { GET_PROJECTS, GET_PROJECT } from '../graphql/queries/project.queries';
-import { Project, ProjectInput, ProjectUpdateInput } from '../graphql/types/project.types';
+import { ProjectInput, ProjectUpdateInput } from '../graphql/types/project.types';
 import { toast } from 'sonner';
 
 export const useProjectMutations = () => {

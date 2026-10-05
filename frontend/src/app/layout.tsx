@@ -7,7 +7,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import { defaultMetadata } from "./metadata";
-import { GogginsFab } from "@/components/goggins/GogginsFab";
 import { StripeFab } from "@/components/stripe/StripeFab";
 
 export const metadata: Metadata = {

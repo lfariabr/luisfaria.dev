@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Article, ArticleInput } from "@/lib/graphql/types/article.types";
-import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -45,7 +44,6 @@ export function ArticleForm({
   submitLabel,
   cancelAction 
 }: ArticleFormProps) {
-  const router = useRouter();
   const [tagInput, setTagInput] = useState<string>("");
   const [autoSlug, setAutoSlug] = useState(!article?.slug);
   
@@ -66,9 +64,9 @@ export function ArticleForm({
   });
   
   // Generate slug from title if auto-slug is enabled
+  const title = useWatch({ control: form.control, name: 'title' });
   useEffect(() => {
     if (autoSlug) {
-      const title = form.watch('title');
       if (title) {
         const generatedSlug = title
           .toLowerCase()
@@ -79,7 +77,7 @@ export function ArticleForm({
         form.setValue('slug', generatedSlug);
       }
     }
-  }, [form.watch('title'), autoSlug, form]);
+  }, [title, autoSlug, form]);
   
   // Handle tag input
   const handleTagInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
