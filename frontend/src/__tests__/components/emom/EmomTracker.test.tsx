@@ -66,6 +66,20 @@ describe('EmomTracker', () => {
     expect(window.localStorage.getItem('emom:live')).toBeNull();
   });
 
+  it('does not credit the minutes of a skipped work block', () => {
+    render(<EmomTracker />);
+    fireEvent.click(screen.getByRole('button', { name: 'Start session' }));
+    advance(10_000 + 60_000 + 5_000);
+
+    fireEvent.keyDown(document.body, { key: 'n' });
+    expect(screen.getByText('Service stop', { selector: 'p' })).toBeInTheDocument();
+    expect(screen.getByText('995 to go')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'End' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Tap again to end' }));
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('5 pull-ups');
+  });
+
   it('offers to resume an unfinished session, paused', () => {
     const cfg = { ...DEFAULT_CONFIG, rates: [5, 5] };
     window.localStorage.setItem(

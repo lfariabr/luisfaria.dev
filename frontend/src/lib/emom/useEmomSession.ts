@@ -11,6 +11,8 @@ import {
   extensionPhase,
   locate,
   minuteKey,
+  minutesDone,
+  phaseMinutes,
   rateFor,
   tally,
   totalSeconds,
@@ -289,9 +291,19 @@ export function useEmomSession(onFinish: (session: FinishedSession) => void) {
     const e = engine.current;
     const loc = e && locate(e.phases, e.vt);
     if (!e || !loc) return;
-    e.vt = loc.phase.start + loc.phase.dur + 0.001;
-    if (!reachedEnd()) redraw();
-  }, [reachedEnd, redraw]);
+    const { phase } = loc;
+    if (phase.type === 'work') {
+      const adj = { ...e.adj };
+      for (let m = minutesDone(phase, e.vt, e.cfg.flashSec); m < phaseMinutes(phase); m++) {
+        adj[minuteKey(phase.block, m)] = -rateFor(e.cfg, phase.block);
+      }
+      e.adj = adj;
+    }
+    e.vt = phase.start + phase.dur + 0.001;
+    if (reachedEnd()) return;
+    persist();
+    redraw();
+  }, [persist, reachedEnd, redraw]);
 
   const end = useCallback(() => finish(), [finish]);
 

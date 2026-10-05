@@ -81,7 +81,7 @@ export function EmomRun({ view, onTogglePause, onAdjust, onSkip, onEnd }: EmomRu
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement).closest('input, textarea')) return;
+      if (e.target instanceof Element && e.target.closest('input, textarea')) return;
       if (e.code === 'Space') {
         e.preventDefault();
         onTogglePause();
