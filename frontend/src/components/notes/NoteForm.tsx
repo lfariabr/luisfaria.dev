@@ -35,12 +35,12 @@ export const buildSuggestedTitle = (periodType: NotePeriodType, dateInputValue: 
 
 export function NoteForm({ note, loading = false, onSubmit }: NoteFormProps) {
   const [title, setTitle] = useState(note?.title ?? '');
-  const [content, setContent] = useState(note?.content ?? '');
+  const [content] = useState(note?.content ?? '');
   const [date, setDate] = useState(toDateInputValue(note?.date));
   const [periodType, setPeriodType] = useState<NotePeriodType>(note?.periodType ?? 'WEEKLY');
   const [accomplishments, setAccomplishments] = useState(toListInput(note?.accomplishments));
   const [nextPlans, setNextPlans] = useState(toListInput(note?.nextPlans));
-  const [tags, setTags] = useState(toListInput(note?.tags));
+  const [tags] = useState(toListInput(note?.tags));
 
   const suggestedTitle = buildSuggestedTitle(periodType, date);
 

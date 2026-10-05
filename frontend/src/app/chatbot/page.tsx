@@ -71,10 +71,11 @@ export default function ChatbotPage() {
   const activeTimeoutsRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
   useEffect(() => {
+    const activeTimeouts = activeTimeoutsRef.current;
     return () => {
       // Clear all pending timeouts on unmount
-      activeTimeoutsRef.current.forEach((timeoutId) => clearTimeout(timeoutId));
-      activeTimeoutsRef.current.clear();
+      activeTimeouts.forEach((timeoutId) => clearTimeout(timeoutId));
+      activeTimeouts.clear();
     }
   }, []);
 
@@ -126,7 +127,7 @@ export default function ChatbotPage() {
     calculateTimeRemaining();
     const interval = setInterval(calculateTimeRemaining, 1000);
     return () => clearInterval(interval);
-  }, [rateLimitInfo?.resetTime]);
+  }, [rateLimitInfo?.resetTime, pushRateNotice, pushUsageEvent]);
 
   // Scroll to latest message whenever the transcript updates
   useEffect(() => {

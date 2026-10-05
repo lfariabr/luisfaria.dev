@@ -7,9 +7,7 @@ import {
   User, 
   UsersData, 
   UserData, 
-  UserVars, 
-  UpdateUserRoleInput, 
-  UserRole 
+  UserVars
 } from '../graphql/types/user.types';
 
 /**

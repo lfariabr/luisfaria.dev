@@ -5,6 +5,7 @@ import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ProjectCard } from '@/components/work/ProjectCard';
 import { fetchGql } from '@/lib/graphql/fetchGql';
+import { logger } from '@/lib/logger';
 import { PROJECTS_QUERY } from '@/lib/graphql/queries/server.queries';
 import type { Project } from '@/lib/graphql/types/project.types';
 import { sanitizeJsonLd } from '@/lib/seo/metadata';
@@ -19,7 +20,7 @@ export default async function ProjectsPage() {
     });
     projects = data.projects ?? [];
   } catch (error) {
-    console.error('Failed to fetch projects page data', error);
+    logger.error('Failed to fetch projects page data', { error: error instanceof Error ? error.message : String(error) });
     errorMessage = 'An unexpected error occurred. Please try again later.';
   }
 

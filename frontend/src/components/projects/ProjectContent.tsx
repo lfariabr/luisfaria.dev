@@ -45,6 +45,8 @@ export function ProjectContent({ project }: ProjectContentProps) {
 
       {project.imageUrl && (
         <div className="overflow-hidden rounded-lg border">
+          {/* Admin-entered URL with unknown host/size; next/image would throw on hosts outside remotePatterns */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={project.imageUrl}
             alt={project.title}

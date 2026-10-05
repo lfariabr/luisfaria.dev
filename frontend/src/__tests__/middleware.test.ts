@@ -4,12 +4,6 @@ interface MockResponse {
   headers: { get: (key: string) => string | null };
 }
 
-interface MockNextRequest {
-  nextUrl: { pathname: string };
-  url: string;
-  cookies: { get: (name: string) => { value: string } | undefined };
-}
-
 // Mock next/server before importing proxy
 const mockRedirect = jest.fn<MockResponse, [URL]>((url: URL) => ({
   status: 307,

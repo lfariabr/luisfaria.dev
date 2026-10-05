@@ -20,7 +20,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/components/ui/use-toast';
 import { sendDiscordWebhook } from '@/utils/discord';
@@ -72,20 +71,21 @@ export function GogginsDialog({ open, onOpenChange }: GogginsDialogProps) {
   const [mutate, { loading }] = useMutation(ACTIVATE_GOGGINS_MODE);
 
   // load saved email on mount
+  const { setValue } = form;
   React.useEffect(() => {
     try {
       const saved = typeof window !== 'undefined' ? localStorage.getItem('gogginsEmail') : null;
       if (saved) {
-        form.setValue('userEmail', saved);
+        setValue('userEmail', saved);
         setShowEmail(false);
       }
       // also load last message once on mount
       const lastMsg = typeof window !== 'undefined' ? localStorage.getItem('gogginsLastMessage') : null;
       if (lastMsg) setResultText(lastMsg);
-    } catch (e) {
+    } catch {
       // ignore
     }
-  }, []);
+  }, [setValue]);
 
   // load last message whenever dialog opens
   React.useEffect(() => {
@@ -311,7 +311,7 @@ export function GogginsDialog({ open, onOpenChange }: GogginsDialogProps) {
                       try {
                         await navigator.clipboard.writeText(resultText);
                         toast({ title: 'Copied to clipboard' });
-                      } catch (err) {
+                      } catch {
                         toast({ title: 'Copy failed', description: 'Please try again', variant: 'destructive' });
                       }
                     }}

@@ -26,7 +26,7 @@ const navigation = [
 
 export function Header() {
   const pathname = usePathname();
-  const { theme, setTheme } = useTheme();
+  const { setTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
   const canViewRelationshipMap = user?.role === 'ADMIN' || user?.role === 'PARTNER';

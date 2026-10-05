@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { AlertCircle, Calendar } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { fetchGql } from '@/lib/graphql/fetchGql';
+import { logger } from '@/lib/logger';
 import { PUBLISHED_ARTICLES_QUERY } from '@/lib/graphql/queries/server.queries';
 import type { Article } from '@/lib/graphql/types/article.types';
 import { sanitizeJsonLd } from '@/lib/seo/metadata';
@@ -21,7 +22,7 @@ export default async function ArticlesPage() {
     });
     articles = data.publishedArticles ?? [];
   } catch (error) {
-    console.error('Failed to fetch articles page data', error);
+    logger.error('Failed to fetch articles page data', { error: error instanceof Error ? error.message : String(error) });
     errorMessage = 'An unexpected error occurred. Please try again later.';
   }
 

@@ -37,7 +37,6 @@ export async function POST(request: Request) {
     });
 
     if (!response.ok) {
-      const error = await response.text();
       throw new Error(`Discord API error: ${response.status}`);
     }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import {
   Dialog,
@@ -89,7 +89,7 @@ export function ApodDialog({ open, onOpenChange }: ApodDialogProps) {
     trackClientEvent('apod_opened', { isAuthenticated });
   }, [open, isAuthenticated]);
 
-  const todayStr = useMemo(() => getTodayDateString(), [open]);
+  const todayStr = getTodayDateString();
   const isHistorical = selectedDate !== null && selectedDate !== todayStr;
 
   const { data: todayData, loading: todayLoading, error: todayError, refetch: refetchToday } = useQuery<{ getTodaysApod: Apod }>(GET_TODAYS_APOD, {

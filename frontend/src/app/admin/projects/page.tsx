@@ -14,7 +14,7 @@ import Image from 'next/image';
 
 export default function AdminProjectsPage() {
   const { projects, loading: projectsLoading, error } = useProjects();
-  const { deleteProject, loading: mutationLoading } = useProjectMutations();
+  const { deleteProject } = useProjectMutations();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const router = useRouter();
 

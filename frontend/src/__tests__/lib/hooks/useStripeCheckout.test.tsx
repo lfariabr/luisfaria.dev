@@ -1,5 +1,5 @@
 import React from 'react';
-import { renderHook, waitFor, act } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import { MockedProvider, MockedResponse } from '@apollo/client/testing';
 import { GraphQLError } from 'graphql';
 import { useStripeCheckout } from '@/lib/hooks/useStripeCheckout';

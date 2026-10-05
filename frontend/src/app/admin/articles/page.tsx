@@ -6,7 +6,6 @@ import { useArticles } from "@/lib/hooks/useArticles";
 import { useArticleMutations } from "@/lib/hooks/useArticleMutations";
 import { AlertCircle, Edit, Eye, Loader2, Plus, Trash, UploadCloud, XCircle } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { formatDistanceToNow, parseISO, isValid } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -31,16 +30,15 @@ const formatDateSafe = (dateString: string) => {
       return `${formatDistanceToNow(date)} ago`;
     }
     return 'recently';
-  } catch (error) {
+  } catch {
     return 'recently';
   }
 };
 
 export default function ArticlesAdminPage() {
-  const router = useRouter();
   const { toast } = useToast();
   const { articles, loading, error } = useArticles();
-  const { publishArticle, unpublishArticle, deleteArticle, loading: mutationLoading } = useArticleMutations();
+  const { publishArticle, unpublishArticle, deleteArticle } = useArticleMutations();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   // Handle article deletion
