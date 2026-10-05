@@ -34,7 +34,11 @@
 
 - `npx tsc --noEmit` → ✅
 - `npm run lint` → ✅ 0 warnings
-- `npx jest` (frontend) → ✅ 26 suites, 191 passed, 5 skipped (12 new)
+- `npx jest` (frontend) → ✅ 26 suites, 192 passed, 5 skipped (13 new)
+
+## Review Follow-up
+
+PR review found that skipping a work block credited every minute left in it, so one skip could add ~240 pull-ups to the summary and the month total, and stop reach-goal mode from adding time. Skipping now counts unstarted minutes as 0 reps (shown amber), and reach-goal mode adds the time back. A regression test covers it.
 
 ## Before / After
 
