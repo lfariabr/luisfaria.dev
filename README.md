@@ -37,41 +37,42 @@ This repository powers [luisfaria.dev](https://luisfaria.dev) — a portfolio bu
 Production runs as a Docker Compose stack on a single Ubuntu host. Nginx terminates TLS and routes `/graphql` to the API and everything else to Next.js.
 
 ```mermaid
-flowchart LR
+flowchart TB
     browser["Browser"]
+    maps["Google Maps<br/>admin map"]
 
     subgraph host["Ubuntu host · Docker Compose"]
         nginx["Nginx<br/>TLS · www → apex"]
         web["Next.js 16 webapp<br/>SSR · App Router · /api routes"]
         api["Express + Apollo Server 5<br/>GraphQL · Shield · Zod"]
-        mongo[("MongoDB<br/>users · notes · articles<br/>projects · pins · chats")]
+        mongo[("MongoDB")]
         redis[("Redis<br/>rate limits · cache")]
     end
 
-    subgraph ext["External services"]
+    subgraph integrations["API integrations"]
+        direction LR
         openai["OpenAI"]
         nasa["NASA APOD"]
         stripe["Stripe"]
         resend["Resend"]
-        turnstile["Cloudflare Turnstile"]
-        maps["Google Maps"]
-        discord["Discord webhook"]
+        turnstile["Turnstile"]
+    end
+
+    subgraph monitoring["Monitoring"]
+        direction LR
         sentry["Sentry"]
+        discord["Discord webhook"]
     end
 
     browser -->|HTTPS| nginx
+    browser -.-> maps
     nginx -->|"/"| web
     nginx -->|"/graphql"| api
-    web -->|"server components · fetchGql"| nginx
+    web -->|"server-side fetchGql"| nginx
     api --> mongo
     api --> redis
-    api --> openai
-    api --> nasa
-    api --> stripe
-    api --> resend
-    api --> turnstile
+    api --> integrations
     web --> discord
-    browser -.->|"admin map"| maps
     web -.-> sentry
     api -.-> sentry
 ```
