@@ -4,7 +4,7 @@
 
 A full-stack TypeScript portfolio application featuring case studies, public Dev.to writing, private tools, and an AI assistant.
 
-[![Live Site](https://img.shields.io/badge/live-luisfaria.dev-000?style=for-the-badge&logo=vercel&logoColor=white)](https://luisfaria.dev)
+[![Live Site](https://img.shields.io/badge/live-luisfaria.dev-000?style=for-the-badge)](https://luisfaria.dev)
 
 [![CI Pipeline](https://github.com/lfariabr/luisfaria.dev/actions/workflows/ci.yml/badge.svg)](https://github.com/lfariabr/luisfaria.dev/actions/workflows/ci.yml)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -32,19 +32,108 @@ This repository powers [luisfaria.dev](https://luisfaria.dev) — a portfolio bu
 
 ## Architecture
 
+### Runtime
+
+Production runs as a Docker Compose stack on a single Ubuntu host. Nginx terminates TLS and routes `/graphql` to the API and everything else to Next.js.
+
+```mermaid
+flowchart TB
+    browser["Browser"]
+    maps["Google Maps<br/>admin map"]
+
+    subgraph host["Ubuntu host · Docker Compose"]
+        nginx["Nginx<br/>TLS · www → apex"]
+        web["Next.js 16 webapp<br/>SSR · App Router · /api routes"]
+        api["Express + Apollo Server 5<br/>GraphQL · Shield · Zod"]
+        mongo[("MongoDB")]
+        redis[("Redis<br/>rate limits · cache")]
+    end
+
+    subgraph integrations["API integrations"]
+        direction LR
+        openai["OpenAI"]
+        nasa["NASA APOD"]
+        stripe["Stripe"]
+        resend["Resend"]
+        turnstile["Turnstile"]
+    end
+
+    subgraph monitoring["Monitoring"]
+        direction LR
+        sentry["Sentry"]
+        discord["Discord webhook"]
+    end
+
+    browser -->|HTTPS| nginx
+    browser -.-> maps
+    nginx -->|"/"| web
+    nginx -->|"/graphql"| api
+    web -->|"server-side fetchGql"| nginx
+    api --> mongo
+    api --> redis
+    api --> integrations
+    web --> discord
+    web -.-> sentry
+    api -.-> sentry
 ```
-Browser ─── Next.js (SSR/CSR) ─── Apollo Client ─── GraphQL API (:4000)
-                                                         │
-                                          ┌──────────────┼──────────────┐
-                                          │              │              │
-                                       MongoDB        Redis        External
-                                       (data)     (cache/rate)    APIs
-                                                                  ├─ OpenAI
-                                                                  ├─ Resend
-                                                                  ├─ NASA
-                                                                  ├─ Stripe
-                                                                  └─ Google Maps
+
+### Request lifecycle
+
+Every GraphQL request passes through the same auth, authorization and validation layers. Rate-limited features (chatbot, APOD history, Goggins) add an atomic Redis check before doing any expensive work.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant B as Browser
+    participant N as Next.js
+    participant G as Apollo Server
+    participant S as GraphQL Shield
+    participant R as Resolver
+    participant L as Redis (Lua)
+    participant X as MongoDB / OpenAI / NASA
+
+    B->>N: Page or client action
+    N->>G: GraphQL operation + httpOnly JWT cookie
+    G->>G: Verify JWT → context.user
+    G->>S: Field-level rules (role, ownership)
+    alt not allowed
+        S-->>B: UNAUTHENTICATED / FORBIDDEN
+    end
+    S->>R: Authorized operation
+    R->>R: Validate args (Zod)
+    R->>L: rateLimiter.limit(feature:user, limit, window)
+    alt over limit
+        L-->>B: RATE_LIMITED + remaining / resetTime
+    end
+    R->>X: Query or external call
+    X-->>R: Result
+    R-->>B: Data (errors via shared Errors.* factories)
 ```
+
+### CI/CD
+
+Pull requests run both test suites and a build check. Pushes to `master` additionally build images, deploy over SSH, and only then audit the live site.
+
+```mermaid
+flowchart LR
+    pr(["PR or push to master"])
+    bt["Backend tests<br/>MongoDB 7 · Redis 7"]
+    ft["Frontend tests<br/>lint --max-warnings 0 · Jest"]
+    bc["Build verification"]
+    img["Build & push images<br/>GHCR"]
+    dep["Deploy to production<br/>SSH · compose pull · health checks"]
+    seo["SEO audit gate<br/>informational"]
+    weekly(["Mondays 09:00 UTC"])
+    mon["SEO monitor<br/>Discord report"]
+
+    pr --> bt & ft
+    bt & ft --> bc
+    bt & ft -->|master only| img
+    img --> dep --> seo
+    weekly --> mon
+```
+
+### Repository
 
 ```
 luisfaria/
@@ -64,7 +153,7 @@ luisfaria/
 | **Caching** | Multi-layer: Redis (server), Apollo Client cache (client) |
 | **Validation** | Zod schemas for all GraphQL inputs |
 | **Error Handling** | Shared error factories (`createErrorHandler`) with standardized codes |
-| **CI/CD** | GitHub Actions with parallel test suites, Docker, minimal-downtime deploys |
+| **CI/CD** | GitHub Actions with parallel test suites, a zero-warning lint gate, GHCR images, SSH deploy with health checks, and a post-deploy SEO audit |
 | **Payments** | Stripe hosted checkout — origin-validated return URLs, `trackClientEvent` analytics, phase-2 webhook fulfillment planned |
 
 ---
@@ -76,13 +165,56 @@ luisfaria/
 | **Frontend** | Next.js 16+, React 19, TypeScript, Apollo Client, TailwindCSS 4, shadcn/ui |
 | **Backend** | Node.js, Express, Apollo Server 5, GraphQL, Mongoose |
 | **Data** | MongoDB, Redis |
-| **Integrations** | OpenAI (chatbot), Resend (email), NASA API (APOD), Stripe (payments), Cloudflare Turnstile |
-| **Infrastructure** | Docker, GitHub Actions, Vercel |
-| **Testing** | Jest, React Testing Library, MongoDB Memory Server |
+| **Integrations** | OpenAI (chatbot), NASA API (APOD), Stripe (payments), Resend (email), Cloudflare Turnstile, Google Maps, Discord webhooks |
+| **Infrastructure** | Docker Compose on Ubuntu 26.04 LTS, Nginx + Let's Encrypt, GHCR, GitHub Actions |
+| **Observability** | Sentry (frontend + backend), Discord activity notifications, structured `logger` |
+| **Quality** | Jest, React Testing Library, MongoDB Memory Server, ESLint (`eslint-config-next`, zero warnings) |
 
 ---
 
 ## Features
+
+### Public site
+
+| Feature | What it does | Since |
+|---|---|---|
+| **Case studies** | `/work` tells curated projects as problem → approach → stack → outcome, with statically prerendered `/work/[slug]` pages | v3.9 |
+| **Evidence-led home** | Rotating hero headline with reduced-motion support, proof metrics, pillars, and Impact metrics curated in `content/` | v3.8, v3.14–v3.16 |
+| **About · Timeline · Contact** | Positioning page, curated career timeline, and contact page | v3.8, v3.10 |
+| **Writing** | Header links to Dev.to; `/articles` and `/projects` remain as archive routes with markdown, images and syntax highlighting | v1.2, v1.15, v3.16 |
+| **SEO** | Metadata, sitemap, robots, JSON-LD, `noindex` on private routes; audited after every deploy and weekly | v1.13, v2.8, v2.9.91 |
+
+### AI and integrations
+
+| Feature | What it does | Since |
+|---|---|---|
+| **AI assistant** | `/chatbot` answers from a curated knowledge base (published articles and career timeline); 5 requests/hour per user with live countdown | v1.4, v2.3, v2.9 |
+| **APOD** | NASA Astronomy Picture of the Day, cached in Redis; browsing past dates is rate-limited per user | v2.4 |
+| **Payments** | Coffee and meeting checkout through Stripe hosted checkout with origin-validated return URLs | v3.1 |
+| **Goggins Mode** | Motivational AI coach, 2 requests/24h per email *(deprecated, kept for reference)* | v2.0 |
+
+### Private tools
+
+| Feature | What it does | Since |
+|---|---|---|
+| **Notes & flashcards** | `/notes` weekly/monthly checkpoints: month accordion, timeline and week/month views, search, one-item-per-line entry, dated title autofill, delete confirmation, mobile-first layout | v3.3, v3.4, v3.18 |
+| **Relationship map** | Google Maps view of outings with spend/date context; admin full access, partner read-only | v3.6 |
+| **Admin** | Manage articles, projects and user roles | v1.3 |
+
+### Platform
+
+| Area | What's in place | Since |
+|---|---|---|
+| **Auth** | JWT in httpOnly cookies, roles (ADMIN · EDITOR · USER · PARTNER), resilient session restore, Turnstile + IP/email throttling on registration | v1.3, v3.2, v3.7 |
+| **Rate limiting** | Redis sliding windows via atomic Lua scripts, unified `RATE_LIMITED` error code | v2.0.1, v3.12 |
+| **Errors** | Shared `createErrorHandler` and `Errors.*` factories across all resolvers | v2.5, v3.13 |
+| **Observability** | Sentry with source maps; Discord notifications for logins, registrations, APOD, Stripe and Goggins | v2.7, v3.5 |
+| **Delivery** | GitHub Actions → GHCR → SSH deploy with health checks; post-deploy SEO gate | v2.6, v3.18.4 |
+| **Code quality** | Native ESLint flat config with a zero-warning CI gate | v3.18.3, v3.18.4 |
+| **Security** | Dependabot alerts kept at zero; production on Ubuntu 26.04 LTS with Docker 29 | v2.2, v3.17 |
+
+<details>
+<summary><strong>Release history</strong> (v1.1 → v3.18.4)</summary>
 
 | Version | Feature | Description |
 |---|---|---|
@@ -109,7 +241,7 @@ luisfaria/
 | v3.5 | Discord Activity Monitoring | Real-time webhook notifications across login, register, APOD, Stripe, and Goggins interactions — fire-and-forget, never blocks user flow |
 | v3.6 | Relationship Pins Admin Map | Private admin Google Maps view for relationship outings with spend/date context, timeline, and optional backend-only home marker |
 | v3.7 | Auth Session Persistence | Resilient session restore (status state machine, transient-error tolerance + retry UI), `sameSite=lax`, `JWT_SECRET` strength guard, and an nginx www→apex canonical host |
-| v3.8 | Home Reposition + About | Problem/outcome-led home ("I solve real business problems with software and data"), four pillars (Software · Data · Automation · AI/ML), stack-by-pillar, and a new `/about` page |
+| v3.8 | Home Reposition + About | Problem/outcome-led home, four pillars (Software · Data · Automation · AI/ML), stack-by-pillar, and a new `/about` page |
 | v3.9 | Case Studies | `/work` repurposed into curated case studies (problem → approach → stack → outcome) with statically prerendered `/work/[slug]` detail pages |
 | v3.10 | Timeline + Contact | Dedicated `/timeline` page (curated data), new `/contact` page, and a Review Pulse ML case study |
 | v3.11 | Impact Metrics Curation | Curated home metrics for freshness + credibility; data moved to `content/metrics.ts` |
@@ -119,6 +251,13 @@ luisfaria/
 | v3.15 | Homepage Proof Points | Evidence-first hero metrics, pillars, stack, and Impact metrics rebuilt around stronger proof |
 | v3.16 | Profile Positioning Refresh | Header simplified to Home / Work / Writing / About; Dev.to promoted; homepage copy aligned to secure education systems, SQL/Power BI, applied ML, and agentic AI |
 | v3.17 | Security & Platform Maintenance | 11 Dependabot PRs consolidated, 27 security alerts → 0 (incl. Next.js critical fixes); production moved to Ubuntu 26.04 LTS with Docker 29 |
+| v3.18 | My Notes Mobile UX | iOS focus-zoom fix, compact stats, one-item-per-line entry, month/year accordion |
+| v3.18.1 | Notes Mobile Polish | Readable stat labels, dated title autofill, Week/Month overflow fix |
+| v3.18.2 | Delete Confirmation | Notes ask before deleting; failures keep the dialog open |
+| v3.18.3 | ESLint Gate | Native flat config, 44 lint errors fixed, lint gates CI |
+| v3.18.4 | CI Hygiene | SEO gate runs after deploy; 67 lint warnings → 0 with `--max-warnings 0` |
+
+</details>
 
 ---
 
@@ -135,8 +274,8 @@ luisfaria/
 
 Latest release docs:
 
-- `_docs/releaseNotes/v.3.17.0_Security-Maintenance.md`
-- `_docs/featureBreakdown/v3.17-security-maintenance.md`
+- `_docs/releaseNotes/v.3.18.4_CI-SEO-After-Deploy-Zero-Warnings.md`
+- `_docs/featureBreakdown/v3.18.4-ci-seo-after-deploy-zero-warnings.md`
 
 ---
 
@@ -291,7 +430,7 @@ RELATIONSHIP_HOME_LABEL="Home base"
 
 ## Testing
 
-Both suites run in CI with MongoDB 7 and Redis 7 service containers.
+Both suites run in CI with MongoDB 7 and Redis 7 service containers. Frontend lint runs before the tests with `--max-warnings 0`, so a new warning fails the build.
 
 ```bash
 # Backend
@@ -303,6 +442,7 @@ npm run test:coverage      # With coverage
 cd frontend
 npm test                   # All tests
 npm run test:coverage      # With coverage
+npm run lint               # ESLint — fails on any error or warning
 npx tsc --noEmit           # Frontend app typecheck
 
 # Single test file
