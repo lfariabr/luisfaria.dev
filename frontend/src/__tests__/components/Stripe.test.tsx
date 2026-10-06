@@ -12,6 +12,11 @@ const mockTrackClientEvent = jest.fn();
 const mockToastError = jest.fn();
 
 let mockLoading = false;
+let mockPathname = "/";
+
+jest.mock("next/navigation", () => ({
+  usePathname: () => mockPathname,
+}));
 
 jest.mock("@/lib/hooks/useStripeCheckout", () => ({
   useStripeCheckout: () => ({
@@ -40,6 +45,7 @@ jest.mock("@/components/ui/tooltip", () => ({
 describe("StripeFab", () => {
   beforeEach(() => {
     mockLoading = false;
+    mockPathname = "/";
   });
 
   afterEach(() => {
@@ -51,6 +57,35 @@ describe("StripeFab", () => {
     expect(
       screen.getByRole("button", { name: /open support checkout options/i })
     ).toBeInTheDocument();
+  });
+
+  it("leaves positioning to the FAB stack and does not pulse", () => {
+    const { container } = render(<StripeFab />);
+    expect(container.querySelector(".fixed")).toBeNull();
+    expect(container.querySelector(".animate-ping")).toBeNull();
+  });
+
+  it("is hidden on /notes pages", () => {
+    mockPathname = "/notes/some-note";
+    render(<StripeFab />);
+    expect(
+      screen.queryByRole("button", { name: /open support checkout options/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it("marks the selected product with the emerald accent", async () => {
+    const user = userEvent.setup();
+    render(<StripeFab />);
+
+    await user.click(
+      screen.getByRole("button", { name: /open support checkout options/i })
+    );
+    const coffee = screen.getByRole("button", { name: /buy me a coffee/i });
+    await user.click(coffee);
+
+    expect(coffee).toHaveAttribute("aria-pressed", "true");
+    expect(coffee.className).toMatch(/emerald/);
+    expect(coffee.className).not.toMatch(/amber/);
   });
 
   it("opens dialog and starts checkout after selecting item", async () => {

@@ -11,7 +11,7 @@ export function GogginsFab() {
   return (
     <>
       <GogginsDialog open={open} onOpenChange={setOpen} />
-      <div className="fixed bottom-6 right-6 z-50">
+      <div>
         <span className="relative inline-flex">
         <Button
           onClick={() => setOpen(true)}

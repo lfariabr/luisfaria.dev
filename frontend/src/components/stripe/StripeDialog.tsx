@@ -99,8 +99,8 @@ export function StripeDialog({ open, onOpenChange }: StripeDialogProps) {
       <DialogContent
         className="
           sm:max-w-lg
-          border border-zinc-200 dark:border-white/10
-          bg-white/95 dark:bg-zinc-950/85
+          border border-border
+          bg-card/95
           backdrop-blur-xl
           shadow-2xl
           rounded-2xl
@@ -108,17 +108,17 @@ export function StripeDialog({ open, onOpenChange }: StripeDialogProps) {
           p-0
         "
       >
-        <div className="h-px w-full bg-gradient-to-r from-transparent via-amber-400/70 to-transparent" />
+        <div className="h-px w-full bg-gradient-to-r from-transparent via-emerald-500/70 to-transparent" />
 
         <div className="p-6">
           <DialogHeader className="space-y-2">
-            <DialogTitle className="flex items-center gap-2 text-lg font-semibold text-zinc-900 dark:text-white">
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-100 dark:bg-white/5">
-                <CreditCard className="h-4 w-4 text-amber-500" />
+            <DialogTitle className="flex items-center gap-2 text-lg font-semibold text-foreground">
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-muted">
+                <CreditCard className="h-4 w-4 text-emerald-500" />
               </span>
               Support My Work
             </DialogTitle>
-            <DialogDescription className="text-zinc-600 dark:text-zinc-300">
+            <DialogDescription className="text-muted-foreground">
               Choose one option and continue to Stripe secure checkout.
             </DialogDescription>
           </DialogHeader>
@@ -134,22 +134,22 @@ export function StripeDialog({ open, onOpenChange }: StripeDialogProps) {
                   className={`
                     w-full rounded-xl border p-4 text-left transition
                     ${isSelected
-                      ? "border-amber-500/70 bg-amber-50/80 dark:bg-amber-500/10"
-                      : "border-zinc-200 dark:border-white/10 hover:border-amber-300/70"}
+                      ? "border-emerald-500/70 bg-emerald-50/80 dark:bg-emerald-500/10"
+                      : "border-border hover:border-emerald-400/70"}
                   `}
                   aria-pressed={isSelected}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3">
-                      <span className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-100 dark:bg-white/5">
-                        <Icon className="h-4 w-4 text-amber-500" />
+                      <span className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
+                        <Icon className="h-4 w-4 text-emerald-500" />
                       </span>
                       <div>
-                        <p className="font-medium text-zinc-900 dark:text-white">{title}</p>
-                        <p className="text-sm text-zinc-600 dark:text-zinc-400">{description}</p>
+                        <p className="font-medium text-foreground">{title}</p>
+                        <p className="text-sm text-muted-foreground">{description}</p>
                       </div>
                     </div>
-                    <span className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">{amount}</span>
+                    <span className="text-sm font-semibold text-foreground">{amount}</span>
                   </div>
                 </button>
               );
@@ -159,7 +159,7 @@ export function StripeDialog({ open, onOpenChange }: StripeDialogProps) {
           <div className="mt-4 space-y-2">
             <label
               htmlFor="checkout-email"
-              className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400"
+              className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
             >
               Email (optional)
             </label>
@@ -169,7 +169,7 @@ export function StripeDialog({ open, onOpenChange }: StripeDialogProps) {
               type="email"
               onChange={(event) => setEmail(event.target.value)}
               placeholder="you@email.com"
-              className="border-zinc-200 dark:border-white/15"
+              className="border-border"
             />
           </div>
 
@@ -183,7 +183,7 @@ export function StripeDialog({ open, onOpenChange }: StripeDialogProps) {
           <Button
             onClick={handleContinue}
             disabled={!selected || loading || isRedirecting}
-            className="mt-6 w-full rounded-xl bg-amber-500 text-zinc-950 hover:bg-amber-400 disabled:opacity-60"
+            className="mt-6 w-full rounded-xl bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-60"
           >
             {loading || isRedirecting ? "Redirecting..." : "Continue to secure checkout"}
           </Button>

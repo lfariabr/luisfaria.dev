@@ -8,6 +8,7 @@ import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import { defaultMetadata } from "./metadata";
 import { StripeFab } from "@/components/stripe/StripeFab";
+import { FabStack } from "@/components/layouts/FabStack";
 
 export const metadata: Metadata = {
   ...defaultMetadata,
@@ -33,8 +34,10 @@ export default function RootLayout({
               {children}
               <Toaster />
               <SonnerToaster />
-              {/* <GogginsFab /> */}
-              <StripeFab />
+              <FabStack>
+                {/* <GogginsFab /> */}
+                <StripeFab />
+              </FabStack>
             </AuthProvider>
           </ApolloProvider>
         </ThemeProvider>
