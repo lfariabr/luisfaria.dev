@@ -26,6 +26,7 @@ interface Config {
     stripeWebhookSecret: string;
     stripeCoffeePriceId: string;
     stripeMeetingPriceId: string;
+    discordWebhookUrl: string;
     turnstileSecretKey: string;
     geocodingApiKey: string;
     relationshipHome: RelationshipHome | null;
@@ -107,6 +108,7 @@ const config: Config = {
     stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
     stripeCoffeePriceId: process.env.STRIPE_COFFEE_PRICE_ID || '',
     stripeMeetingPriceId: process.env.STRIPE_MEETING_PRICE_ID || '',
+    discordWebhookUrl: process.env.DISCORD_WEBHOOK_URL || '',
     turnstileSecretKey: process.env.TURNSTILE_SECRET_KEY || '',
     geocodingApiKey: process.env.GEOCODING_API_KEY || '',
     relationshipHome: parseRelationshipHome(),

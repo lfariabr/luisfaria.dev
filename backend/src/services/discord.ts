@@ -1,0 +1,23 @@
+import config from '../config/config';
+import { logger } from '../utils/logger';
+
+export async function notifyDiscord(content: string): Promise<void> {
+  if (config.nodeEnv === 'test') return;
+  if (!config.discordWebhookUrl) {
+    logger.warn('notifyDiscord skipped: DISCORD_WEBHOOK_URL is not set');
+    return;
+  }
+
+  try {
+    const response = await fetch(config.discordWebhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content }),
+    });
+    if (!response.ok) {
+      logger.error('Discord webhook returned an error', { status: response.status });
+    }
+  } catch (error) {
+    logger.error('Discord webhook failed', { error: String(error) });
+  }
+}

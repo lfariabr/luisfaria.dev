@@ -8,6 +8,7 @@ import { apodTypes } from './types/apodTypes';
 import { stripeTypes } from './types/stripeTypes';
 import { notesTypes } from './types/notesTypes';
 import { pinTypes } from './types/pinTypes';
+import { paymentTypes } from './types/paymentTypes';
 
 export const typeDefs = `#graphql
   ${projectTypes}
@@ -20,6 +21,7 @@ export const typeDefs = `#graphql
   ${stripeTypes}
   ${notesTypes}
   ${pinTypes}
+  ${paymentTypes}
 
   type Query {
     # Test query

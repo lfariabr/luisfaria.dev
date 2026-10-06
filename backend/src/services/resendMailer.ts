@@ -1,6 +1,10 @@
 // resendMailer.ts
 import { Resend } from 'resend';
 import config from '../config/config';
+import { escapeHtml, renderEmailLayout } from './emailLayout';
+
+const SUPPORT_SENDER = 'Luis Faria <contact@luisfaria.dev>';
+const SUPPORT_REPLY_TO = 'contact@luisfaria.dev';
 
 // Resend expects a string API key in the constructor
 const resendApiKey = config.resendApiKey?.trim();
@@ -11,14 +15,6 @@ export type SendEmailResult = {
   error: any | null;
 };
 
-function escapeHtml(input: string): string {
-  return input
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
 
 export async function sendGogginsEmail(
   to: string,
@@ -74,4 +70,35 @@ export async function sendGogginsEmail(
     console.error('[resendMailer] Error sending email:', err);
     return { data: null, error: err };
   }
+}
+
+export async function sendCoffeeThankYouEmail(to: string): Promise<SendEmailResult> {
+  if (process.env.NODE_ENV === 'test') {
+    return { data: null, error: null };
+  }
+  if (!resend) {
+    console.warn('[resendMailer] RESEND_API_KEY not set. Skipping email send.');
+    return { data: null, error: null };
+  }
+
+  const { data, error } = await resend.emails.send({
+    from: SUPPORT_SENDER,
+    replyTo: SUPPORT_REPLY_TO,
+    to,
+    subject: 'Thanks for the coffee ☕',
+    html: renderEmailLayout({
+      heading: 'Thanks for the coffee ☕',
+      paragraphs: [
+        'Your support just landed, and it genuinely makes my day.',
+        'Coffee is what keeps the side projects, the write-ups and the build-in-public posts going. If you ever want to say hi or suggest something to build next, just reply to this email.',
+      ],
+      cta: { label: 'See what I’m building', url: config.frontendUrl },
+    }),
+  });
+
+  if (error) {
+    console.error('[resendMailer] Error sending coffee thank-you:', error);
+    return { data: null, error };
+  }
+  return { data, error: null };
 }
