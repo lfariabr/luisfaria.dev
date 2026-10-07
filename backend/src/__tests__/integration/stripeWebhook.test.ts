@@ -26,6 +26,7 @@ jest.mock('../../services/resendMailer', () => ({
 
 import stripeWebhookRouter from '../../routes/stripeWebhook';
 import Payment from '../../models/Payment';
+import { logger } from '../../utils/logger';
 
 function buildApp() {
   const app = express();
@@ -179,6 +180,47 @@ describe('POST /webhooks/stripe', () => {
 
       expect(res.status).toBe(200);
       expect((await Payment.findOne().lean())?.status).toBe('paid');
+    });
+  });
+
+  describe('logging', () => {
+    it('logs an email failure returned by Resend with the session id', async () => {
+      const errorSpy = jest.spyOn(logger, 'error');
+      mockSendCoffeeThankYouEmail.mockResolvedValueOnce({ data: null, error: { message: 'domain not verified' } });
+
+      await post(app, event('checkout.session.completed', session()));
+
+      expect(errorSpy).toHaveBeenCalledWith(
+        'Payment side effect failed',
+        expect.objectContaining({ sessionId: 'cs_test_1', error: expect.stringContaining('domain not verified') })
+      );
+      errorSpy.mockRestore();
+    });
+
+    it('warns when a session is ignored for missing Support checkout metadata', async () => {
+      const warnSpy = jest.spyOn(logger, 'warn');
+
+      await post(app, event('checkout.session.completed', session({ source: undefined })));
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Stripe session ignored: not from Support checkout',
+        expect.objectContaining({ sessionId: 'cs_test_1' })
+      );
+      warnSpy.mockRestore();
+    });
+
+    it('warns when a paid coffee Payment has no email to thank', async () => {
+      const warnSpy = jest.spyOn(logger, 'warn');
+      const noEmail = { ...session(), customer_details: { email: null } };
+
+      await post(app, event('checkout.session.completed', noEmail));
+
+      expect(mockSendCoffeeThankYouEmail).not.toHaveBeenCalled();
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Coffee thank-you skipped: no Supporter email',
+        expect.objectContaining({ sessionId: 'cs_test_1' })
+      );
+      warnSpy.mockRestore();
     });
   });
 

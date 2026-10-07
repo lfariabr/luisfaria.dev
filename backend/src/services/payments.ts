@@ -5,6 +5,7 @@ import { sendCoffeeThankYouEmail } from './resendMailer';
 import { logger } from '../utils/logger';
 
 const SUPPORT_CHECKOUT_SOURCE = 'luisfaria.dev';
+const DEFAULT_CURRENCY = 'aud';
 const DUPLICATE_KEY = 11000;
 
 const isDuplicateKeyError = (error: unknown) =>
@@ -18,14 +19,21 @@ const idOf = (ref: string | { id: string } | null | undefined) =>
 
 function toPaymentFields(session: Stripe.Checkout.Session) {
   const productKey = session.metadata?.productKey;
-  if (session.metadata?.source !== SUPPORT_CHECKOUT_SOURCE || !isProductKey(productKey)) return null;
+  if (session.metadata?.source !== SUPPORT_CHECKOUT_SOURCE || !isProductKey(productKey)) {
+    logger.warn('Stripe session ignored: not from Support checkout', {
+      sessionId: session.id,
+      paymentStatus: session.payment_status,
+      metadata: session.metadata,
+    });
+    return null;
+  }
 
   return {
     stripeSessionId: session.id,
     productKey,
     email: session.customer_details?.email ?? session.customer_email ?? undefined,
     amount: session.amount_total ?? 0,
-    currency: session.currency ?? 'aud',
+    currency: session.currency ?? DEFAULT_CURRENCY,
     stripePaymentIntentId: idOf(session.payment_intent),
   };
 }
@@ -35,23 +43,33 @@ type PaymentFields = NonNullable<ReturnType<typeof toPaymentFields>>;
 const formatAmount = (amount: number, currency: string) =>
   `${currency.toUpperCase()} ${(amount / 100).toFixed(2)}`;
 
-async function onPaid(fields: PaymentFields) {
-  const results = await Promise.allSettled([
-    notifyDiscord(`💰 paid ${formatAmount(fields.amount, fields.currency)} — ${fields.productKey}`),
-    fields.productKey === 'coffee' && fields.email ? sendCoffeeThankYouEmail(fields.email) : Promise.resolve(),
-  ]);
-
-  results
-    .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
-    .forEach((r) => logger.error('Payment side effect failed', { sessionId: fields.stripeSessionId, error: String(r.reason) }));
+async function sendCoffeeThankYou(fields: PaymentFields) {
+  if (fields.productKey !== 'coffee') return undefined;
+  if (!fields.email) {
+    logger.warn('Coffee thank-you skipped: no Supporter email', { sessionId: fields.stripeSessionId });
+    return undefined;
+  }
+  return sendCoffeeThankYouEmail(fields.email);
 }
 
-async function recordPending(fields: PaymentFields) {
-  await Payment.updateOne(
-    { stripeSessionId: fields.stripeSessionId },
-    { $setOnInsert: { ...fields, status: 'pending' } },
-    { upsert: true }
-  );
+async function runPaidSideEffects(fields: PaymentFields) {
+  const results = await Promise.allSettled([
+    notifyDiscord(`💰 paid ${formatAmount(fields.amount, fields.currency)} — ${fields.productKey}`),
+    sendCoffeeThankYou(fields),
+  ]);
+
+  results.forEach((result) => {
+    const error =
+      result.status === 'rejected'
+        ? result.reason
+        : (result.value as { error?: { message?: string } | null } | undefined)?.error;
+    if (error) {
+      logger.error('Payment side effect failed', {
+        sessionId: fields.stripeSessionId,
+        error: String((error as { message?: string }).message ?? error),
+      });
+    }
+  });
 }
 
 /** Moves a Payment into a settled status unless it is already paid or refunded. Returns true if it moved. */
@@ -64,30 +82,45 @@ async function settle(fields: PaymentFields, status: Extract<PaymentStatus, 'pai
     );
     return true;
   } catch (error) {
+    // The filter misses an already-settled Payment, so the upsert collides with the unique session id
     if (isDuplicateKeyError(error)) return false;
     throw error;
   }
 }
 
-async function onSession(session: Stripe.Checkout.Session, target: 'completed' | 'succeeded' | 'failed') {
+async function markPaid(fields: PaymentFields) {
+  if (await settle(fields, 'paid')) await runPaidSideEffects(fields);
+}
+
+async function onCheckoutCompleted(session: Stripe.Checkout.Session) {
   const fields = toPaymentFields(session);
   if (!fields) return;
 
-  if (target === 'failed') {
-    await settle(fields, 'failed');
+  if (session.payment_status === 'paid') {
+    await markPaid(fields);
     return;
   }
 
-  if (target === 'completed' && session.payment_status !== 'paid') {
-    await recordPending(fields);
-    return;
-  }
+  await Payment.updateOne(
+    { stripeSessionId: fields.stripeSessionId },
+    { $setOnInsert: { ...fields, status: 'pending' } },
+    { upsert: true }
+  );
+}
 
-  if (await settle(fields, 'paid')) await onPaid(fields);
+async function onAsyncPaymentSucceeded(session: Stripe.Checkout.Session) {
+  const fields = toPaymentFields(session);
+  if (fields) await markPaid(fields);
+}
+
+async function onAsyncPaymentFailed(session: Stripe.Checkout.Session) {
+  const fields = toPaymentFields(session);
+  if (fields) await settle(fields, 'failed');
 }
 
 async function onChargeRefunded(charge: Stripe.Charge) {
   const paymentIntentId = idOf(charge.payment_intent);
+  // Partial refunds keep the Payment paid; only a full refund moves it to refunded
   if (!charge.refunded || !paymentIntentId) return;
 
   await Payment.updateOne({ stripePaymentIntentId: paymentIntentId }, { $set: { status: 'refunded' } });
@@ -96,11 +129,11 @@ async function onChargeRefunded(charge: Stripe.Charge) {
 export async function applyStripeEvent(event: Stripe.Event): Promise<void> {
   switch (event.type) {
     case 'checkout.session.completed':
-      return onSession(event.data.object, 'completed');
+      return onCheckoutCompleted(event.data.object);
     case 'checkout.session.async_payment_succeeded':
-      return onSession(event.data.object, 'succeeded');
+      return onAsyncPaymentSucceeded(event.data.object);
     case 'checkout.session.async_payment_failed':
-      return onSession(event.data.object, 'failed');
+      return onAsyncPaymentFailed(event.data.object);
     case 'charge.refunded':
       return onChargeRefunded(event.data.object);
     default:

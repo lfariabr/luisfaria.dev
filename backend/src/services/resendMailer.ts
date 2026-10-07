@@ -1,6 +1,7 @@
 // resendMailer.ts
 import { Resend } from 'resend';
 import config from '../config/config';
+import { logger } from '../utils/logger';
 import { escapeHtml, renderEmailLayout } from './emailLayout';
 
 const SUPPORT_SENDER = 'Luis Faria <contact@luisfaria.dev>';
@@ -14,7 +15,6 @@ export type SendEmailResult = {
   data: any | null;
   error: any | null;
 };
-
 
 export async function sendGogginsEmail(
   to: string,
@@ -73,11 +73,11 @@ export async function sendGogginsEmail(
 }
 
 export async function sendCoffeeThankYouEmail(to: string): Promise<SendEmailResult> {
-  if (process.env.NODE_ENV === 'test') {
+  if (config.nodeEnv === 'test') {
     return { data: null, error: null };
   }
   if (!resend) {
-    console.warn('[resendMailer] RESEND_API_KEY not set. Skipping email send.');
+    logger.warn('sendCoffeeThankYouEmail skipped: RESEND_API_KEY is not set');
     return { data: null, error: null };
   }
 
@@ -97,7 +97,7 @@ export async function sendCoffeeThankYouEmail(to: string): Promise<SendEmailResu
   });
 
   if (error) {
-    console.error('[resendMailer] Error sending coffee thank-you:', error);
+    logger.error('Coffee thank-you email failed', { error: String(error.message ?? error) });
     return { data: null, error };
   }
   return { data, error: null };
