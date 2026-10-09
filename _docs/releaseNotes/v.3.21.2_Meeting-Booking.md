@@ -1,12 +1,14 @@
 # v3.21.2 — Meeting Booking After Payment 📅
 
-**Release date:** TBD (draft, ships with #314)
+**Release date:** 10 October 2026 (merged in #317, closes #314)
 **Type:** Feature
 
 ## What's New
 
 - **Pay, then book.** After paying for a meeting, Supporters see a "Book your session" button on the success page that opens Luis's Cal.com booking page.
 - **Booking email.** Meeting Supporters also get an email from `contact@luisfaria.dev` with a thank-you and the booking link, so they can book later.
+- **Always a next step.** If the booking link isn't configured, a paid meeting Supporter sees "I'll email you to arrange a time" with a `contact@luisfaria.dev` link instead of a dead end.
+- **The link only goes to paying Supporters.** The Cal.com URL lives in one backend env var (`CAL_MEETING_URL`). The API hands it out only for a paid meeting session, and it never ships in the frontend bundle.
 - Coffee Supporters see the same success page as before, with no booking button.
 
 ## Files Changed
@@ -14,16 +16,18 @@
 | File | Change |
 |------|--------|
 | `backend/src/schemas/types/stripeTypes.ts` | `checkoutSessionStatus` returns `productKey` |
-| `backend/src/services/stripe.ts` | Reads `productKey` from session metadata |
-| `backend/src/config/config.ts` | `CAL_MEETING_URL` |
-| `backend/src/services/resendMailer.ts` | Meeting booking email (shared layout) |
-| `backend/src/routes/stripeWebhook.ts` | Sends the booking email when a meeting is paid |
-| `frontend/src/app/payment/success/page.tsx` | "Book your session" button for paid meetings |
+| `backend/src/services/stripe.ts` | Reads `productKey` from session metadata; `meetingBookingUrl()` owns the "paid meeting + configured URL" rule |
+| `backend/src/resolvers/stripe/queries.ts` | Returns `productKey` and `bookingUrl` |
+| `backend/src/config/config.ts`, `backend/.env.example`, `docker-compose.yml` | `CAL_MEETING_URL` |
+| `backend/src/services/resendMailer.ts` | Meeting booking email; both Support emails share one `sendSupportEmail` sender |
+| `backend/src/services/payments.ts` | Picks the Supporter email per product from a map; sends the booking email when a meeting is paid |
+| `frontend/src/app/payment/success/page.tsx` | "Book your session" button for paid meetings, contact fallback without a link |
+| `frontend/src/lib/graphql/queries/server.queries.ts` | Queries `productKey` and `bookingUrl` |
 
 ## Tests
 
-- Backend: TBD/TBD passing (`productKey` in status, booking email once for meeting only)
-- Frontend: TBD/TBD passing (success page button logic)
+- Backend: 298/298 passing (`productKey`/`bookingUrl` in status, `meetingBookingUrl` rule, booking email once for meeting only, async success, replay, missing `CAL_MEETING_URL`)
+- Frontend: 206 passed, 5 skipped (button for paid meeting, contact fallback, nothing for coffee or unpaid)
 
 ## Before / After
 
