@@ -43,7 +43,7 @@ docker-compose down          # Stop
 ## Architecture
 
 ### Monorepo Structure
-- `frontend/` — Next.js 14+ App Router, React 19, Apollo Client, TailwindCSS 4, shadcn/ui
+- `frontend/` — Next.js 16 App Router (see `frontend/AGENTS.md`), React 19, Apollo Client, TailwindCSS 4, shadcn/ui
 - `backend/` — Express + Apollo Server 5, GraphQL, Mongoose, Redis
 - `_docs/` — Feature specs (`featureBreakdown/`), release notes, articles
 - `copilot-instructions.md` — Detailed development guidelines (authoritative reference)
