@@ -14,6 +14,7 @@ import {
   LogOut,
   MapPin,
   Timer,
+  Receipt,
 } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -59,6 +60,7 @@ export default function AdminLayoutClient({ children }: AdminLayoutClientProps) 
     { href: '/admin/users', label: 'Users', icon: Users },
     { href: '/admin/settings', label: 'Settings', icon: Settings },
     { href: '/admin/relationship', label: 'Pins', icon: MapPin },
+    { href: '/admin/payments', label: 'Payments', icon: Receipt },
     { href: '/admin/emom', label: 'EMOM', icon: Timer },
   ];
 

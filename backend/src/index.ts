@@ -33,6 +33,7 @@ import { permissions } from './validation/shield';
 
 // Routes
 import healthRoutes from './routes/health';
+import stripeWebhookRoutes from './routes/stripeWebhook';
 
 // Utils
 import { logger, requestLogger } from './utils/logger';
@@ -135,6 +136,8 @@ async function startServer() {
     app.set('trust proxy', 'loopback, uniquelocal');
 
     app.use(cors(corsOptions));
+    // Stripe signs the raw body, so the webhook must run before JSON parsing
+    app.use(stripeWebhookRoutes);
     app.use(express.json());
     app.use(cookieParser());
     // Health check routes (liveness + deep readiness)

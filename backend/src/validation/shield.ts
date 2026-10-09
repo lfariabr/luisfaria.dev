@@ -154,6 +154,7 @@ export const permissions = shield(
       note: and(isAuthenticated, validateNoteId),
       pins: canViewRelationshipPins,
       relationshipHomeLocation: canViewRelationshipPins,
+      payments: and(isAuthenticated, isAdmin),
     },
     Mutation: {
       // Public mutations

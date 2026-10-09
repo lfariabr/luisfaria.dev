@@ -16,6 +16,7 @@ import { noteQueries } from './notes/queries';
 import { noteMutations } from './notes/mutations';
 import { pinQueries } from './pins/queries';
 import { pinMutations } from './pins/mutations';
+import { paymentQueries } from './payments/queries';
 import Project from '../models/Project';
 import { slugify } from '../utils/slugUtils';
 import type { ApodResponse } from '../services/apod/';
@@ -32,6 +33,7 @@ export const resolvers = {
     ...stripeQueries,
     ...noteQueries,
     ...pinQueries,
+    ...paymentQueries,
   },
 
   Mutation: {
@@ -51,6 +53,10 @@ export const resolvers = {
     date: (parent: { date?: Date }) => parent.date?.toISOString(),
     createdAt: (parent: { createdAt?: Date }) => parent.createdAt?.toISOString(),
     updatedAt: (parent: { updatedAt?: Date }) => parent.updatedAt?.toISOString(),
+  },
+
+  Payment: {
+    createdAt: (parent: { createdAt?: Date }) => parent.createdAt?.toISOString(),
   },
 
   Pin: {
