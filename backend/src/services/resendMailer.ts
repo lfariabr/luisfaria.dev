@@ -2,7 +2,7 @@
 import { Resend } from 'resend';
 import config from '../config/config';
 import { logger } from '../utils/logger';
-import { escapeHtml, renderEmailLayout } from './emailLayout';
+import { escapeHtml, renderEmailLayout, type EmailLayoutInput } from './emailLayout';
 
 const SUPPORT_SENDER = 'Luis Faria <contact@luisfaria.dev>';
 const SUPPORT_REPLY_TO = 'contact@luisfaria.dev';
@@ -72,12 +72,19 @@ export async function sendGogginsEmail(
   }
 }
 
-export async function sendCoffeeThankYouEmail(to: string): Promise<SendEmailResult> {
+interface SupportEmail {
+  kind: string;
+  to: string;
+  subject: string;
+  content: EmailLayoutInput;
+}
+
+async function sendSupportEmail({ kind, to, subject, content }: SupportEmail): Promise<SendEmailResult> {
   if (config.nodeEnv === 'test') {
     return { data: null, error: null };
   }
   if (!resend) {
-    logger.warn('sendCoffeeThankYouEmail skipped: RESEND_API_KEY is not set');
+    logger.warn('Support email skipped: RESEND_API_KEY is not set', { email: kind });
     return { data: null, error: null };
   }
 
@@ -85,20 +92,45 @@ export async function sendCoffeeThankYouEmail(to: string): Promise<SendEmailResu
     from: SUPPORT_SENDER,
     replyTo: SUPPORT_REPLY_TO,
     to,
+    subject,
+    html: renderEmailLayout(content),
+  });
+
+  if (error) {
+    logger.error('Support email failed', { email: kind, error: String(error.message ?? error) });
+    return { data: null, error };
+  }
+  return { data, error: null };
+}
+
+export function sendCoffeeThankYouEmail(to: string): Promise<SendEmailResult> {
+  return sendSupportEmail({
+    kind: 'coffee thank-you',
+    to,
     subject: 'Thanks for the coffee ☕',
-    html: renderEmailLayout({
+    content: {
       heading: 'Thanks for the coffee ☕',
       paragraphs: [
         'Your support just landed, and it genuinely makes my day.',
         'Coffee is what keeps the side projects, the write-ups and the build-in-public posts going. If you ever want to say hi or suggest something to build next, just reply to this email.',
       ],
       cta: { label: 'See what I’m building', url: config.frontendUrl },
-    }),
+    },
   });
+}
 
-  if (error) {
-    logger.error('Coffee thank-you email failed', { error: String(error.message ?? error) });
-    return { data: null, error };
-  }
-  return { data, error: null };
+export function sendMeetingBookingEmail(to: string, bookingUrl: string): Promise<SendEmailResult> {
+  return sendSupportEmail({
+    kind: 'meeting booking',
+    to,
+    subject: 'Book your session with Luis',
+    content: {
+      heading: 'Thanks — let’s find a time',
+      paragraphs: [
+        'Your payment for a consulting session went through. Thank you for trusting me with your time.',
+        'Pick a slot that suits you using the link below. If none of the times work, or you want to share some context before we meet, just reply to this email.',
+      ],
+      cta: { label: 'Book your session', url: bookingUrl },
+    },
+  });
 }

@@ -36,6 +36,72 @@ describe("PaymentSuccessPage", () => {
     expect(screen.getByText(/thank you for your support/i)).toBeInTheDocument();
   });
 
+  describe("booking link", () => {
+    const renderWith = async (checkoutSessionStatus: Record<string, unknown>) => {
+      mockFetchGql.mockResolvedValue({ checkoutSessionStatus });
+      const page = await PaymentSuccessPage({
+        searchParams: Promise.resolve({ session_id: "cs_meeting" }),
+      });
+      render(page);
+    };
+
+    it("shows Book your session for a paid meeting", async () => {
+      await renderWith({
+        sessionId: "cs_meeting",
+        paymentStatus: "paid",
+        status: "complete",
+        productKey: "meeting",
+        bookingUrl: "https://cal.com/lfariadev/consulting-session",
+      });
+
+      const link = screen.getByRole("link", { name: /book your session/i });
+      expect(link).toHaveAttribute("href", "https://cal.com/lfariadev/consulting-session");
+      expect(screen.getByText(/save this link/i)).toBeInTheDocument();
+    });
+
+    it("offers a contact fallback for a paid meeting without a booking link", async () => {
+      await renderWith({
+        sessionId: "cs_meeting",
+        paymentStatus: "paid",
+        status: "complete",
+        productKey: "meeting",
+        bookingUrl: null,
+      });
+
+      expect(screen.queryByRole("link", { name: /book your session/i })).not.toBeInTheDocument();
+      expect(screen.getByText(/i'll email you to arrange a time/i)).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /contact@luisfaria.dev/i })).toHaveAttribute(
+        "href",
+        "mailto:contact@luisfaria.dev"
+      );
+    });
+
+    it("does not show it for coffee", async () => {
+      await renderWith({
+        sessionId: "cs_coffee",
+        paymentStatus: "paid",
+        status: "complete",
+        productKey: "coffee",
+        bookingUrl: null,
+      });
+
+      expect(screen.queryByRole("link", { name: /book your session/i })).not.toBeInTheDocument();
+      expect(screen.queryByText(/arrange a time/i)).not.toBeInTheDocument();
+    });
+
+    it("does not show it while the meeting is unpaid", async () => {
+      await renderWith({
+        sessionId: "cs_meeting",
+        paymentStatus: "unpaid",
+        status: "complete",
+        productKey: "meeting",
+        bookingUrl: "https://cal.com/lfariadev/consulting-session",
+      });
+
+      expect(screen.queryByRole("link", { name: /book your session/i })).not.toBeInTheDocument();
+    });
+  });
+
   it("renders recovery copy when the payment cannot be verified", async () => {
     mockFetchGql.mockRejectedValue(new Error("not found"));
 

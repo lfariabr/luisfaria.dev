@@ -1,9 +1,22 @@
 import { stripeMutations } from '../../resolvers/stripe/mutations';
 import { stripeQueries } from '../../resolvers/stripe/queries';
+import config from '../../config/config';
+
+const CAL_URL = 'https://cal.com/lfariadev/consulting-session';
+
+jest.mock('../../config/config', () => {
+  const actual = jest.requireActual('../../config/config');
+  return {
+    __esModule: true,
+    ...actual,
+    default: { ...actual.default, calMeetingUrl: 'https://cal.com/lfariadev/consulting-session' },
+  };
+});
 
 jest.mock('../../services/stripe', () => ({
   createCheckoutSession: jest.fn(),
   getCheckoutSessionStatus: jest.fn(),
+  meetingBookingUrl: jest.requireActual('../../services/stripe').meetingBookingUrl,
   isStripeServiceError: (error: unknown) => !!error && typeof error === 'object' && 'code' in error,
   mapStripeErrorCode: (code: string) => {
     if (code === 'SESSION_NOT_FOUND') return 'NOT_FOUND';
@@ -94,6 +107,7 @@ describe('stripeQueries.checkoutSessionStatus', () => {
       paymentStatus: 'paid',
       status: 'complete',
       customerEmail: 'paid@example.com',
+      productKey: 'coffee',
     });
 
     const result = await stripeQueries.checkoutSessionStatus({}, { sessionId: 'cs_test_1' });
@@ -102,6 +116,47 @@ describe('stripeQueries.checkoutSessionStatus', () => {
       sessionId: 'cs_test_1',
       paymentStatus: 'paid',
       status: 'complete',
+      productKey: 'coffee',
+      bookingUrl: null,
+    });
+  });
+
+  describe('bookingUrl', () => {
+    const meetingSession = (paymentStatus: string) => ({
+      sessionId: 'cs_meeting',
+      paymentStatus,
+      status: 'complete',
+      customerEmail: 'paid@example.com',
+      productKey: 'meeting',
+    });
+
+    afterEach(() => {
+      config.calMeetingUrl = CAL_URL;
+    });
+
+    it('hands out the Cal.com link for a paid meeting', async () => {
+      getCheckoutSessionStatus.mockResolvedValue(meetingSession('paid'));
+
+      const result = await stripeQueries.checkoutSessionStatus({}, { sessionId: 'cs_meeting' });
+
+      expect(result).toMatchObject({ productKey: 'meeting', bookingUrl: CAL_URL });
+    });
+
+    it('withholds the link while the meeting is unpaid', async () => {
+      getCheckoutSessionStatus.mockResolvedValue(meetingSession('unpaid'));
+
+      const result = await stripeQueries.checkoutSessionStatus({}, { sessionId: 'cs_meeting' });
+
+      expect(result.bookingUrl).toBeNull();
+    });
+
+    it('returns no link when CAL_MEETING_URL is not configured', async () => {
+      config.calMeetingUrl = '';
+      getCheckoutSessionStatus.mockResolvedValue(meetingSession('paid'));
+
+      const result = await stripeQueries.checkoutSessionStatus({}, { sessionId: 'cs_meeting' });
+
+      expect(result.bookingUrl).toBeNull();
     });
   });
 

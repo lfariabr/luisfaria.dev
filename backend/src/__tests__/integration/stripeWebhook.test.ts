@@ -10,7 +10,11 @@ jest.mock('../../config/config', () => {
   return {
     __esModule: true,
     ...actual,
-    default: { ...actual.default, stripeWebhookSecret: 'whsec_test_secret' },
+    default: {
+      ...actual.default,
+      stripeWebhookSecret: 'whsec_test_secret',
+      calMeetingUrl: 'https://cal.com/lfariadev/consulting-session',
+    },
   };
 });
 
@@ -20,13 +24,16 @@ jest.mock('../../services/discord', () => ({
 }));
 
 const mockSendCoffeeThankYouEmail = jest.fn().mockResolvedValue({ data: null, error: null });
+const mockSendMeetingBookingEmail = jest.fn().mockResolvedValue({ data: null, error: null });
 jest.mock('../../services/resendMailer', () => ({
   sendCoffeeThankYouEmail: (...args: unknown[]) => mockSendCoffeeThankYouEmail(...args),
+  sendMeetingBookingEmail: (...args: unknown[]) => mockSendMeetingBookingEmail(...args),
 }));
 
 import stripeWebhookRouter from '../../routes/stripeWebhook';
 import Payment from '../../models/Payment';
 import { logger } from '../../utils/logger';
+import config from '../../config/config';
 
 function buildApp() {
   const app = express();
@@ -183,6 +190,63 @@ describe('POST /webhooks/stripe', () => {
     });
   });
 
+  describe('meeting booking email', () => {
+    const meeting = () => session({ productKey: 'meeting', amount_total: 15000 });
+
+    afterEach(() => {
+      config.calMeetingUrl = 'https://cal.com/lfariadev/consulting-session';
+    });
+
+    it('sends the Cal.com booking link to meeting Supporters', async () => {
+      await post(app, event('checkout.session.completed', meeting()));
+
+      expect(mockSendMeetingBookingEmail).toHaveBeenCalledTimes(1);
+      expect(mockSendMeetingBookingEmail).toHaveBeenCalledWith(
+        'supporter@example.com',
+        'https://cal.com/lfariadev/consulting-session'
+      );
+    });
+
+    it('never sends it to coffee Supporters', async () => {
+      await post(app, event('checkout.session.completed', session()));
+
+      expect(mockSendMeetingBookingEmail).not.toHaveBeenCalled();
+    });
+
+    it('sends it only once when the event is replayed', async () => {
+      const body = event('checkout.session.completed', meeting(), 'evt_meeting_replayed');
+
+      await post(app, body);
+      await post(app, body);
+
+      expect(mockSendMeetingBookingEmail).toHaveBeenCalledTimes(1);
+    });
+
+    it('waits for an async meeting payment to succeed before sending it', async () => {
+      await post(app, event('checkout.session.completed', session({ productKey: 'meeting', payment_status: 'unpaid' })));
+      expect(mockSendMeetingBookingEmail).not.toHaveBeenCalled();
+
+      await post(app, event('checkout.session.async_payment_succeeded', meeting()));
+      expect(mockSendMeetingBookingEmail).toHaveBeenCalledTimes(1);
+    });
+
+    it('logs and skips the email when CAL_MEETING_URL is not configured', async () => {
+      config.calMeetingUrl = '';
+      const errorSpy = jest.spyOn(logger, 'error');
+
+      const res = await post(app, event('checkout.session.completed', meeting()));
+
+      expect(res.status).toBe(200);
+      expect((await Payment.findOne().lean())?.status).toBe('paid');
+      expect(mockSendMeetingBookingEmail).not.toHaveBeenCalled();
+      expect(errorSpy).toHaveBeenCalledWith(
+        'Meeting booking email skipped: CAL_MEETING_URL is not set',
+        expect.objectContaining({ sessionId: 'cs_test_1' })
+      );
+      errorSpy.mockRestore();
+    });
+  });
+
   describe('logging', () => {
     it('logs an email failure returned by Resend with the session id', async () => {
       const errorSpy = jest.spyOn(logger, 'error');
@@ -217,8 +281,8 @@ describe('POST /webhooks/stripe', () => {
 
       expect(mockSendCoffeeThankYouEmail).not.toHaveBeenCalled();
       expect(warnSpy).toHaveBeenCalledWith(
-        'Coffee thank-you skipped: no Supporter email',
-        expect.objectContaining({ sessionId: 'cs_test_1' })
+        'Supporter email skipped: no Supporter email',
+        expect.objectContaining({ sessionId: 'cs_test_1', email: 'coffee thank-you' })
       );
       warnSpy.mockRestore();
     });

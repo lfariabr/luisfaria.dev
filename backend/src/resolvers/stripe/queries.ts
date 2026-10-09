@@ -2,6 +2,7 @@ import {
   getCheckoutSessionStatus,
   isStripeServiceError,
   mapStripeErrorCode,
+  meetingBookingUrl,
 } from '../../services/stripe';
 import { createErrorHandler } from '../../utils/errors';
 
@@ -22,6 +23,8 @@ export const stripeQueries = {
       sessionId: session.sessionId,
       paymentStatus: session.paymentStatus,
       status: session.status,
+      productKey: session.productKey,
+      bookingUrl: meetingBookingUrl(session.productKey, session.paymentStatus),
     };
   },
 };
