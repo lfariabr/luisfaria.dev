@@ -13,6 +13,8 @@ export const stripeTypes = `#graphql
     sessionId: String!
     paymentStatus: String!
     status: String
+    productKey: ProductKey
+    bookingUrl: String
   }
 
   input CheckoutInput {

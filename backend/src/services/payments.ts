@@ -1,7 +1,8 @@
 import type Stripe from 'stripe';
 import Payment, { PAYMENT_PRODUCT_KEYS, type PaymentProductKey, type PaymentStatus } from '../models/Payment';
 import { notifyDiscord } from './discord';
-import { sendCoffeeThankYouEmail } from './resendMailer';
+import { sendCoffeeThankYouEmail, sendMeetingBookingEmail } from './resendMailer';
+import config from '../config/config';
 import { logger } from '../utils/logger';
 
 const SUPPORT_CHECKOUT_SOURCE = 'luisfaria.dev';
@@ -43,19 +44,27 @@ type PaymentFields = NonNullable<ReturnType<typeof toPaymentFields>>;
 const formatAmount = (amount: number, currency: string) =>
   `${currency.toUpperCase()} ${(amount / 100).toFixed(2)}`;
 
-async function sendCoffeeThankYou(fields: PaymentFields) {
-  if (fields.productKey !== 'coffee') return undefined;
+async function sendSupporterEmail(fields: PaymentFields) {
   if (!fields.email) {
-    logger.warn('Coffee thank-you skipped: no Supporter email', { sessionId: fields.stripeSessionId });
+    logger.warn(`${fields.productKey === 'coffee' ? 'Coffee thank-you' : 'Meeting booking email'} skipped: no Supporter email`, {
+      sessionId: fields.stripeSessionId,
+    });
     return undefined;
   }
-  return sendCoffeeThankYouEmail(fields.email);
+
+  if (fields.productKey === 'coffee') return sendCoffeeThankYouEmail(fields.email);
+
+  if (!config.calMeetingUrl) {
+    logger.error('Meeting booking email skipped: CAL_MEETING_URL is not set', { sessionId: fields.stripeSessionId });
+    return undefined;
+  }
+  return sendMeetingBookingEmail(fields.email, config.calMeetingUrl);
 }
 
 async function runPaidSideEffects(fields: PaymentFields) {
   const results = await Promise.allSettled([
     notifyDiscord(`💰 paid ${formatAmount(fields.amount, fields.currency)} — ${fields.productKey}`),
-    sendCoffeeThankYou(fields),
+    sendSupporterEmail(fields),
   ]);
 
   results.forEach((result) => {

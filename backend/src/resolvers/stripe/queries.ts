@@ -4,6 +4,7 @@ import {
   mapStripeErrorCode,
 } from '../../services/stripe';
 import { createErrorHandler } from '../../utils/errors';
+import config from '../../config/config';
 
 const withStripeErrorHandling = createErrorHandler(
   mapStripeErrorCode,
@@ -22,6 +23,11 @@ export const stripeQueries = {
       sessionId: session.sessionId,
       paymentStatus: session.paymentStatus,
       status: session.status,
+      productKey: session.productKey,
+      bookingUrl:
+        session.paymentStatus === 'paid' && session.productKey === 'meeting' && config.calMeetingUrl
+          ? config.calMeetingUrl
+          : null,
     };
   },
 };

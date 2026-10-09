@@ -102,3 +102,34 @@ export async function sendCoffeeThankYouEmail(to: string): Promise<SendEmailResu
   }
   return { data, error: null };
 }
+
+export async function sendMeetingBookingEmail(to: string, bookingUrl: string): Promise<SendEmailResult> {
+  if (config.nodeEnv === 'test') {
+    return { data: null, error: null };
+  }
+  if (!resend) {
+    logger.warn('sendMeetingBookingEmail skipped: RESEND_API_KEY is not set');
+    return { data: null, error: null };
+  }
+
+  const { data, error } = await resend.emails.send({
+    from: SUPPORT_SENDER,
+    replyTo: SUPPORT_REPLY_TO,
+    to,
+    subject: 'Book your session with Luis',
+    html: renderEmailLayout({
+      heading: 'Thanks — let’s find a time',
+      paragraphs: [
+        'Your payment for a consulting session went through. Thank you for trusting me with your time.',
+        'Pick a slot that suits you using the link below. If none of the times work, or you want to share some context before we meet, just reply to this email.',
+      ],
+      cta: { label: 'Book your session', url: bookingUrl },
+    }),
+  });
+
+  if (error) {
+    logger.error('Meeting booking email failed', { error: String(error.message ?? error) });
+    return { data: null, error };
+  }
+  return { data, error: null };
+}

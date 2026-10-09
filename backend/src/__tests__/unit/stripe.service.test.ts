@@ -40,6 +40,7 @@ describe('getCheckoutSessionStatus (test-mode stub)', () => {
       paymentStatus: 'paid',
       status: 'complete',
       customerEmail: 'test@example.com',
+      productKey: 'coffee',
     });
   });
 

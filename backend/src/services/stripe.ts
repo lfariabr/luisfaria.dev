@@ -31,7 +31,11 @@ export interface StripeSessionStatus {
   paymentStatus: string;
   status: string | null;
   customerEmail: string | null;
+  productKey: StripeProductKey | null;
 }
+
+const toProductKey = (value: string | undefined): StripeProductKey | null =>
+  value && Object.hasOwn(PRODUCTS, value) ? (value as StripeProductKey) : null;
 
 type StripeServiceErrorCode = 'NOT_CONFIGURED' | 'MISSING_PRICE' | 'SESSION_NOT_FOUND' | 'INVALID_RETURN_URL';
 
@@ -193,6 +197,7 @@ export async function getCheckoutSessionStatus(sessionId: string): Promise<Strip
       paymentStatus: 'paid',
       status: 'complete',
       customerEmail: 'test@example.com',
+      productKey: 'coffee',
     };
   }
 
@@ -205,6 +210,7 @@ export async function getCheckoutSessionStatus(sessionId: string): Promise<Strip
       paymentStatus: session.payment_status,
       status: session.status,
       customerEmail: session.customer_email,
+      productKey: toProductKey(session.metadata?.productKey),
     };
   } catch (error) {
     if (error instanceof Stripe.errors.StripeInvalidRequestError) {
