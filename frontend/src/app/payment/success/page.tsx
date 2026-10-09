@@ -64,7 +64,8 @@ export default async function PaymentSuccessPage({ searchParams }: SuccessPagePr
   const isPaid =
     sessionStatus?.paymentStatus === "paid" &&
     (sessionStatus.status === "complete" || sessionStatus.status === "open");
-  const bookingUrl = isPaid ? sessionStatus?.bookingUrl : null;
+  const isPaidMeeting = isPaid && sessionStatus?.productKey === "meeting";
+  const bookingUrl = isPaidMeeting ? sessionStatus?.bookingUrl : null;
 
   return (
     <MainLayout>
@@ -93,17 +94,29 @@ export default async function PaymentSuccessPage({ searchParams }: SuccessPagePr
               ? "Your checkout was completed successfully. I appreciate your support."
               : "If you just paid, wait a moment and refresh this page. If this keeps happening, contact me and include the session ID below."}
           </p>
-          {bookingUrl && (
+          {isPaidMeeting && (
             <div className="mt-6 rounded-xl border border-emerald-300/60 bg-white/70 p-5 dark:border-emerald-500/30 dark:bg-zinc-950/40">
               <p className="font-medium text-zinc-900 dark:text-white">Next step: pick a time for our session.</p>
-              <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                The booking link is also in your email, so you can come back to it later.
-              </p>
-              <Button asChild className="mt-4 rounded-full bg-emerald-600 px-6 text-white hover:bg-emerald-500">
-                <a href={bookingUrl} target="_blank" rel="noopener noreferrer">
-                  Book your session
-                </a>
-              </Button>
+              {bookingUrl ? (
+                <>
+                  <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                    Save this link so you can come back to it. I&apos;ll also email it to you if you gave an email at checkout.
+                  </p>
+                  <Button asChild className="mt-4 rounded-full bg-emerald-600 px-6 text-white hover:bg-emerald-500">
+                    <a href={bookingUrl} target="_blank" rel="noopener noreferrer">
+                      Book your session
+                    </a>
+                  </Button>
+                </>
+              ) : (
+                <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                  I&apos;ll email you to arrange a time. If you don&apos;t hear from me within a day, write to{" "}
+                  <a href="mailto:contact@luisfaria.dev" className="font-medium text-emerald-700 underline dark:text-emerald-300">
+                    contact@luisfaria.dev
+                  </a>
+                  .
+                </p>
+              )}
             </div>
           )}
           {sessionId ? (

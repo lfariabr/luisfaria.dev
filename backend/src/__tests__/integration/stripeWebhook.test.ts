@@ -281,8 +281,8 @@ describe('POST /webhooks/stripe', () => {
 
       expect(mockSendCoffeeThankYouEmail).not.toHaveBeenCalled();
       expect(warnSpy).toHaveBeenCalledWith(
-        'Coffee thank-you skipped: no Supporter email',
-        expect.objectContaining({ sessionId: 'cs_test_1' })
+        'Supporter email skipped: no Supporter email',
+        expect.objectContaining({ sessionId: 'cs_test_1', email: 'coffee thank-you' })
       );
       warnSpy.mockRestore();
     });

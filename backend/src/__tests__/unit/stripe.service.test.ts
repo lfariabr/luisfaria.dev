@@ -1,6 +1,8 @@
+import config from '../../config/config';
 import {
   createCheckoutSession,
   getCheckoutSessionStatus,
+  meetingBookingUrl,
   StripeServiceError,
   isStripeServiceError,
   mapStripeErrorCode,
@@ -47,6 +49,35 @@ describe('getCheckoutSessionStatus (test-mode stub)', () => {
   it('preserves the sessionId passed in', async () => {
     const result = await getCheckoutSessionStatus('cs_live_xyz789');
     expect(result.sessionId).toBe('cs_live_xyz789');
+  });
+});
+
+describe('getCheckoutSessionStatus test-mode productKey', () => {
+  it('reports the product encoded in a test session id', async () => {
+    expect((await getCheckoutSessionStatus('test_session_meeting')).productKey).toBe('meeting');
+    expect((await getCheckoutSessionStatus('test_session_coffee')).productKey).toBe('coffee');
+  });
+});
+
+describe('meetingBookingUrl', () => {
+  const original = config.calMeetingUrl;
+  beforeEach(() => {
+    config.calMeetingUrl = 'https://cal.com/lfariadev/consulting-session';
+  });
+  afterAll(() => {
+    config.calMeetingUrl = original;
+  });
+
+  it('returns the Cal.com link for a paid meeting', () => {
+    expect(meetingBookingUrl('meeting', 'paid')).toBe('https://cal.com/lfariadev/consulting-session');
+  });
+
+  it('returns null for coffee, unpaid meetings, or an unset link', () => {
+    expect(meetingBookingUrl('coffee', 'paid')).toBeNull();
+    expect(meetingBookingUrl('meeting', 'unpaid')).toBeNull();
+    expect(meetingBookingUrl(null, 'paid')).toBeNull();
+    config.calMeetingUrl = '';
+    expect(meetingBookingUrl('meeting', 'paid')).toBeNull();
   });
 });
 

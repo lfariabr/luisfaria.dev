@@ -1,8 +1,8 @@
 import type Stripe from 'stripe';
 import Payment, { PAYMENT_PRODUCT_KEYS, type PaymentProductKey, type PaymentStatus } from '../models/Payment';
 import { notifyDiscord } from './discord';
-import { sendCoffeeThankYouEmail, sendMeetingBookingEmail } from './resendMailer';
-import config from '../config/config';
+import { sendCoffeeThankYouEmail, sendMeetingBookingEmail, type SendEmailResult } from './resendMailer';
+import { meetingBookingUrl } from './stripe';
 import { logger } from '../utils/logger';
 
 const SUPPORT_CHECKOUT_SOURCE = 'luisfaria.dev';
@@ -44,21 +44,34 @@ type PaymentFields = NonNullable<ReturnType<typeof toPaymentFields>>;
 const formatAmount = (amount: number, currency: string) =>
   `${currency.toUpperCase()} ${(amount / 100).toFixed(2)}`;
 
+const SUPPORTER_EMAILS: Record<
+  PaymentProductKey,
+  { kind: string; send: (to: string, fields: PaymentFields) => Promise<SendEmailResult | undefined> }
+> = {
+  coffee: {
+    kind: 'coffee thank-you',
+    send: (to) => sendCoffeeThankYouEmail(to),
+  },
+  meeting: {
+    kind: 'meeting booking',
+    send: async (to, fields) => {
+      const bookingUrl = meetingBookingUrl(fields.productKey, 'paid');
+      if (!bookingUrl) {
+        logger.error('Meeting booking email skipped: CAL_MEETING_URL is not set', { sessionId: fields.stripeSessionId });
+        return undefined;
+      }
+      return sendMeetingBookingEmail(to, bookingUrl);
+    },
+  },
+};
+
 async function sendSupporterEmail(fields: PaymentFields) {
+  const { kind, send } = SUPPORTER_EMAILS[fields.productKey];
   if (!fields.email) {
-    logger.warn(`${fields.productKey === 'coffee' ? 'Coffee thank-you' : 'Meeting booking email'} skipped: no Supporter email`, {
-      sessionId: fields.stripeSessionId,
-    });
+    logger.warn('Supporter email skipped: no Supporter email', { sessionId: fields.stripeSessionId, email: kind });
     return undefined;
   }
-
-  if (fields.productKey === 'coffee') return sendCoffeeThankYouEmail(fields.email);
-
-  if (!config.calMeetingUrl) {
-    logger.error('Meeting booking email skipped: CAL_MEETING_URL is not set', { sessionId: fields.stripeSessionId });
-    return undefined;
-  }
-  return sendMeetingBookingEmail(fields.email, config.calMeetingUrl);
+  return send(fields.email, fields);
 }
 
 async function runPaidSideEffects(fields: PaymentFields) {

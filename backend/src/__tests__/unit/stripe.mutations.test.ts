@@ -16,6 +16,7 @@ jest.mock('../../config/config', () => {
 jest.mock('../../services/stripe', () => ({
   createCheckoutSession: jest.fn(),
   getCheckoutSessionStatus: jest.fn(),
+  meetingBookingUrl: jest.requireActual('../../services/stripe').meetingBookingUrl,
   isStripeServiceError: (error: unknown) => !!error && typeof error === 'object' && 'code' in error,
   mapStripeErrorCode: (code: string) => {
     if (code === 'SESSION_NOT_FOUND') return 'NOT_FOUND';

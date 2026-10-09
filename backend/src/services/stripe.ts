@@ -37,6 +37,9 @@ export interface StripeSessionStatus {
 const toProductKey = (value: string | undefined): StripeProductKey | null =>
   value && Object.hasOwn(PRODUCTS, value) ? (value as StripeProductKey) : null;
 
+export const meetingBookingUrl = (productKey: StripeProductKey | null, paymentStatus: string): string | null =>
+  paymentStatus === 'paid' && productKey === 'meeting' && config.calMeetingUrl ? config.calMeetingUrl : null;
+
 type StripeServiceErrorCode = 'NOT_CONFIGURED' | 'MISSING_PRICE' | 'SESSION_NOT_FOUND' | 'INVALID_RETURN_URL';
 
 export class StripeServiceError extends Error implements ServiceError {
@@ -197,7 +200,7 @@ export async function getCheckoutSessionStatus(sessionId: string): Promise<Strip
       paymentStatus: 'paid',
       status: 'complete',
       customerEmail: 'test@example.com',
-      productKey: 'coffee',
+      productKey: toProductKey(sessionId.replace(/^test_session_/, '')) ?? 'coffee',
     };
   }
 

@@ -56,7 +56,24 @@ describe("PaymentSuccessPage", () => {
 
       const link = screen.getByRole("link", { name: /book your session/i });
       expect(link).toHaveAttribute("href", "https://cal.com/lfariadev/consulting-session");
-      expect(screen.getByText(/booking link is also in your email/i)).toBeInTheDocument();
+      expect(screen.getByText(/save this link/i)).toBeInTheDocument();
+    });
+
+    it("offers a contact fallback for a paid meeting without a booking link", async () => {
+      await renderWith({
+        sessionId: "cs_meeting",
+        paymentStatus: "paid",
+        status: "complete",
+        productKey: "meeting",
+        bookingUrl: null,
+      });
+
+      expect(screen.queryByRole("link", { name: /book your session/i })).not.toBeInTheDocument();
+      expect(screen.getByText(/i'll email you to arrange a time/i)).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /contact@luisfaria.dev/i })).toHaveAttribute(
+        "href",
+        "mailto:contact@luisfaria.dev"
+      );
     });
 
     it("does not show it for coffee", async () => {
@@ -69,6 +86,7 @@ describe("PaymentSuccessPage", () => {
       });
 
       expect(screen.queryByRole("link", { name: /book your session/i })).not.toBeInTheDocument();
+      expect(screen.queryByText(/arrange a time/i)).not.toBeInTheDocument();
     });
 
     it("does not show it while the meeting is unpaid", async () => {
