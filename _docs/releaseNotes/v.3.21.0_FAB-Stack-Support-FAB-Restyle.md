@@ -1,6 +1,6 @@
 # v3.21.0 — FAB Stack and Support FAB Restyle
 
-**Release date:** TBD (draft, ships with #312)
+**Release date:** 7 October 2026 (merged in #315, closes #312)
 **Type:** Feature (UI)
 
 ## What's New
@@ -25,7 +25,7 @@
 
 ## Tests
 
-- Frontend: TBD/TBD passing (updated Support FAB tests + new FAB stack test)
+- Frontend: 197 passed, 5 skipped (updated Support FAB tests + new FAB stack test)
 - `npm run lint` → 0 warnings
 - Backend: no change
 

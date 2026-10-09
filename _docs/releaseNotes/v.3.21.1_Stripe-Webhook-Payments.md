@@ -1,6 +1,6 @@
 # v3.21.1 — Record Payments via Stripe Webhook 💰
 
-**Release date:** TBD (draft, ships with #313)
+**Release date:** 9 October 2026 (merged in #316, closes #313). Verified in production with a live AUD 5 coffee and a full refund
 **Type:** Feature
 
 ## What's New
@@ -29,8 +29,8 @@
 
 ## Tests
 
-- Backend: TBD/TBD passing (signature rejection, each event, idempotency, admin auth)
-- Frontend: TBD/TBD passing (admin payments list)
+- Backend: 287/287 passing (signature rejection, each event, idempotency, side-effect logging, admin auth)
+- Frontend: 202 passed, 5 skipped (admin payments list, no client "checkout initiated" ping)
 
 ## Before / After
 
