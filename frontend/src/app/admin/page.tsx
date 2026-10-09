@@ -2,16 +2,14 @@
 
 import { useProjects } from "@/lib/hooks/useProjects";
 import { useArticles } from "@/lib/hooks/useArticles";
-import { useAuth } from "@/lib/auth/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, FolderKanban, Users, BarChart3, ExternalLink } from "lucide-react";
+import { FileText, FolderKanban, BarChart3, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 export default function AdminDashboardPage() {
   const { projects, loading: projectsLoading } = useProjects();
   const { articles, loading: articlesLoading } = useArticles();
-  const { user } = useAuth();
   
   // Simple statistics for the dashboard
   const stats = [
@@ -31,14 +29,6 @@ export default function AdminDashboardPage() {
       color: "text-green-500",
       link: "/admin/articles"
     },
-    {
-      title: "User Role",
-      value: user?.role || "...",
-      description: "Your current permission level",
-      icon: Users,
-      color: "text-orange-500",
-      link: "/admin/settings"
-    },
   ];
   
   return (
@@ -51,7 +41,7 @@ export default function AdminDashboardPage() {
       </div>
       
       {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         {stats.map((stat, i) => (
           <Card key={i}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
