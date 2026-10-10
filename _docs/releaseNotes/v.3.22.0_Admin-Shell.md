@@ -1,6 +1,6 @@
 # v3.22.0 — Admin Shell Rework
 
-**Release date:** TBD (closes #318)
+**Release date:** 10 October 2026 (merged in #320, closes #318)
 **Type:** Feature (UI)
 
 ## What's New

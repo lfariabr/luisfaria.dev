@@ -1,6 +1,6 @@
 # v3.22.1 — Admin Dashboard Redesign
 
-**Release date:** TBD (closes #319)
+**Release date:** 11 October 2026 (merged in #321, closes #319)
 **Type:** Feature (UI)
 
 ## What's New
