@@ -149,7 +149,6 @@ export const permissions = shield(
       // Protected queries
       me: isAuthenticated,
       chatHistory: isAuthenticated,
-      testRateLimit: isAuthenticated,
       myNotes: and(isAuthenticated, validateNoteFilters),
       note: and(isAuthenticated, validateNoteId),
       pins: canViewRelationshipPins,

@@ -27,11 +27,6 @@ export default tseslint.config(
     rules: { "no-restricted-syntax": "off" },
   },
   {
-    // Rate-limit sites that predate the factories; migrate to Errors.rateLimited in the rate-limiting work
-    files: ["src/middleware/rateLimiter.ts", "src/utils/applyRateLimit.ts", "src/resolvers/screams/mutations.ts"],
-    rules: { "no-restricted-syntax": "off" },
-  },
-  {
     // Jest suites mock with require() inside test bodies on purpose
     files: ["src/__tests__/**"],
     rules: { "@typescript-eslint/no-require-imports": "off" },

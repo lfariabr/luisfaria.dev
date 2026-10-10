@@ -3,7 +3,7 @@
 import * as dbHandler from '../helpers/dbHandler';
 import { executeOperation } from '../helpers/testServer';
 import { connectRedis, disconnectRedis, getRedisClient } from '../../services/redis';
-import config from '../../config/config';
+import { rateLimits } from '../../rateLimiting';
 
 // Mock the APOD service - keep error handling real
 jest.mock('../../services/apod/', () => {
@@ -90,7 +90,7 @@ describe('APOD Resolvers Integration Tests', () => {
     jest.clearAllMocks();
     // Clear rate limit keys before each test
     const redisClient = getRedisClient();
-    const keys = await redisClient.keys('rate-limit:apod:*');
+    const keys = await redisClient.keys('rl:apod:*');
     if (keys.length > 0) {
       await redisClient.del(keys);
     }
@@ -160,8 +160,7 @@ describe('APOD Resolvers Integration Tests', () => {
 
         const testIp = `192.168.1.${Math.floor(Math.random() * 255)}`;
 
-        // Use actual anonymous rate limit from config
-        const anonymousLimit = config.rateLimitAnonymousRequests;
+        const anonymousLimit = rateLimits.apod.limits.ip;
 
         // Make requests up to the limit
         for (let i = 0; i < anonymousLimit; i++) {
@@ -186,8 +185,7 @@ describe('APOD Resolvers Integration Tests', () => {
         const ip1 = `10.0.0.${Math.floor(Math.random() * 255)}`;
         const ip2 = `10.0.1.${Math.floor(Math.random() * 255)}`;
 
-        // Exhaust IP1's limit using config value
-        const anonymousLimit = config.rateLimitAnonymousRequests;
+        const anonymousLimit = rateLimits.apod.limits.ip;
         for (let i = 0; i < anonymousLimit; i++) {
           await executeOperation(GET_TODAYS_APOD, {}, { clientIp: ip1 });
         }
@@ -208,8 +206,7 @@ describe('APOD Resolvers Integration Tests', () => {
 
         const testIp = `172.16.0.${Math.floor(Math.random() * 255)}`;
 
-        // Exhaust limit using config value
-        const anonymousLimit = config.rateLimitAnonymousRequests;
+        const anonymousLimit = rateLimits.apod.limits.ip;
         for (let i = 0; i < anonymousLimit; i++) {
           await executeOperation(GET_TODAYS_APOD, {}, { clientIp: testIp });
         }
@@ -338,8 +335,7 @@ describe('APOD Resolvers Integration Tests', () => {
           clientIp: '127.0.0.1',
         };
 
-        // Use actual rate limit from config (same setting used by the resolver)
-        const limit = config.rateLimitMaxRequests;
+        const limit = rateLimits.apod.limits.user;
 
         // Make exactly `limit` requests - all should succeed
         for (let i = 0; i < limit; i++) {

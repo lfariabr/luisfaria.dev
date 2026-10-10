@@ -4,7 +4,7 @@ import User, { UserRole } from '../../models/User';
 import ChatMessage from '../../models/ChatMessage';
 import bcrypt from 'bcryptjs';
 import { connectRedis, disconnectRedis, getRedisClient } from '../../services/redis';
-import { rateLimiter } from '../../services/rateLimiter';
+import { rateLimits, resetCount, Subject } from '../../rateLimiting';
 
 // Mock OpenAI service
 jest.mock('../../services/openai', () => ({
@@ -121,7 +121,7 @@ describe('Chatbot Resolvers', () => {
         expect(askQuestion.message.modelUsed).toBe('gpt-3.5-turbo');
         
         // Check rate limit info
-        expect(askQuestion.rateLimitInfo.limit).toBe(5); // Using the actual value from config
+        expect(askQuestion.rateLimitInfo.limit).toBe(rateLimits.chatbot.limits.user);
         expect(askQuestion.rateLimitInfo.remaining).toBe(4);
         expect(askQuestion.rateLimitInfo.resetTime).toBeTruthy();
       }
@@ -141,7 +141,7 @@ describe('Chatbot Resolvers', () => {
     const context = { user: { id: testUser._id, role: testUser.role } };
     
     // Simulate hitting the rate limit by making multiple requests
-    const limit = 5; // Match the actual limit in the environment
+    const limit = rateLimits.chatbot.limits.user;
     
     for (let i = 0; i < limit; i++) {
       await executeOperation(ASK_QUESTION_MUTATION, variables, context);
@@ -174,7 +174,7 @@ describe('Chatbot Resolvers', () => {
       });
       
       // Clear rate limits for this user using the correct prefixed key
-      await rateLimiter.reset(`chatbot:${freshUser._id}`);
+      await resetCount('chatbot', Subject.user(freshUser._id));
     });
 
     const dangerousInputs = [
@@ -240,7 +240,7 @@ describe('Chatbot Resolvers', () => {
       'should accept safe input: %s',
       async (question) => {
         // Clear rate limit before each safe input test using the correct prefixed key
-        await rateLimiter.reset(`chatbot:${freshUser._id}`);
+        await resetCount('chatbot', Subject.user(freshUser._id));
         
         const context = { user: { id: freshUser._id, role: freshUser.role } };
         const response = await executeOperation(
