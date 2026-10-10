@@ -18,13 +18,13 @@ Method: the plugin's `retro` skill (still in its `in-progress` folder, so run by
 ### 1. Backend had no lint or typecheck guardrail → fixed in #323
 No lint script, CI ran build + tests only, no pre-commit hook anywhere. Fix: backend ESLint (flat config), `lint` + `typecheck` scripts, CI lint step, `.githooks/pre-commit`. `no-explicit-any` ratcheted at 123 so new ones fail.
 
-### 2. Standards live in a judgement doc pretending to be a rulebook → open
+### 2. Standards live in a judgement doc pretending to be a rulebook → fixed in #330
 The review used `CLAUDE.md` + `copilot-instructions.md` and flagged a resolver not wrapped in `createErrorHandler`. Mechanical rule → linter. Proposed: ESLint `no-restricted-syntax` on `new GraphQLError` in the backend, and a short `CODING_STANDARDS.md` for the judgement calls the `code-review` skill looks for by name.
 
 ### 3. Redis test dependency lived in agent memory, not the repo → fixed in #323
 The agent knew about port 6381 from a saved memory, started Redis by hand, and saw `cookieAuthE2E` fail twice in a full run then pass alone; moved on without diagnosing. Fix: `npm test` pretest guard that starts Redis when the port is silent, and a line in `CLAUDE.md` naming the requirement and the suspected flake. Diagnosis of the flake is backlog.
 
-### 4. `copilot-instructions.md` is sediment → open
+### 4. `copilot-instructions.md` is sediment → fixed in #330
 Called the "authoritative reference" by `CLAUDE.md`, yet it claims NextAuth.js (never in the code) and Next.js 14 (installed: 16). Two architecture sources of truth, one stale. Proposed: delete after moving any live judgement calls into the standards file.
 
 ### 5. Navigation pointers lagged the code → fixed in #323
