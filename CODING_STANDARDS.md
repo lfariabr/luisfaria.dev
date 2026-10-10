@@ -5,7 +5,7 @@ Judgement calls a reviewer applies to a diff. Anything checkable by a machine li
 ## Errors
 
 - A resolver throws through `Errors.*` from `backend/src/utils/errors`, and is wrapped in `createErrorHandler` so unexpected failures map to `INTERNAL_SERVER_ERROR` with the resolver name logged. The lint rule bans raw `new GraphQLError` outside the error infrastructure; the reviewer checks the wrapper.
-- Pick the code by what the caller can do about it: `BAD_USER_INPUT` when they can change the input, `UNAUTHENTICATED` / `FORBIDDEN` when they need a session or a role, `TOO_MANY_REQUESTS` with `limit`, `remaining`, `resetTime` when they should wait. Shield rules return errors; resolvers throw them.
+- Pick the code by what the caller can do about it: `BAD_USER_INPUT` when they can change the input, `UNAUTHENTICATED` / `FORBIDDEN` when they need a session or a role, `RATE_LIMITED` (via `Errors.rateLimited`) with `limit`, `remaining`, `resetTime` when they should wait. Shield rules return errors; resolvers throw them.
 - Side effects that are not the mutation's purpose (email, Discord, analytics) are caught and logged; they never fail the mutation.
 
 ## Validation and input
@@ -15,9 +15,9 @@ Judgement calls a reviewer applies to a diff. Anything checkable by a machine li
 
 ## Rate limiting
 
-- One call to `rateLimiter.limit(key, limit, windowSeconds)`; the Lua script is the only place that reads and writes the counter. A limit is never checked client-side.
-- Keys are `<feature>:<subject>`; the subject is the user id, or a normalised email when there is no session.
-- The response carries `limit`, `remaining` and `resetTime`, and the UI shows them. A silent limit is a bug.
+- A resolver or route calls `consume(name, subject)` from `backend/src/rateLimiting/`; the Lua script there is the only place that reads and writes the counter. The numbers (limit, Window, failure mode, visibility) live in the module's list of Rate limits, never at the call site. A limit is never checked client-side.
+- The Subject is the user id, a normalised email, or an IP; the caller passes `unknown` when it has none, never skips the call. Keys are `rl:<rateLimit>:<subjectKind>:<id>`.
+- A Visible rate limit's response carries `limit`, `remaining` and `resetTime`, and the UI shows them. A Silent rate limit (abuse protection) shows nothing; a new one needs a reason in the PR. See `docs/adr/0001-rate-limiting-domain.md`.
 
 ## Logging
 
