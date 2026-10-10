@@ -104,7 +104,7 @@ export const chatWithAI = async (
       return response.choices[0]?.message?.content || 'Sorry, I could not generate a response.';
     } catch (error: any) {
       console.error('OpenAI API error:', error.message);
-      throw new Error('Failed to get response from AI service');
+      throw new Error('Failed to get response from AI service', { cause: error });
     }
   };
 
@@ -131,7 +131,7 @@ export const chatWithAI = async (
       return response.choices[0]?.message?.content || 'Sorry, I could not generate a response.';
     } catch (error: any) {
       console.error('OpenAI API error:', error.message);
-      throw new Error('Failed to get response from AI service');
+      throw new Error('Failed to get response from AI service', { cause: error });
     }
   };
   

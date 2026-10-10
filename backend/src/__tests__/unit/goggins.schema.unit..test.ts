@@ -1,5 +1,4 @@
 // backend/src/__tests__/goggins.schema.unit.test.ts
-import { z } from 'zod';
 import { screamInputSchema } from '../../validation/schemas/scream.schema';
 
 describe('screamInputSchema', () => {

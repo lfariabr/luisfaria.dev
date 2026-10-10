@@ -52,7 +52,8 @@ const containsDangerousPattern = (input: string): boolean => {
  */
 const sanitizeInput = (input: string): string => {
   return input
-    .replace(/[\x00-\x1F\x7F]/g, '')  // Remove control characters
+    // eslint-disable-next-line no-control-regex -- stripping control characters is the point
+    .replace(/[\x00-\x1F\x7F]/g, '')
     .trim();
 };
 

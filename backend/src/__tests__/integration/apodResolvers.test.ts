@@ -234,10 +234,6 @@ describe('APOD Resolvers Integration Tests', () => {
   });
 
   describe('getApodByDate', () => {
-    const authenticatedContext = {
-      user: { id: 'test-user-123', email: 'test@example.com', role: 'USER' },
-      clientIp: '127.0.0.1',
-    };
 
     describe('Authentication', () => {
       it('should require authentication', async () => {

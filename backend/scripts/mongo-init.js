@@ -1,3 +1,5 @@
+/* global db, print */
+/* eslint-disable no-global-assign */
 // This script creates the portfolio database and initializes collections
 db = db.getSiblingDB('portfolio');
 

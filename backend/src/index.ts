@@ -146,7 +146,7 @@ async function startServer() {
     app.use('/graphql', 
       express.json(),
       cors(corsOptions),
-      // @ts-ignore - Ignoring type issues with Express middleware
+      // @ts-expect-error - Ignoring type issues with Express middleware
       expressMiddleware(server, {
         context: async ({ req, res }: any) => {
           // Get the user from the token

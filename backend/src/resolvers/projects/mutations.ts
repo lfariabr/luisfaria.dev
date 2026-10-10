@@ -2,7 +2,6 @@ import Project from '../../models/Project';
 import { checkRole } from '../../utils/authUtils';
 import { generateUniqueProjectSlug, isValidSlug, slugify } from '../../utils/slugUtils';
 import { Errors } from '../../utils/errors';
-import { logger } from '../../utils/logger';
 
 export const projectMutations = {
   createProject: async (_: any, { input }: any, context: any) => {

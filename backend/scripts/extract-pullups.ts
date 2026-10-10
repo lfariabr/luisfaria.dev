@@ -30,7 +30,7 @@ function parsePullUpCounts(line: string): { perSession?: number; cumulative?: nu
   const result: { perSession?: number; cumulative?: number; target?: number } = {};
 
   // Case-insensitive search for "pull ups" and an adjacent integer
-  const perSessionRegex = /pull\s*ups[^0-9\-]*(-?\d+)|(-?\d+)\s*pull\s*ups/i;
+  const perSessionRegex = /pull\s*ups[^0-9-]*(-?\d+)|(-?\d+)\s*pull\s*ups/i;
   const matchPS = line.match(perSessionRegex);
   if (matchPS) {
     const n = matchPS[1] ?? matchPS[2];

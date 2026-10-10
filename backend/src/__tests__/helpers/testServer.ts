@@ -11,7 +11,7 @@ import { applyMiddleware } from 'graphql-middleware';
  * @param {Object} contextValue - Mock context value to use for tests
  * @returns {ApolloServer} Apollo Server instance
  */
-export const createTestServer = (contextValue = {}) => {
+export const createTestServer = (_contextValue = {}) => {
   // Create schema with permissions middleware
   const schema = makeExecutableSchema({ typeDefs, resolvers });
   const schemaWithMiddleware = applyMiddleware(schema, permissions);

@@ -13,7 +13,9 @@ Full-stack TypeScript portfolio application (luisfaria.dev) with a Next.js front
 npm run dev              # Start dev server with nodemon (port 4000)
 npm run build            # TypeScript compile to /dist
 npm run build:prod       # Production TypeScript build
-npm test                 # Run Jest tests
+npm run lint             # ESLint (any-count ratchet via --max-warnings)
+npm run typecheck        # tsc --noEmit
+npm test                 # Run Jest tests (pretest starts a local Redis if REDIS_URL's port is silent)
 npm run test:watch       # Watch mode
 npm run test:coverage    # With coverage report
 ```
@@ -52,9 +54,10 @@ docker-compose down          # Stop
 - **Entry point**: `backend/src/index.ts` — Express server, MongoDB/Redis connections, Apollo setup
 - **Config**: `backend/src/config/config.ts`
 - **GraphQL schema**: `backend/src/schemas/typeDefs.ts` (composed from `schemas/types/`)
-- **Resolvers**: `backend/src/resolvers/index.ts` (composed from domain folders: `users/`, `articles/`, `projects/`, `chatbot/`, `apod/`, `resend/`, `screams/`)
-- **Models**: `backend/src/models/` — Mongoose schemas (User, Article, Project, ChatMessage, Scream)
-- **Services**: `backend/src/services/` — rateLimiter (Redis+Lua), redis client, openai client, resendMailer, apod service
+- **Resolvers**: `backend/src/resolvers/index.ts` (composed from domain folders: `users/`, `articles/`, `projects/`, `chatbot/`, `apod/`, `resend/`, `screams/`, `notes/`, `pins/`, `stripe/`, `payments/`)
+- **REST routes**: `backend/src/routes/` — `health.ts`, `stripeWebhook.ts` (raw-body Stripe webhook, mounted before JSON parsing)
+- **Models**: `backend/src/models/` — Mongoose schemas (User, Article, Project, ChatMessage, Scream, Note, Pin, Payment)
+- **Services**: `backend/src/services/` — rateLimiter (Redis+Lua), redis client, openai client, resendMailer + emailLayout, apod, stripe (checkout), payments (webhook side effects), discord, turnstile
 - **Error handling**: `backend/src/utils/errors/` — shared error factories, `createErrorHandler` wrapper
 - **Authorization**: `backend/src/validation/shield.ts` — GraphQL Shield rules
 - **Validation**: `backend/src/validation/schemas/` — Zod schemas
@@ -111,9 +114,10 @@ Use `rateLimiter.limit(key, limit, windowSeconds)` from `backend/src/services/ra
 
 ## Testing
 
-- **Backend**: Jest + ts-jest, MongoDB Memory Server for in-memory DB, mocked external services (OpenAI, Resend, NASA)
+- **Backend**: Jest + ts-jest, MongoDB Memory Server for in-memory DB, mocked external services (OpenAI, Resend, NASA). Needs a real Redis at `REDIS_URL` (local `.env` uses port 6381); `npm test` starts one via Docker when the port is silent. `cookieAuthE2E` has failed once in a full run and passed alone: suspected ordering flake, not yet diagnosed.
 - **Frontend**: Jest + React Testing Library + jsdom, Apollo Client mocks
-- **CI**: GitHub Actions runs both test suites in parallel with MongoDB 7 and Redis 7 services
+- **CI**: GitHub Actions runs lint + build/typecheck + tests per package in parallel with MongoDB 7 and Redis 7 services
+- **Pre-commit**: `.githooks/pre-commit` runs typecheck + lint for whichever package has staged files. Enable once per clone: `git config core.hooksPath .githooks`
 
 ## Environment Variables
 

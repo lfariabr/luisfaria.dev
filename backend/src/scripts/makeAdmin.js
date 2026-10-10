@@ -1,6 +1,5 @@
 // Simple script to update a user's role to ADMIN
-const mongoose = require('mongoose');
-const { MongoClient, ObjectId } = require('mongodb');
+const { MongoClient } = require('mongodb');
 
 // Replace with your MongoDB connection string
 const uri = 'mongodb://localhost:27017/portfolio';
