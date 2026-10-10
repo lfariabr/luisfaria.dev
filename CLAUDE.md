@@ -13,9 +13,9 @@ Full-stack TypeScript portfolio application (luisfaria.dev) with a Next.js front
 npm run dev              # Start dev server with nodemon (port 4000)
 npm run build            # TypeScript compile to /dist
 npm run build:prod       # Production TypeScript build
-npm run lint             # ESLint (any-count ratchet via --max-warnings)
+npm run lint             # ESLint (total any-warning count capped via --max-warnings)
 npm run typecheck        # tsc --noEmit
-npm test                 # Run Jest tests (pretest starts a local Redis if REDIS_URL's port is silent)
+npm test                 # Run Jest tests (pretest starts a Docker Redis when REDIS_URL is localhost and its port is silent; remote URLs must already be up)
 npm run test:watch       # Watch mode
 npm run test:coverage    # With coverage report
 ```
@@ -114,7 +114,7 @@ Use `rateLimiter.limit(key, limit, windowSeconds)` from `backend/src/services/ra
 
 ## Testing
 
-- **Backend**: Jest + ts-jest, MongoDB Memory Server for in-memory DB, mocked external services (OpenAI, Resend, NASA). Needs a real Redis at `REDIS_URL` (local `.env` uses port 6381); `npm test` starts one via Docker when the port is silent. `cookieAuthE2E` has failed once in a full run and passed alone: suspected ordering flake, not yet diagnosed.
+- **Backend**: Jest + ts-jest, MongoDB Memory Server for in-memory DB, mocked external services (OpenAI, Resend, NASA). Needs a real Redis at `REDIS_URL` (local `.env` uses port 6381); `npm test` starts one via Docker when the host is localhost and the port is silent, and fails fast for an unreachable remote host. `cookieAuthE2E` has failed once in a full run and passed alone: suspected ordering flake, not yet diagnosed.
 - **Frontend**: Jest + React Testing Library + jsdom, Apollo Client mocks
 - **CI**: GitHub Actions runs lint + build/typecheck + tests per package in parallel with MongoDB 7 and Redis 7 services
 - **Pre-commit**: `.githooks/pre-commit` runs typecheck + lint for whichever package has staged files. Enable once per clone: `git config core.hooksPath .githooks`

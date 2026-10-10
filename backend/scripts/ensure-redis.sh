@@ -7,7 +7,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 if [[ -z "${REDIS_URL:-}" && -f .env ]]; then
-  REDIS_URL="$(grep -E '^REDIS_URL=' .env | head -1 | cut -d= -f2- | awk '{print $1}')"
+  REDIS_URL="$( { grep -E '^REDIS_URL=' .env || true; } | head -1 | cut -d= -f2- | awk '{print $1}')"
 fi
 REDIS_URL="${REDIS_URL:-redis://localhost:6379}"
 
@@ -38,7 +38,7 @@ fi
 name="redis-test-$port"
 echo "ensure-redis: starting $name on port $port"
 docker rm -f "$name" >/dev/null 2>&1 || true
-docker run -d --name "$name" -p "$port:6379" redis:alpine >/dev/null
+docker run -d --name "$name" -p "127.0.0.1:$port:6379" redis:alpine >/dev/null
 
 for _ in $(seq 1 30); do
   reachable && exit 0
