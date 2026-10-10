@@ -2,8 +2,6 @@ import * as dbHandler from '../helpers/dbHandler';
 import { executeOperation } from '../helpers/testServer';
 import User, { UserRole } from '../../models/User';
 import ChatMessage from '../../models/ChatMessage';
-import jwt from 'jsonwebtoken';
-import config from '../../config/config';
 import bcrypt from 'bcryptjs';
 import { connectRedis, disconnectRedis, getRedisClient } from '../../services/redis';
 import { rateLimiter } from '../../services/rateLimiter';
@@ -66,7 +64,6 @@ function isAskQuestionResponse(obj: any): obj is { askQuestion: AskQuestionRespo
 
 describe('Chatbot Resolvers', () => {
   let testUser: any;
-  let authToken: string;
   
   // Connect to database and Redis before tests
   beforeAll(async () => {
@@ -81,13 +78,6 @@ describe('Chatbot Resolvers', () => {
       password: passwordHash,
       role: UserRole.USER
     });
-    
-    // Generate auth token
-    authToken = jwt.sign(
-      { userId: testUser._id, role: testUser.role },
-      config.jwtSecret,
-      { expiresIn: '1h' }
-    );
     
     // Clear any existing rate limit data
     const redisClient = getRedisClient();
@@ -172,7 +162,6 @@ describe('Chatbot Resolvers', () => {
 
   describe('Input Validation - Security Patterns', () => {
     let freshUser: any;
-    let freshToken: string;
 
     beforeAll(async () => {
       // Create a fresh user for security tests to avoid rate limit issues
@@ -262,7 +251,7 @@ describe('Chatbot Resolvers', () => {
 
         expect(response.body.kind).toBe('single');
         if (response.body.kind === 'single') {
-          const { data, errors } = response.body.singleResult;
+          const { errors } = response.body.singleResult;
           // Should not have validation errors (may have rate limit errors which is fine)
           const hasValidationError = errors?.some(e => 
             e.message.includes('invalid characters or patterns')

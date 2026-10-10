@@ -69,6 +69,9 @@ jobs:
         env:
           MONGOMS_DOWNLOAD_DIR: ~/.cache/mongodb-binaries
 
+      - name: Lint
+        run: npm run lint
+
       - name: Build & Type Check
         run: npm run build
 

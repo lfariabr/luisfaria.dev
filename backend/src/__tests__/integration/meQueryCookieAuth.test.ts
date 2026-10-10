@@ -42,8 +42,6 @@ const USER_QUERY = `
 describe('Cookie-Based Auth - User Queries', () => {
   let testUser: any;
   let adminUser: any;
-  let validToken: string;
-  let adminToken: string;
   let expiredToken: string;
   let invalidToken: string;
 
@@ -68,20 +66,6 @@ describe('Cookie-Based Auth - User Queries', () => {
       password: passwordHash,
       role: UserRole.ADMIN
     });
-
-    // Create valid token (simulating what would be in the cookie)
-    validToken = jwt.sign(
-      { id: testUser._id.toString(), email: testUser.email, role: testUser.role },
-      config.jwtSecret,
-      { expiresIn: '1h' }
-    );
-
-    // Create admin token
-    adminToken = jwt.sign(
-      { id: adminUser._id.toString(), email: adminUser.email, role: adminUser.role },
-      config.jwtSecret,
-      { expiresIn: '1h' }
-    );
 
     // Create expired token
     expiredToken = jwt.sign(

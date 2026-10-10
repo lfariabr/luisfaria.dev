@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Runs the package checks for whichever package has staged changes.
+# Enable once per clone: git config core.hooksPath .githooks
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+
+staged="$(git diff --cached --name-only --diff-filter=ACMR)"
+
+run() {
+  local label=$1 dir=$2 cmd=$3 out
+  if out="$(cd "$dir" && eval "$cmd" 2>&1)"; then
+    echo "pre-commit: $label ok"
+  else
+    echo "pre-commit: $label FAILED"; echo "$out"; exit 1
+  fi
+}
+
+if grep -q '^backend/' <<<"$staged"; then
+  run "backend typecheck" backend "npx tsc --noEmit"
+  run "backend lint" backend "npm run -s lint"
+fi
+
+if grep -q '^frontend/' <<<"$staged"; then
+  run "frontend typecheck" frontend "npx tsc --noEmit"
+  run "frontend lint" frontend "npm run -s lint"
+fi
