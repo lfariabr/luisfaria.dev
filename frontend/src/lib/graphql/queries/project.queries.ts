@@ -10,6 +10,7 @@ export const PROJECT_FRAGMENT = gql`
     imageUrl
     githubUrl
     technologies
+    featured
     createdAt
     updatedAt
   }
