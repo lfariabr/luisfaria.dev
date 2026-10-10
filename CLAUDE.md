@@ -48,7 +48,7 @@ docker-compose down          # Stop
 - `frontend/` — Next.js 16 App Router (see `frontend/AGENTS.md`), React 19, Apollo Client, TailwindCSS 4, shadcn/ui
 - `backend/` — Express + Apollo Server 5, GraphQL, Mongoose, Redis
 - `_docs/` — Feature specs (`featureBreakdown/`), release notes, articles
-- `copilot-instructions.md` — Detailed development guidelines (authoritative reference)
+- `CODING_STANDARDS.md` — judgement-call standards the code review reads; mechanical rules live in ESLint
 
 ### Backend Key Paths
 - **Entry point**: `backend/src/index.ts` — Express server, MongoDB/Redis connections, Apollo setup
@@ -127,11 +127,7 @@ Frontend requires: `NEXT_PUBLIC_GRAPHQL_URL` (defaults to `http://localhost:4000
 See `backend/.env.example` for full template.
 
 ## Code Style
-- TypeScript with proper types (no `any`)
-- Functional patterns: React hooks, composition
-- Minimal comments — code should be self-documenting
-- Zod for input validation
-- TailwindCSS for styling, shadcn/ui components
+Mechanical rules are enforced by ESLint (`--max-warnings` caps `any`; raw `new GraphQLError` is banned outside the error infrastructure). Judgement calls are in `CODING_STANDARDS.md`.
 
 ## Agent skills
 
