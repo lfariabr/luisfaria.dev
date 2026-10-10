@@ -4,7 +4,7 @@ import User, { UserRole } from '../../models/User';
 import jwt from 'jsonwebtoken';
 import config from '../../config/config';
 import bcrypt from 'bcryptjs';
-import { rateLimiter } from '../../services/rateLimiter';
+import { connectRedis, disconnectRedis, getRedisClient } from '../../services/redis';
 
 // Define test queries and mutations
 const REGISTER_MUTATION = `
@@ -38,6 +38,11 @@ describe('Auth Resolvers', () => {
   // Connect to database before tests
   beforeAll(async () => {
     await dbHandler.connect();
+    await connectRedis();
+  });
+
+  beforeEach(async () => {
+    await getRedisClient().flushDb();
   });
 
   // Clear database between tests
@@ -49,6 +54,7 @@ describe('Auth Resolvers', () => {
   // Disconnect after all tests
   afterAll(async () => {
     await dbHandler.closeDatabase();
+    await disconnectRedis();
   });
 
   describe('Register Mutation', () => {
@@ -133,21 +139,6 @@ describe('Auth Resolvers', () => {
     });
 
     it('should fail when email rate limit is exceeded', async () => {
-      jest
-        .spyOn(rateLimiter, 'limit')
-        .mockResolvedValueOnce({
-          success: true,
-          limit: 5,
-          remaining: 4,
-          resetTime: new Date(Date.now() + 3600 * 1000),
-        })
-        .mockResolvedValueOnce({
-          success: false,
-          limit: 3,
-          remaining: 0,
-          resetTime: new Date(Date.now() + 3600 * 1000),
-        });
-
       const variables = {
         input: {
           name: 'Test User',
@@ -157,7 +148,10 @@ describe('Auth Resolvers', () => {
         },
       };
 
-      const response = await executeOperation(REGISTER_MUTATION, variables, { clientIp: '203.0.113.10' });
+      for (let i = 0; i < 3; i++) {
+        await executeOperation(REGISTER_MUTATION, variables, { clientIp: `203.0.113.${10 + i}` });
+      }
+      const response = await executeOperation(REGISTER_MUTATION, variables, { clientIp: '203.0.113.20' });
       expect(response.body.kind).toBe('single');
       if (response.body.kind === 'single') {
         const errorMessage = response.body.singleResult.errors?.[0].message;
@@ -166,23 +160,19 @@ describe('Auth Resolvers', () => {
     });
 
     it('should fail when ip rate limit is exceeded', async () => {
-      jest.spyOn(rateLimiter, 'limit').mockResolvedValueOnce({
-        success: false,
-        limit: 5,
-        remaining: 0,
-        resetTime: new Date(Date.now() + 3600 * 1000),
-      });
-
-      const variables = {
+      const variablesFor = (i: number) => ({
         input: {
           name: 'Test User',
-          email: 'ip-limit@example.com',
+          email: `ip-limit-${i}@example.com`,
           password: 'Test1234!',
           captchaToken: 'test-turnstile-pass',
         },
-      };
+      });
 
-      const response = await executeOperation(REGISTER_MUTATION, variables, { clientIp: '198.51.100.7' });
+      for (let i = 0; i < 5; i++) {
+        await executeOperation(REGISTER_MUTATION, variablesFor(i), { clientIp: '198.51.100.7' });
+      }
+      const response = await executeOperation(REGISTER_MUTATION, variablesFor(5), { clientIp: '198.51.100.7' });
       expect(response.body.kind).toBe('single');
       if (response.body.kind === 'single') {
         const errorMessage = response.body.singleResult.errors?.[0].message;

@@ -9,6 +9,7 @@ export const ErrorCodes = {
   UNAUTHENTICATED: 'UNAUTHENTICATED',
   FORBIDDEN: 'FORBIDDEN',
   NOT_FOUND: 'NOT_FOUND',
+  RATE_LIMITED: 'RATE_LIMITED',
   TOO_MANY_REQUESTS: 'TOO_MANY_REQUESTS',
   EXTERNAL_SERVICE_ERROR: 'EXTERNAL_SERVICE_ERROR',
   BAD_GATEWAY: 'BAD_GATEWAY',
@@ -69,6 +70,30 @@ export const Errors = {
     createGraphQLError(message, {
       code: ErrorCodes.BAD_USER_INPUT,
       http: { status: 400 },
+    }),
+
+  rateLimited: (info: { limit: number; remaining: number; resetTime: Date; resetIn?: number }) =>
+    new GraphQLError('Rate limit exceeded', {
+      extensions: {
+        code: ErrorCodes.RATE_LIMITED,
+        http: { status: 429 },
+        limit: info.limit,
+        remaining: info.remaining,
+        resetTime: info.resetTime.toISOString(),
+        ...(info.resetIn !== undefined && { resetIn: info.resetIn }),
+      },
+    }),
+
+  rateLimitedSilently: (message: string) =>
+    createGraphQLError(message, {
+      code: ErrorCodes.RATE_LIMITED,
+      http: { status: 429 },
+    }),
+
+  unavailable: (message = 'Temporarily unavailable, please try again shortly') =>
+    createGraphQLError(message, {
+      code: ErrorCodes.SERVICE_UNAVAILABLE,
+      http: { status: 503 },
     }),
 
   internal: (message = 'An unexpected error occurred') =>

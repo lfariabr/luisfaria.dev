@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import { getRedisClient } from '../services/redis';
 import os from 'os';
 import { logger } from '../utils/logger';
-import { rateLimiter } from '../services/rateLimiter';
+import { consume, RateLimitExceeded, rateLimits, Subject } from '../rateLimiting';
 
 const router = Router();
 
@@ -125,10 +125,11 @@ router.get('/health', (_req: Request, res: Response) => {
 // Pulsetic / uptime monitors should target this endpoint.
 // ---------------------------------------------------------------------------
 router.get('/health/ready', async (req: Request, res: Response) => {
-  const rl = await rateLimiter.limit(`health:ready:${req.ip}`, 30, 60);
-  if (!rl.success) {
-    logger.warn('Health endpoint rate limited', { endpoint: '/health/ready', ip: req.ip });
-    res.status(429).json({ error: 'Too Many Requests', resetTime: rl.resetTime });
+  try {
+    await consume('healthReady', Subject.ip(req.ip));
+  } catch (error) {
+    if (!(error instanceof RateLimitExceeded)) throw error;
+    res.status(429).json({ error: rateLimits.healthReady.message });
     return;
   }
 

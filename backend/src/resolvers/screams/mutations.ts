@@ -1,13 +1,27 @@
-import { GraphQLError } from 'graphql';
 import Scream from '../../models/Scream';
 import { Errors } from '../../utils/errors';
-import { rateLimiter } from '../../services/rateLimiter';
+import { consume, RateLimitExceeded, RateLimitUnavailable, Subject, toGraphQLError, type RateLimitInfo } from '../../rateLimiting';
 import { chatWithGogginsMode } from '../../services/openai';
 import { sendGogginsEmail } from '../../services/resendMailer';
 
 // Simple email normalization/validation (replace later with zod schema)
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
 const isValidEmail = (email: string) => /.+@.+\..+/.test(email);
+
+// Goggins still reads resetIn; drop it once the frontend reads resetTime (#340)
+const secondsUntil = (date: Date) => Math.max(0, Math.ceil((date.getTime() - Date.now()) / 1000));
+
+const consumeGoggins = async (userEmail: string): Promise<RateLimitInfo> => {
+  try {
+    return await consume('goggins', Subject.email(userEmail));
+  } catch (error) {
+    if (error instanceof RateLimitExceeded) {
+      throw Errors.rateLimited({ ...error.info, resetIn: secondsUntil(error.info.resetTime) });
+    }
+    if (error instanceof RateLimitUnavailable) throw toGraphQLError(error);
+    throw error;
+  }
+};
 
 const buildPrompt = (explicitMode: boolean) => {
   if (explicitMode) {
@@ -27,22 +41,7 @@ export const activateGogginsMode = async (_: any, { input }: any) => {
 
   const userEmail = normalizeEmail(userEmailRaw);
 
-  // Redis rate limit (2/day)
-  const key = `goggins:${userEmail}`;
-  const limitResult = await rateLimiter.limit(key, 2, 86400); // 100 for testing
-
-  if (!limitResult.success) {
-    const resetIn = Math.max(0, Math.ceil((limitResult.resetTime.getTime() - Date.now()) / 1000));
-    throw new GraphQLError('Rate limit exceeded', {
-      extensions: {
-        code: 'RATE_LIMITED',
-        limit: limitResult.limit,
-        remaining: 0,
-        resetTime: limitResult.resetTime.toISOString(),
-        resetIn,
-      },
-    });
-  }
+  const rateLimitInfo = await consumeGoggins(userEmail);
 
   // Generate scream via OpenAI
   const modelUsed = 'gpt-3.5-turbo'; // keep aligned with chatWithAI's default
@@ -75,9 +74,6 @@ export const activateGogginsMode = async (_: any, { input }: any) => {
       });
   }
 
-  const resetIn = Math.max(0, Math.ceil((limitResult.resetTime.getTime() - Date.now()) / 1000));
-
-  // Match SDL Scream type (RateLimitInfo { allowed, resetIn, limit, remaining })
   return {
     id: newScream.id,
     userEmail: newScream.userEmail,
@@ -87,10 +83,11 @@ export const activateGogginsMode = async (_: any, { input }: any) => {
     isSubscriber: newScream.isSubscriber,
     createdAt: newScream.createdAt.toISOString(),
     rateLimitInfo: {
+      limit: rateLimitInfo.limit,
+      remaining: rateLimitInfo.remaining,
+      resetTime: rateLimitInfo.resetTime.toISOString(),
       allowed: true,
-      resetIn,
-      limit: limitResult.limit,
-      remaining: limitResult.remaining,
+      resetIn: secondsUntil(rateLimitInfo.resetTime),
     },
   };
 };

@@ -1,23 +1,18 @@
 import { Errors } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 import { checkAuth } from '../../utils/authUtils';
-import { rateLimit } from '../../middleware/rateLimiter';
+import { enforceRateLimit, Subject } from '../../rateLimiting';
 import ChatMessage from '../../models/ChatMessage';
 import { chatWithAI } from '../../services/openai';
 import mongoose from 'mongoose';
-import config from '../../config/config';
 
 export const chatbotMutations = {
   askQuestion: async (_: any, { question }: { question: string }, context: any) => {
     // Check authentication
     const user = checkAuth(context);
     
-    // Enforce rate limiting - 1 question per hour by default
-    const rateLimitInfo = await rateLimit(
-      'chatbot', 
-      config.rateLimitMaxRequests, 
-      config.rateLimitWindow
-    )(_, {}, context);
+    const { limit, remaining, resetTime } = await enforceRateLimit('chatbot', Subject.user(user.id));
+    const rateLimitInfo = { limit, remaining, resetTime: resetTime.toISOString() };
     
     try {
       // Get answer from AI
