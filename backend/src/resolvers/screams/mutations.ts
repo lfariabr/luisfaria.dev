@@ -1,27 +1,12 @@
 import Scream from '../../models/Scream';
 import { Errors } from '../../utils/errors';
-import { consume, RateLimitExceeded, RateLimitUnavailable, Subject, toGraphQLError, type RateLimitInfo } from '../../rateLimiting';
+import { enforceRateLimit, Subject } from '../../rateLimiting';
 import { chatWithGogginsMode } from '../../services/openai';
 import { sendGogginsEmail } from '../../services/resendMailer';
 
 // Simple email normalization/validation (replace later with zod schema)
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
 const isValidEmail = (email: string) => /.+@.+\..+/.test(email);
-
-// Goggins still reads resetIn; drop it once the frontend reads resetTime (#340)
-const secondsUntil = (date: Date) => Math.max(0, Math.ceil((date.getTime() - Date.now()) / 1000));
-
-const consumeGoggins = async (userEmail: string): Promise<RateLimitInfo> => {
-  try {
-    return await consume('goggins', Subject.email(userEmail));
-  } catch (error) {
-    if (error instanceof RateLimitExceeded) {
-      throw Errors.rateLimited({ ...error.info, resetIn: secondsUntil(error.info.resetTime) });
-    }
-    if (error instanceof RateLimitUnavailable) throw toGraphQLError(error);
-    throw error;
-  }
-};
 
 const buildPrompt = (explicitMode: boolean) => {
   if (explicitMode) {
@@ -41,7 +26,7 @@ export const activateGogginsMode = async (_: any, { input }: any) => {
 
   const userEmail = normalizeEmail(userEmailRaw);
 
-  const rateLimitInfo = await consumeGoggins(userEmail);
+  const rateLimitInfo = await enforceRateLimit('goggins', Subject.email(userEmail));
 
   // Generate scream via OpenAI
   const modelUsed = 'gpt-3.5-turbo'; // keep aligned with chatWithAI's default
@@ -86,8 +71,6 @@ export const activateGogginsMode = async (_: any, { input }: any) => {
       limit: rateLimitInfo.limit,
       remaining: rateLimitInfo.remaining,
       resetTime: rateLimitInfo.resetTime.toISOString(),
-      allowed: true,
-      resetIn: secondsUntil(rateLimitInfo.resetTime),
     },
   };
 };

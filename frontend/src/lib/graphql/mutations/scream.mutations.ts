@@ -11,10 +11,9 @@ export const ACTIVATE_GOGGINS_MODE = gql`
       isSubscriber
       createdAt
       rateLimitInfo {
-        allowed
-        resetIn
         limit
         remaining
+        resetTime
       }
     }
   }

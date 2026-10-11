@@ -36,6 +36,12 @@ export type GogginsDialogProps = {
   onOpenChange: (open: boolean) => void;
 };
 
+function secondsUntil(resetTime: unknown): number | null {
+  if (typeof resetTime !== 'string') return null;
+  const ms = new Date(resetTime).getTime() - Date.now();
+  return Number.isNaN(ms) ? null : Math.max(0, Math.ceil(ms / 1000));
+}
+
 // small helper to humanize seconds (e.g., 1h 12m, 04:35)
 function formatDuration(seconds?: number | null): string {
   if (seconds == null || seconds <= 0) return '0s';
@@ -149,7 +155,7 @@ export function GogginsDialog({ open, onOpenChange }: GogginsDialogProps) {
     const applyRateLimitExtensions = (ext: Record<string, unknown> | undefined) => {
       if (typeof ext?.limit === 'number') setLimit(ext.limit);
       if (typeof ext?.remaining === 'number') setRemaining(ext.remaining);
-      if (typeof ext?.resetIn === 'number') setSecondsUntilReset(ext.resetIn);
+      if (ext?.code === 'RATE_LIMITED') setSecondsUntilReset(secondsUntil(ext.resetTime));
     };
     try {
       const { data, errors } = await mutate({
@@ -171,19 +177,12 @@ export function GogginsDialog({ open, onOpenChange }: GogginsDialogProps) {
         setResultText(text);
         // persist last successful message
         try { localStorage.setItem('gogginsLastMessage', text); } catch {}
-        const allowed = scream.rateLimitInfo?.allowed;
-        const resetIn = scream.rateLimitInfo?.resetIn as number | undefined;
         const lim = scream.rateLimitInfo?.limit as number | undefined;
         const rem = scream.rateLimitInfo?.remaining as number | undefined;
         if (typeof lim === 'number') setLimit(lim);
         if (typeof rem === 'number') setRemaining(rem);
-        // Start countdown when request was blocked or when remaining hits 0 after this success
-        if ((allowed === false || rem === 0) && typeof resetIn === 'number') {
-          setSecondsUntilReset(resetIn);
-          if (allowed === false) setErrorText('Rate limited.');
-        } else {
-          setSecondsUntilReset(null);
-        }
+        // That was the last scream in the Window: count down to when the next one is allowed
+        setSecondsUntilReset(rem === 0 ? secondsUntil(scream.rateLimitInfo?.resetTime) : null);
       }
     } catch (e) {
       const gqError = (e as { graphQLErrors?: ReadonlyArray<GraphQLErrorLike> } | null)?.graphQLErrors?.[0];
