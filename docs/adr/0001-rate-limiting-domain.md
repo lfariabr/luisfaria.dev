@@ -37,3 +37,4 @@ The numbers were also unclear: chatbot was documented as 5 per hour, `.env.examp
 - Moving to the new keys resets every counter once, on deploy.
 - Chatbot, Goggins and register become unavailable while Redis is down.
 - `CODING_STANDARDS.md` "Rate limiting" and "Errors" describe this module and `RATE_LIMITED`.
+- Implemented in [#339](https://github.com/lfariabr/luisfaria.dev/issues/339) and [#340](https://github.com/lfariabr/luisfaria.dev/issues/340): every call site uses the module and every client reads one `RateLimitInfo { limit, remaining, resetTime }`.

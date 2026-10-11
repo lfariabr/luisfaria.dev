@@ -26,7 +26,7 @@ const mocks = [
           explicitMode: false,
           isSubscriber: false,
           createdAt: new Date().toISOString(),
-          rateLimitInfo: { allowed: true, limit: 2, remaining: 1, resetIn: 0, __typename: 'RateLimitInfo' },
+          rateLimitInfo: { limit: 2, remaining: 1, resetTime: new Date(Date.now() + 3600 * 1000).toISOString(), __typename: 'RateLimitInfo' },
           __typename: 'Scream',
         },
       },

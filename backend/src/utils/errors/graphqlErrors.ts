@@ -72,7 +72,7 @@ export const Errors = {
       http: { status: 400 },
     }),
 
-  rateLimited: (info: { limit: number; remaining: number; resetTime: Date; resetIn?: number }) =>
+  rateLimited: (info: { limit: number; remaining: number; resetTime: Date }) =>
     new GraphQLError('Rate limit exceeded', {
       extensions: {
         code: ErrorCodes.RATE_LIMITED,
@@ -80,7 +80,6 @@ export const Errors = {
         limit: info.limit,
         remaining: info.remaining,
         resetTime: info.resetTime.toISOString(),
-        ...(info.resetIn !== undefined && { resetIn: info.resetIn }),
       },
     }),
 

@@ -19,8 +19,9 @@ const ACTIVATE_GOGGINS_MODE_MUTATION = `
       isSubscriber
       createdAt
       rateLimitInfo {
-        allowed
-        resetIn
+        limit
+        remaining
+        resetTime
       }
     }
   }
@@ -36,8 +37,9 @@ interface ScreamType {
   isSubscriber: boolean;
   createdAt: string;
   rateLimitInfo: {
-    allowed: boolean;
-    resetIn: number;
+    limit: number;
+    remaining: number;
+    resetTime: string;
   };
 }
 
@@ -109,8 +111,9 @@ it('should successfully input an email and get a response', async () => {
        expect(activateGogginsMode.modelUsed).toBe('gpt-3.5-turbo');
        
        // Check rate limit info
-       expect(activateGogginsMode.rateLimitInfo.allowed).toBe(true);
-       expect(activateGogginsMode.rateLimitInfo.resetIn).toBeGreaterThan(0);
+       expect(activateGogginsMode.rateLimitInfo.limit).toBe(2);
+       expect(activateGogginsMode.rateLimitInfo.remaining).toBe(1);
+       expect(new Date(activateGogginsMode.rateLimitInfo.resetTime).getTime()).toBeGreaterThan(Date.now());
      }
    }
 });
@@ -136,6 +139,8 @@ it('should enforce daily rate limit after 2 requests for the same email', async 
     expect(errors).toBeDefined();
     expect(errors?.[0].message).toContain('Rate limit exceeded');
     expect(errors?.[0].extensions?.code).toBe('RATE_LIMITED');
-    expect(errors?.[0].extensions?.resetIn).toBeGreaterThan(0);
+    expect(errors?.[0].extensions).toEqual(expect.objectContaining({ limit: 2, remaining: 0 }));
+    expect(new Date(errors?.[0].extensions?.resetTime as string).getTime()).toBeGreaterThan(Date.now());
+    expect(errors?.[0].extensions).not.toHaveProperty('resetIn');
   }
 });
