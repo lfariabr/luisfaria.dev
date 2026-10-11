@@ -31,12 +31,24 @@ export interface HitResult {
   resetTime: Date;
 }
 
-/** Atomically counts one request against `key`. Throws when Redis cannot be reached. */
+// node-redis queues commands while reconnecting and has no command timeout,
+// so an unanswered eval would otherwise hang the request forever.
+const HIT_TIMEOUT_MS = 1000;
+
+/** Atomically counts one request against `key`. Throws when Redis cannot be reached or does not answer in time. */
 export async function hit(key: string, limit: number, windowSeconds: number): Promise<HitResult> {
-  const [allowed, remaining, ttl] = (await getRedisClient().eval(HIT_SCRIPT, {
+  let timer: NodeJS.Timeout | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`Rate limit counter timed out after ${HIT_TIMEOUT_MS}ms`)), HIT_TIMEOUT_MS);
+  });
+  const evaluation = getRedisClient().eval(HIT_SCRIPT, {
     keys: [key],
     arguments: [String(limit), String(windowSeconds)],
-  })) as number[];
+  });
+
+  const [allowed, remaining, ttl] = (await Promise.race([evaluation, timeout]).finally(() =>
+    clearTimeout(timer),
+  )) as number[];
 
   return {
     allowed: allowed === 1,

@@ -112,6 +112,12 @@ describe('consume', () => {
     expect(logger.error).toHaveBeenCalledWith('Rate limit check failed; failing open', expect.objectContaining({ rateLimit: 'apod' }));
   });
 
+  it('treats a counter that never answers (Redis reconnecting) as unreachable', async () => {
+    jest.spyOn(redis(), 'eval').mockReturnValue(new Promise(() => {}) as never);
+    await expect(consume('chatbot', Subject.user('u4'))).rejects.toBeInstanceOf(RateLimitUnavailable);
+    await expect(consume('apod', Subject.ip('203.0.113.11'))).resolves.toEqual(expect.objectContaining({ remaining: 5 }));
+  });
+
   it('fails closed: throws RateLimitUnavailable and logs', async () => {
     jest.spyOn(redis(), 'eval').mockRejectedValueOnce(new Error('redis down'));
     await expect(consume('chatbot', Subject.user('u3'))).rejects.toBeInstanceOf(RateLimitUnavailable);

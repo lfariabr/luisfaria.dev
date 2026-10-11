@@ -26,7 +26,7 @@
 
 ## Tests
 
-- `cd backend && npm test` → ✅ 22 suites, 320 tests
+- `cd backend && npm test` → ✅ 22 suites, 321 tests
 - New behavior tests were red on the old code (6 failed) and pass now
 - `npm run lint` → ✅ 0 errors, 117 warnings (cap lowered from 123)
 
