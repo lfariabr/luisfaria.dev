@@ -15,8 +15,6 @@ services:
       - MONGODB_URI=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongo:27017/portfolio?authSource=admin
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
       - JWT_SECRET=${JWT_SECRET}
-      - RATE_LIMIT_WINDOW=${RATE_LIMIT_WINDOW:-3600}
-      - RATE_LIMIT_MAX_REQUESTS=${RATE_LIMIT_MAX_REQUESTS:-5}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - RESEND_API_KEY=${RESEND_API_KEY}
     depends_on:

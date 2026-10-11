@@ -57,7 +57,8 @@ docker-compose down          # Stop
 - **Resolvers**: `backend/src/resolvers/index.ts` (composed from domain folders: `users/`, `articles/`, `projects/`, `chatbot/`, `apod/`, `resend/`, `screams/`, `notes/`, `pins/`, `stripe/`, `payments/`)
 - **REST routes**: `backend/src/routes/` — `health.ts`, `stripeWebhook.ts` (raw-body Stripe webhook, mounted before JSON parsing)
 - **Models**: `backend/src/models/` — Mongoose schemas (User, Article, Project, ChatMessage, Scream, Note, Pin, Payment)
-- **Services**: `backend/src/services/` — rateLimiter (Redis+Lua), redis client, openai client, resendMailer + emailLayout, apod, stripe (checkout), payments (webhook side effects), discord, turnstile
+- **Rate limiting**: `backend/src/rateLimiting/` — the list of Rate limits, `consume`/`enforceRateLimit`, the Redis Lua counter (see `CONTEXT.md`, `docs/adr/0001-rate-limiting-domain.md`)
+- **Services**: `backend/src/services/` — redis client, openai client, resendMailer + emailLayout, apod, stripe (checkout), payments (webhook side effects), discord, turnstile
 - **Error handling**: `backend/src/utils/errors/` — shared error factories, `createErrorHandler` wrapper
 - **Authorization**: `backend/src/validation/shield.ts` — GraphQL Shield rules
 - **Validation**: `backend/src/validation/schemas/` — Zod schemas
@@ -79,23 +80,26 @@ Browser → Next.js (SSR/CSR) → Apollo Client → GraphQL API (port 4000)
 ## Key Patterns
 
 ### GraphQL Resolver Pattern
-All resolvers use shared error infrastructure. Never create raw `GraphQLError` instances:
+Resolvers throw through `Errors.*`; raw `new GraphQLError` is a lint error. A service with its own error type gets a wrapper built by `createErrorHandler(mapErrorCode, isServiceError)` (see `services/apod/apod.errorHandler.ts`):
 ```typescript
-import { createErrorHandler, Errors } from '../../utils/errors';
+import { Errors } from '../../utils/errors';
+import { withApodErrorHandling, fetchApod } from '../../services/apod/';
 
-export const myResolver = createErrorHandler(async (parent, args, context) => {
+export const myResolver = async (_: unknown, args: Args, context: Context) => {
   if (!context.user) throw Errors.unauthenticated();
-  // resolver logic
-}, 'ResolverName');
+  return withApodErrorHandling(() => fetchApod(args), 'myResolver');
+};
 ```
 
 ### Rate Limiting
-Uses Redis with atomic Lua scripts. Three rate-limited features:
-- Chatbot: 5 req/hr per user (`chatbot:<userId>`)
-- Goggins Mode: 2 req/24hr per email (`goggins:<email>`)
-- APOD: 5 req/hr per user (`apod:<userId>`)
+Every Rate limit is defined once in `backend/src/rateLimiting/rateLimits.ts` (limit per Subject kind, Window, visibility, failure mode). Call sites name it and pass a Subject; they never pass numbers:
+```typescript
+import { consume, enforceRateLimit, Subject } from '../../rateLimiting';
 
-Use `rateLimiter.limit(key, limit, windowSeconds)` from `backend/src/services/rateLimiter.ts`.
+const info = await enforceRateLimit('chatbot', Subject.user(user.id)); // resolvers: throws GraphQL errors
+await consume('healthReady', Subject.ip(req.ip));                      // routes: throws RateLimitExceeded
+```
+A new rate-limited feature adds an entry to `rateLimits.ts`, not a new key or limit at the call site.
 
 ### Authentication
 - JWT in httpOnly cookies (not localStorage)

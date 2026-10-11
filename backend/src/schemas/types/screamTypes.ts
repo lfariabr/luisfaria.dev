@@ -17,11 +17,4 @@ export const screamTypes = `#graphql
     userEmail: String!
     explicitMode: Boolean!
   }
-
-  type RateLimitInfo {
-    allowed: Boolean!
-    resetIn: Int!
-    limit: Int!
-    remaining: Int!
-  }
 `;

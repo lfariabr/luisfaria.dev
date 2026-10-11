@@ -23,13 +23,14 @@ jest.mock('../../services/cache/apodCache', () => ({
 }));
 
 // Mock rate limiter
-jest.mock('../../utils/applyRateLimit', () => ({
-  applyRateLimit: jest.fn().mockResolvedValue({ success: true, remaining: 4, limit: 5 }),
+jest.mock('../../rateLimiting', () => ({
+  ...jest.requireActual('../../rateLimiting'),
+  enforceRateLimit: jest.fn().mockResolvedValue({ limit: 10, remaining: 9, resetTime: new Date() }),
 }));
 
 const { fetchApod } = require('../../services/apod/');
 const { apodCache } = require('../../services/cache/apodCache');
-const { applyRateLimit } = require('../../utils/applyRateLimit');
+const { enforceRateLimit } = require('../../rateLimiting');
 
 describe('APOD Resolver - ApodQueries', () => {
   beforeEach(() => {
@@ -73,7 +74,7 @@ describe('APOD Resolver - ApodQueries', () => {
       const result = await ApodQueries.getTodaysApod({}, {}, { user: undefined, clientIp: '127.0.0.1' });
 
       expect(result).toEqual(cachedApod);
-      expect(applyRateLimit).not.toHaveBeenCalled();
+      expect(enforceRateLimit).not.toHaveBeenCalled();
       expect(fetchApod).not.toHaveBeenCalled();
     });
 
@@ -92,7 +93,7 @@ describe('APOD Resolver - ApodQueries', () => {
 
       await ApodQueries.getTodaysApod({}, {}, { user: undefined, clientIp: '127.0.0.1' });
 
-      expect(applyRateLimit).toHaveBeenCalledTimes(1);
+      expect(enforceRateLimit).toHaveBeenCalledTimes(1);
       expect(fetchApod).toHaveBeenCalledTimes(1);
     });
 
@@ -256,7 +257,7 @@ describe('APOD Resolver - ApodQueries', () => {
       );
 
       expect(result).toEqual(cachedApod);
-      expect(applyRateLimit).not.toHaveBeenCalled();
+      expect(enforceRateLimit).not.toHaveBeenCalled();
       expect(fetchApod).not.toHaveBeenCalled();
     });
 
@@ -279,7 +280,7 @@ describe('APOD Resolver - ApodQueries', () => {
         { user: { id: 'user-456' } }
       );
 
-      expect(applyRateLimit).toHaveBeenCalledTimes(1);
+      expect(enforceRateLimit).toHaveBeenCalledTimes(1);
       expect(fetchApod).toHaveBeenCalledTimes(1);
     });
 

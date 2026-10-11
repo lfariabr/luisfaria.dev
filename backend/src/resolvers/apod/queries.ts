@@ -1,7 +1,6 @@
-import config from '../../config/config';
 import { Errors } from '../../utils/errors';
 import { logger } from '../../utils/logger';
-import { applyRateLimit } from '../../utils/applyRateLimit';
+import { enforceRateLimit, Subject } from '../../rateLimiting';
 import { fetchApod, withApodErrorHandling, APOD_CACHE_TTL_TODAY_SECONDS, APOD_CACHE_TTL_DATE_SECONDS } from '../../services/apod/';
 import { apodCache } from '../../services/cache/apodCache';
 
@@ -13,7 +12,7 @@ export const ApodQueries = {
    * Flow: Cache check → (if miss) Rate limit → NASA API
    * Rate limit only consumed on cache miss to prevent UX degradation.
    */
-  getTodaysApod: async (_: unknown, __: unknown, context: { user?: { id: string }; clientIp: string }) => {
+  getTodaysApod: async (_: unknown, __: unknown, context: { user?: { id: string }; clientIp?: string }) => {
     // Check cache FIRST - no rate limit consumed on cache hits
     const cacheKey = apodCache.buildTodayKey();
     const cached = await apodCache.get(cacheKey);
@@ -23,18 +22,8 @@ export const ApodQueries = {
       return cached;
     }
 
-    // Cache miss - apply rate limit before fetching from NASA API
-    // Rate limit: per-user for authenticated, per-IP for anonymous
-    const limitKey = context.user?.id 
-      ? `apod:today:${context.user.id}` 
-      : `apod:today:ip:${context.clientIp}`;
-    const limit = context.user ? config.rateLimitMaxRequests : config.rateLimitAnonymousRequests;
-    
-    await applyRateLimit(limitKey, limit, config.rateLimitWindow, {
-      resolver: 'getTodaysApod',
-      userId: context.user?.id,
-      metadata: { clientIp: context.clientIp },
-    });
+    // Cache miss - count against the APOD rate limit: per user when signed in, per IP otherwise
+    await enforceRateLimit('apod', context.user ? Subject.user(context.user.id) : Subject.ip(context.clientIp));
 
     const apod = await withApodErrorHandling(
       () => fetchApod({ context: { userId: context.user?.id } }),
@@ -73,14 +62,9 @@ export const ApodQueries = {
       return cached;
     }
 
-    // Cache miss - apply rate limit before fetching from NASA API
+    // Cache miss - shares the APOD rate limit with getTodaysApod
     const userId = context.user.id;
-    const limitKey = `apod:date:${userId}`;
-    
-    await applyRateLimit(limitKey, config.rateLimitMaxRequests, config.rateLimitWindow, {
-      resolver: 'getApodByDate',
-      userId,
-    });
+    await enforceRateLimit('apod', Subject.user(userId));
 
     const apod = await withApodErrorHandling(
       () => fetchApod({ date: args.date, context: { userId } }),

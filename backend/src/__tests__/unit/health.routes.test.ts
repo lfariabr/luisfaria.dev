@@ -20,8 +20,9 @@ jest.mock('mongoose', () => ({
 // Mock Redis
 // ---------------------------------------------------------------------------
 const mockRedisPing = jest.fn();
+const mockRedisEval = jest.fn();
 jest.mock('../../services/redis', () => ({
-  getRedisClient: () => ({ ping: mockRedisPing }),
+  getRedisClient: () => ({ ping: mockRedisPing, eval: mockRedisEval }),
 }));
 
 // ---------------------------------------------------------------------------
@@ -56,6 +57,7 @@ describe('Health Routes', () => {
     (mongoose.connection as any).db = { admin: () => ({ ping: mockPing }) };
     mockPing.mockResolvedValue({ ok: 1 });
     mockRedisPing.mockResolvedValue('PONG');
+    mockRedisEval.mockResolvedValue([1, 29, 60]);
   });
 
   // -----------------------------------------------------------------------
@@ -91,6 +93,21 @@ describe('Health Routes', () => {
       expect(res.status).toBe(503);
       expect(res.body.status).toBe('degraded');
       expect(res.body.checks.mongodb.status).toBe('error');
+    });
+
+    it('returns 429 with no numbers when over the healthReady rate limit', async () => {
+      mockRedisEval.mockResolvedValueOnce([0, 0, 42]);
+
+      const res = await request(buildApp()).get('/health/ready');
+      expect(res.status).toBe(429);
+      expect(res.body).toEqual({ error: 'Too Many Requests' });
+    });
+
+    it('fails open when the rate limit counter is unreachable', async () => {
+      mockRedisEval.mockRejectedValueOnce(new Error('Connection refused'));
+
+      const res = await request(buildApp()).get('/health/ready');
+      expect(res.status).toBe(200);
     });
 
     it('returns 503 with "degraded" when Redis ping fails', async () => {

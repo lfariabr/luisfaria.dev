@@ -1,7 +1,7 @@
 import { projectTypes } from './types/projectTypes';
 import { articleTypes } from './types/articleTypes';
 import { userTypes } from './types/userTypes';
-import { rateTestTypes } from './types/rateTestTypes';
+import { rateLimitTypes } from './types/rateLimitTypes';
 import { chatbotTypes } from './types/chatbotTypes';
 import { screamTypes } from './types/screamTypes';
 import { apodTypes } from './types/apodTypes';
@@ -14,7 +14,7 @@ export const typeDefs = `#graphql
   ${projectTypes}
   ${articleTypes}
   ${userTypes}
-  ${rateTestTypes}
+  ${rateLimitTypes}
   ${chatbotTypes}
   ${screamTypes}
   ${apodTypes}
@@ -45,9 +45,6 @@ export const typeDefs = `#graphql
     users: [User!]!
     user(id: ID!): User
     me: User
-
-    # Rate limit test query
-    testRateLimit: RateLimitInfo
 
     # Chatbot queries
     chatHistory(limit: Int = 10, offset: Int = 0): [ChatMessage!]!

@@ -2,7 +2,7 @@ import User, { UserRole } from '../../models/User';
 import { AUTH_COOKIE_BASE_OPTIONS, AUTH_COOKIE_MAX_AGE } from '../../utils/authUtils';
 import { Errors } from '../../utils/errors';
 import { logger } from '../../utils/logger';
-import { rateLimiter } from '../../services/rateLimiter';
+import { enforceRateLimit, Subject } from '../../rateLimiting';
 import { verifyTurnstileToken } from '../../services/turnstile';
 import type { LoginInput, RegisterInput } from '../../validation/schemas/user.schema';
 
@@ -28,19 +28,11 @@ export const userMutations = {
     const normalizedEmail = email.trim().toLowerCase();
     const clientIp = context?.clientIp;
 
-    if (clientIp) {
-      const ipRateLimit = await rateLimiter.limit(`register:${clientIp}`, 5, 3600);
-      if (!ipRateLimit.success) {
-        throw Errors.badInput('Too many registration attempts. Please try again later.');
-      }
-    }
+    await enforceRateLimit('registerByIp', Subject.ip(clientIp));
 
     await verifyTurnstileToken(captchaToken, clientIp);
 
-    const emailRateLimit = await rateLimiter.limit(`register-email:${normalizedEmail}`, 3, 3600);
-    if (!emailRateLimit.success) {
-      throw Errors.badInput('Too many registration attempts. Please try again later.');
-    }
+    await enforceRateLimit('registerByEmail', Subject.email(normalizedEmail));
     
     // Check if user already exists
     const existingUser = await User.findOne({ email: normalizedEmail });
