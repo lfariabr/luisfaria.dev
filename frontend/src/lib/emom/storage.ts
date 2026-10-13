@@ -1,4 +1,4 @@
-import { Adjustments, DEFAULT_CONFIG, EmomConfig, Phase } from './plan';
+import { Adjustments, DEFAULT_CONFIG, EmomConfig, PaceChange, Phase } from './plan';
 
 export interface LoggedSession {
   id: string;
@@ -15,6 +15,8 @@ export interface LiveSnapshot {
   phases: Phase[];
   vt: number;
   adj: Adjustments;
+  /** Absent on snapshots written before mid-session pace changes existed. */
+  paces?: PaceChange[];
   startedAt: string;
 }
 

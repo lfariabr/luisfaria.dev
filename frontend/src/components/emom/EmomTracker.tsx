@@ -32,7 +32,7 @@ const sessionLabel = (cfg: EmomConfig) => PRESETS.find((p) => matchesPreset(cfg,
 
 function ResumeBanner({ snap, onResume, onDiscard }: { snap: LiveSnapshot; onResume: () => void; onDiscard: () => void }) {
   const started = new Date(snap.startedAt);
-  const reps = tally(snap.cfg, snap.phases, snap.adj, snap.vt).done;
+  const reps = tally(snap.cfg, snap.phases, snap.adj, snap.paces ?? [], snap.vt).done;
 
   return (
     <section
