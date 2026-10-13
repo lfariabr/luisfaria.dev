@@ -111,7 +111,8 @@ server
 backend/dump.rdb
 frontend/src/app/test-sentry
 backend/scripts/seed-nana-notes.ts
-backend/scripts/seed-pins.ts
+backend/scripts/pins*.csv
+backend/scripts/pins*.json
 backend/scripts/query-nana-notes.ts
 backend/scripts/insert-nana-april-checkpoint.ts
 # macOS
