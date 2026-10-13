@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { blockSummaries, formatClock, formatReps, sessionGoal, warRoomLogLine } from '@/lib/emom/plan';
+import { blockSummaries, formatClock, formatPace, formatReps, sessionGoal, warRoomLogLine } from '@/lib/emom/plan';
 import type { FinishedSession } from '@/lib/emom/useEmomSession';
 import { cn } from '@/lib/utils';
 import { SIGNAL } from './signal';
@@ -20,8 +20,8 @@ interface EmomSummaryProps {
 
 export function EmomSummary({ session, note, onNoteChange, onBack }: EmomSummaryProps) {
   const [copied, setCopied] = useState<'idle' | 'copied' | 'failed'>('idle');
-  const { cfg, phases, adj, secs, done, complete, startedAt } = session;
-  const blocks = blockSummaries(cfg, phases, adj, secs);
+  const { cfg, phases, adj, paces, secs, done, complete, startedAt } = session;
+  const blocks = blockSummaries(cfg, phases, adj, paces, secs);
   const logLine = warRoomLogLine(cfg, blocks, done, secs, startedAt);
   const vsGoal = done - sessionGoal(cfg);
   const signal = SIGNAL[cfg.color];
@@ -85,7 +85,7 @@ export function EmomSummary({ session, note, onNoteChange, onBack }: EmomSummary
             {blocks.map((b) => (
               <tr key={b.label} className="border-b font-mono tabular-nums">
                 <td className="py-2 pr-2 font-sans">{b.label}</td>
-                <td className="py-2 pr-2 text-right">{b.rate}/min</td>
+                <td className="py-2 pr-2 text-right">{formatPace(b)}</td>
                 <td className="py-2 pr-2 text-right">{b.minutes} min</td>
                 <td className="py-2 pr-2 text-right">{formatReps(b.reps)}</td>
                 <td className="py-2 text-right">{b.shortMinutes || '—'}</td>

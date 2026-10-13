@@ -9,9 +9,12 @@ import {
   extensionPhase,
   extraMinutes,
   formatClock,
+  formatPace,
   minuteKey,
+  paceAt,
   planReps,
   sessionGoal,
+  setPace,
   setPlanField,
   tally,
   totalSeconds,
@@ -42,7 +45,7 @@ describe('emom plan', () => {
     const last = phases[phases.length - 1];
     expect(last).toMatchObject({ type: 'work', extra: true, dur: 25 * 60, block: 8 });
     expect(phases[phases.length - 2].type).toBe('break');
-    expect(tally(cfg, phases, {}, totalSeconds(phases)).done).toBe(2000);
+    expect(tally(cfg, phases, {}, [], totalSeconds(phases)).done).toBe(2000);
   });
 
   it('sets every block from the main rate and grows blocks at the last rate', () => {
@@ -58,25 +61,25 @@ describe('emom plan', () => {
     const cfg = { ...DEFAULT_CONFIG, rates: [5], workMin: 10, flashSec: 10 };
     const phases = buildPhases(cfg);
     const minuteThree = COUNT_IN_SEC + 2 * 60;
-    expect(tally(cfg, phases, {}, minuteThree + 5)).toEqual({ done: 10, plan: 10 });
-    expect(tally(cfg, phases, {}, minuteThree + 10)).toEqual({ done: 15, plan: 15 });
+    expect(tally(cfg, phases, {}, [], minuteThree + 5)).toEqual({ done: 10, plan: 10 });
+    expect(tally(cfg, phases, {}, [], minuteThree + 10)).toEqual({ done: 15, plan: 15 });
   });
 
   it('keeps the plan when a minute comes up short', () => {
     const cfg = { ...DEFAULT_CONFIG, rates: [5], workMin: 10 };
     const phases = buildPhases(cfg);
     const adj = { [minuteKey(0, 0)]: -2 };
-    expect(tally(cfg, phases, adj, totalSeconds(phases))).toEqual({ done: 48, plan: 50 });
+    expect(tally(cfg, phases, adj, [], totalSeconds(phases))).toEqual({ done: 48, plan: 50 });
   });
 
   it('adds extra minutes only in reach-goal mode when reps fall short', () => {
     const plan = { ...DEFAULT_CONFIG, rates: [5], workMin: 10, goal: 0 };
     const goal = { ...plan, goal: 50 };
     const adj = { [minuteKey(0, 3)]: -4 };
-    expect(extensionPhase(plan, buildPhases(plan), adj)).toBeNull();
-    expect(extensionPhase(goal, buildPhases(goal), {})).toBeNull();
+    expect(extensionPhase(plan, buildPhases(plan), adj, [])).toBeNull();
+    expect(extensionPhase(goal, buildPhases(goal), {}, [])).toBeNull();
 
-    const ext = extensionPhase(goal, buildPhases(goal), adj);
+    const ext = extensionPhase(goal, buildPhases(goal), adj, []);
     expect(ext).toMatchObject({ type: 'work', extra: true, dur: 60, block: 1 });
   });
 
@@ -85,16 +88,65 @@ describe('emom plan', () => {
     const phases = buildPhases(cfg);
     const adj = { [minuteKey(1, 0)]: -1 };
     const secs = totalSeconds(phases);
-    const blocks = blockSummaries(cfg, phases, adj, secs);
+    const blocks = blockSummaries(cfg, phases, adj, [], secs);
 
     expect(blocks).toEqual([
-      { label: 'Block 1', rate: 5, minutes: 10, reps: 50, shortMinutes: 0 },
-      { label: 'Block 2', rate: 4, minutes: 10, reps: 39, shortMinutes: 1 },
+      { label: 'Block 1', rate: 5, paces: [5], minutes: 10, reps: 50, shortMinutes: 0 },
+      { label: 'Block 2', rate: 4, paces: [4], minutes: 10, reps: 39, shortMinutes: 1 },
     ]);
     const line = warRoomLogLine(cfg, blocks, 89, secs, new Date('2026-10-11T07:00:00'));
     expect(line).toContain('**`89`**');
     expect(line).toContain('`50`/10min → stop → `39`/10min');
     expect(line).toContain('EMOM `5→4/min`');
+  });
+
+  it('holds a pace change until the next one, across blocks and over the plan taper', () => {
+    const cfg = { ...DEFAULT_CONFIG, rates: [5, 5, 4] };
+    let paces = setPace([], { block: 0, minute: 10, rate: 4 });
+    paces = setPace(paces, { block: 1, minute: 3, rate: 3 });
+
+    expect(paceAt(cfg, paces, 0, 9)).toBe(5);
+    expect(paceAt(cfg, paces, 0, 10)).toBe(4);
+    expect(paceAt(cfg, paces, 1, 2)).toBe(4);
+    expect(paceAt(cfg, paces, 1, 3)).toBe(3);
+    expect(paceAt(cfg, paces, 2, 0)).toBe(3);
+    expect(paceAt(cfg, paces, 3, 0)).toBe(3);
+
+    paces = setPace(paces, { block: 2, minute: 0, rate: 4 });
+    expect(paceAt(cfg, paces, 2, 0)).toBe(4);
+    expect(paceAt(cfg, paces, 1, 40)).toBe(3);
+  });
+
+  it('replaces a second change in the same minute and clamps the pace to the setup limits', () => {
+    const paces = setPace(setPace([], { block: 0, minute: 2, rate: 4 }), { block: 0, minute: 2, rate: 0 });
+    expect(paces).toEqual([{ block: 0, minute: 2, rate: 1 }]);
+  });
+
+  it('counts paced minutes as done and keeps the plan at the configured rate', () => {
+    const cfg = { ...DEFAULT_CONFIG, rates: [5], workMin: 10, breakMin: 0 };
+    const phases = buildPhases(cfg);
+    const paces = setPace([], { block: 0, minute: 4, rate: 3 });
+    expect(tally(cfg, phases, {}, paces, totalSeconds(phases))).toEqual({ done: 38, plan: 50 });
+  });
+
+  it('reports the paces run in each block and logs the fade in the War Room line', () => {
+    const cfg = { ...DEFAULT_CONFIG, rates: [5, 5], workMin: 10, breakMin: 2 };
+    const phases = buildPhases(cfg);
+    const paces = setPace(setPace([], { block: 0, minute: 6, rate: 4 }), { block: 1, minute: 2, rate: 3 });
+    const adj = { [minuteKey(1, 5)]: -3 };
+    const secs = totalSeconds(phases);
+    const blocks = blockSummaries(cfg, phases, adj, paces, secs);
+
+    expect(blocks).toEqual([
+      { label: 'Block 1', rate: 5, paces: [5, 4], minutes: 10, reps: 46, shortMinutes: 0 },
+      { label: 'Block 2', rate: 5, paces: [4, 3], minutes: 10, reps: 29, shortMinutes: 1 },
+    ]);
+    expect(formatPace(blocks[0])).toBe('5 → 4/min');
+    expect(formatPace(blocks[1])).toBe('5 → 4 → 3/min');
+    expect(formatPace({ rate: 5, paces: [5] })).toBe('5/min');
+
+    const line = warRoomLogLine(cfg, blocks, 75, secs, new Date('2026-10-11T07:00:00'));
+    expect(line).toContain('EMOM `5→3/min`');
   });
 
   it('formats clocks with and without hours', () => {

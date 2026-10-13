@@ -41,6 +41,13 @@ export interface Located {
 
 export type Adjustments = Record<string, number>;
 
+/** A reps-per-minute change made mid-session. It holds from (block, minute) until the next change. */
+export interface PaceChange {
+  block: number;
+  minute: number;
+  rate: number;
+}
+
 export const COUNT_IN_SEC = 10;
 export const MONTH_GOAL = 2000;
 
@@ -153,8 +160,24 @@ export function locate(phases: Phase[], vt: number): Located | null {
 
 export const minuteKey = (block: number, minute: number) => `${block}-${minute}`;
 
-export const repsAt = (cfg: EmomConfig, adj: Adjustments, block: number, minute: number) =>
-  Math.max(0, rateFor(cfg, block) + (adj[minuteKey(block, minute)] ?? 0));
+const paceBefore = (p: PaceChange, block: number, minute: number) =>
+  p.block < block || (p.block === block && p.minute <= minute);
+
+/** Effective reps per minute at (block, minute): the latest pace change at or before it, else the configured rate. */
+export function paceAt(cfg: EmomConfig, paces: PaceChange[], block: number, minute: number): number {
+  let rate = rateFor(cfg, block);
+  for (const p of paces) if (paceBefore(p, block, minute)) rate = p.rate;
+  return rate;
+}
+
+export const setPace = (paces: PaceChange[], change: PaceChange): PaceChange[] => {
+  const last = paces[paces.length - 1];
+  const same = last && last.block === change.block && last.minute === change.minute;
+  return [...(same ? paces.slice(0, -1) : paces), { ...change, rate: clampField('rate', change.rate) }];
+};
+
+export const repsAt = (cfg: EmomConfig, adj: Adjustments, paces: PaceChange[], block: number, minute: number) =>
+  Math.max(0, paceAt(cfg, paces, block, minute) + (adj[minuteKey(block, minute)] ?? 0));
 
 export function minutesDone(phase: Phase, vt: number, flashSec: number): number {
   if (phase.type !== 'work' || vt <= phase.start) return 0;
@@ -168,23 +191,23 @@ export interface Tally {
   plan: number;
 }
 
-export function tally(cfg: EmomConfig, phases: Phase[], adj: Adjustments, vt: number): Tally {
+export function tally(cfg: EmomConfig, phases: Phase[], adj: Adjustments, paces: PaceChange[], vt: number): Tally {
   let done = 0;
   let plan = 0;
   for (const phase of phases) {
     const minutes = minutesDone(phase, vt, cfg.flashSec);
     for (let m = 0; m < minutes; m++) {
-      done += repsAt(cfg, adj, phase.block, m);
+      done += repsAt(cfg, adj, paces, phase.block, m);
       plan += rateFor(cfg, phase.block);
     }
   }
   return { done, plan };
 }
 
-export function extensionPhase(cfg: EmomConfig, phases: Phase[], adj: Adjustments): Phase | null {
+export function extensionPhase(cfg: EmomConfig, phases: Phase[], adj: Adjustments, paces: PaceChange[]): Phase | null {
   if (!cfg.goal) return null;
   const end = totalSeconds(phases);
-  const deficit = cfg.goal - tally(cfg, phases, adj, end).done;
+  const deficit = cfg.goal - tally(cfg, phases, adj, paces, end).done;
   if (deficit <= 0) return null;
   const block = Math.max(...phases.filter((p) => p.type === 'work').map((p) => p.block)) + 1;
   return { type: 'work', start: end, dur: Math.ceil(deficit / lastRate(cfg)) * 60, block, extra: true };
@@ -192,29 +215,48 @@ export function extensionPhase(cfg: EmomConfig, phases: Phase[], adj: Adjustment
 
 export interface BlockSummary {
   label: string;
+  /** Configured reps per minute for the block. */
   rate: number;
+  /** Paces actually run in the block, in order, consecutive repeats collapsed. */
+  paces: number[];
   minutes: number;
   reps: number;
+  /** Minutes below the pace in force, i.e. skipped minutes. */
   shortMinutes: number;
 }
 
-export function blockSummaries(cfg: EmomConfig, phases: Phase[], adj: Adjustments, vt: number): BlockSummary[] {
+export function blockSummaries(
+  cfg: EmomConfig,
+  phases: Phase[],
+  adj: Adjustments,
+  paces: PaceChange[],
+  vt: number,
+): BlockSummary[] {
   return phases
     .filter((phase) => phase.type === 'work')
     .map((phase) => {
       const minutes = minutesDone(phase, vt, cfg.flashSec);
       const rate = rateFor(cfg, phase.block);
+      const run: number[] = [];
       let reps = 0;
       let shortMinutes = 0;
       for (let m = 0; m < minutes; m++) {
-        const r = repsAt(cfg, adj, phase.block, m);
+        const pace = paceAt(cfg, paces, phase.block, m);
+        const r = repsAt(cfg, adj, paces, phase.block, m);
         reps += r;
-        if (r < rate) shortMinutes++;
+        if (r < pace) shortMinutes++;
+        if (run[run.length - 1] !== pace) run.push(pace);
       }
-      return { label: phase.extra ? 'Extra' : `Block ${phase.block + 1}`, rate, minutes, reps, shortMinutes };
+      return { label: phase.extra ? 'Extra' : `Block ${phase.block + 1}`, rate, paces: run, minutes, reps, shortMinutes };
     })
     .filter((row) => row.minutes > 0);
 }
+
+/** "5/min" when the block ran at plan, "5 → 3/min" when it was paced away from it. */
+export const formatPace = (block: Pick<BlockSummary, 'rate' | 'paces'>) => {
+  const steps = block.paces[0] === block.rate ? block.paces.slice(1) : block.paces;
+  return `${[block.rate, ...steps].join(' → ')}/min`;
+};
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
@@ -234,8 +276,10 @@ export const localDateKey = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() 
 
 export function warRoomLogLine(cfg: EmomConfig, blocks: BlockSummary[], done: number, secs: number, date: Date): string {
   const label = date.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' });
-  const distinct = new Set(cfg.rates);
-  const pace = distinct.size > 1 ? `${Math.max(...cfg.rates)}→${Math.min(...cfg.rates)}/min` : `${cfg.rates[0]}/min`;
+  const used = blocks.flatMap((b) => b.paces);
+  const rates = used.length ? used : cfg.rates;
+  const distinct = new Set(rates);
+  const pace = distinct.size > 1 ? `${Math.max(...rates)}→${Math.min(...rates)}/min` : `${rates[0]}/min`;
   const parts = blocks.map((b) => `\`${b.reps}\`/${b.minutes}min`).join(' → stop → ');
   return `| # | **${label}** | **\`${formatReps(done)}\`** | ${parts} | EMOM \`${pace}\`, FIT \`${formatClock(secs, true)}\` |`;
 }

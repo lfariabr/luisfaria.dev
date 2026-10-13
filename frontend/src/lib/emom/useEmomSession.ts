@@ -4,7 +4,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Adjustments,
   EmomConfig,
+  LIMITS,
   Located,
+  PaceChange,
   Phase,
   Tally,
   buildPhases,
@@ -12,8 +14,9 @@ import {
   locate,
   minuteKey,
   minutesDone,
+  paceAt,
   phaseMinutes,
-  rateFor,
+  setPace,
   tally,
   totalSeconds,
 } from './plan';
@@ -21,11 +24,19 @@ import { LiveSnapshot, saveLive } from './storage';
 
 const TICK_MS = 100;
 
+/** The (block, minute) a pace change made at `loc` applies from. */
+export function paceTarget(phases: Phase[], loc: Located): { block: number; minute: number } | null {
+  if (loc.phase.type === 'work') return { block: loc.phase.block, minute: Math.floor(loc.local / 60) };
+  const next = phases.slice(loc.index + 1).find((p) => p.type === 'work');
+  return next ? { block: next.block, minute: 0 } : null;
+}
+
 interface Engine {
   cfg: EmomConfig;
   phases: Phase[];
   vt: number;
   adj: Adjustments;
+  paces: PaceChange[];
   startedAt: Date;
   running: boolean;
   lastTs: number;
@@ -38,6 +49,7 @@ export interface FinishedSession {
   cfg: EmomConfig;
   phases: Phase[];
   adj: Adjustments;
+  paces: PaceChange[];
   secs: number;
   done: number;
   complete: boolean;
@@ -48,6 +60,7 @@ export interface SessionView extends Tally {
   cfg: EmomConfig;
   phases: Phase[];
   adj: Adjustments;
+  paces: PaceChange[];
   vt: number;
   total: number;
   running: boolean;
@@ -104,6 +117,7 @@ const toSnapshot = (e: Engine): LiveSnapshot => ({
   phases: e.phases,
   vt: e.vt,
   adj: e.adj,
+  paces: e.paces,
   startedAt: e.startedAt.toISOString(),
 });
 
@@ -114,13 +128,14 @@ function toView(e: Engine): SessionView | null {
     cfg: e.cfg,
     phases: e.phases,
     adj: e.adj,
+    paces: e.paces,
     vt: e.vt,
     total: totalSeconds(e.phases),
     running: e.running,
     startedAt: e.startedAt,
     loc,
     now: Date.now(),
-    ...tally(e.cfg, e.phases, e.adj, e.vt),
+    ...tally(e.cfg, e.phases, e.adj, e.paces, e.vt),
   };
 }
 
@@ -153,8 +168,9 @@ export function useEmomSession(onFinish: (session: FinishedSession) => void) {
       cfg: e.cfg,
       phases: e.phases,
       adj: e.adj,
+      paces: e.paces,
       secs,
-      done: tally(e.cfg, e.phases, e.adj, secs).done,
+      done: tally(e.cfg, e.phases, e.adj, e.paces, secs).done,
       complete: e.vt >= total,
       startedAt: e.startedAt,
     });
@@ -164,7 +180,7 @@ export function useEmomSession(onFinish: (session: FinishedSession) => void) {
   const reachedEnd = useCallback((): boolean => {
     const e = engine.current;
     if (!e || e.vt < totalSeconds(e.phases)) return false;
-    const extension = extensionPhase(e.cfg, e.phases, e.adj);
+    const extension = extensionPhase(e.cfg, e.phases, e.adj, e.paces);
     if (extension) {
       e.phases = [...e.phases, extension];
       persist();
@@ -252,14 +268,14 @@ export function useEmomSession(onFinish: (session: FinishedSession) => void) {
   const start = useCallback(
     (cfg: EmomConfig) => {
       if (cfg.sound) beep(660, 0.08, 0.15);
-      boot({ cfg, phases: buildPhases(cfg), vt: 0, adj: {}, startedAt: new Date(), running: true });
+      boot({ cfg, phases: buildPhases(cfg), vt: 0, adj: {}, paces: [], startedAt: new Date(), running: true });
     },
     [beep, boot],
   );
 
   const resume = useCallback(
     (snap: LiveSnapshot) =>
-      boot({ ...snap, startedAt: new Date(snap.startedAt), running: false }),
+      boot({ ...snap, paces: snap.paces ?? [], startedAt: new Date(snap.startedAt), running: false }),
     [boot],
   );
 
@@ -272,15 +288,21 @@ export function useEmomSession(onFinish: (session: FinishedSession) => void) {
     redraw();
   }, [persist, redraw]);
 
+  /**
+   * Changes the pace from this minute on. Outside a work minute (count-in, service stop) the change
+   * lands on the first minute of the next block, so the next pace can be set with free hands.
+   */
   const adjust = useCallback(
     (delta: number) => {
       const e = engine.current;
       const loc = e && locate(e.phases, e.vt);
-      if (!e || !loc || loc.phase.type !== 'work') return;
-      const key = minuteKey(loc.phase.block, Math.floor(loc.local / 60));
-      const next = (e.adj[key] ?? 0) + delta;
-      if (rateFor(e.cfg, loc.phase.block) + next < 0) return;
-      e.adj = { ...e.adj, [key]: next };
+      if (!e || !loc) return;
+      const target = paceTarget(e.phases, loc);
+      if (!target) return;
+      const [min, max] = LIMITS.rate;
+      const rate = Math.min(max, Math.max(min, paceAt(e.cfg, e.paces, target.block, target.minute) + delta));
+      if (rate === paceAt(e.cfg, e.paces, target.block, target.minute)) return;
+      e.paces = setPace(e.paces, { ...target, rate });
       persist();
       redraw();
     },
@@ -295,7 +317,7 @@ export function useEmomSession(onFinish: (session: FinishedSession) => void) {
     if (phase.type === 'work') {
       const adj = { ...e.adj };
       for (let m = minutesDone(phase, e.vt, e.cfg.flashSec); m < phaseMinutes(phase); m++) {
-        adj[minuteKey(phase.block, m)] = -rateFor(e.cfg, phase.block);
+        adj[minuteKey(phase.block, m)] = -paceAt(e.cfg, e.paces, phase.block, m);
       }
       e.adj = adj;
     }

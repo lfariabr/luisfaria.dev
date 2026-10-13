@@ -4,18 +4,20 @@ import { useEffect, useRef, useState } from 'react';
 import { Minus, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
+  LIMITS,
   Phase,
   formatClock,
   formatReps,
   isSlowBlock,
   minuteKey,
   minutesDone,
+  paceAt,
   phaseMinutes,
   rateFor,
   repsAt,
   sessionGoal,
 } from '@/lib/emom/plan';
-import type { SessionView } from '@/lib/emom/useEmomSession';
+import { paceTarget, type SessionView } from '@/lib/emom/useEmomSession';
 import { cn } from '@/lib/utils';
 import { REST_TEXT, SIGNAL, WARN_TEXT } from './signal';
 import { SessionMap } from './SessionMap';
@@ -50,17 +52,24 @@ function MinuteStrip({ view, phase }: { view: SessionView; phase: Phase }) {
   return (
     <div className="grid gap-[3px]" style={{ gridTemplateColumns: `repeat(${Math.min(minutes, 25)}, minmax(0, 1fr))` }}>
       {Array.from({ length: minutes }, (_, m) => {
-        const adj = view.adj[minuteKey(phase.block, m)] ?? 0;
+        const skipped = (view.adj[minuteKey(phase.block, m)] ?? 0) < 0;
+        const under = rateFor(view.cfg, phase.block) - paceAt(view.cfg, view.paces, phase.block, m);
         const isDone = m < done;
+        const state = !isDone ? 'todo' : skipped ? 'short' : under > 0 ? 'paced' : 'done';
+        const tint = skipped
+          ? 'bg-amber-500/70'
+          : under > 0
+            ? signal.paced[Math.min(under, signal.paced.length) - 1]
+            : signal.soft;
         return (
           <i
             key={m}
             title={`Minute ${m + 1}`}
-            data-state={isDone ? (adj < 0 ? 'short' : 'done') : 'todo'}
+            data-state={state}
             className={cn(
               'aspect-square rounded-[3px] border bg-muted',
-              isDone && (adj < 0 ? 'border-transparent bg-amber-500/70' : cn('border-transparent', signal.soft)),
-              isDone && adj > 0 && 'border-foreground',
+              isDone && cn('border-transparent', tint),
+              isDone && under < 0 && 'border-foreground',
               m === current && 'border-2 border-foreground',
             )}
           />
@@ -74,7 +83,7 @@ export function EmomRun({ view, onTogglePause, onAdjust, onSkip, onEnd }: EmomRu
   const [endArmed, setEndArmed] = useState(false);
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const endTimer = useRef<number | undefined>(undefined);
-  const { cfg, loc, phases, vt, running } = view;
+  const { cfg, loc, phases, paces, vt, running } = view;
   const { phase, local } = loc;
   const signal = SIGNAL[cfg.color];
   const goal = sessionGoal(cfg);
@@ -127,10 +136,10 @@ export function EmomRun({ view, onTogglePause, onAdjust, onSkip, onEnd }: EmomRu
     state = 'count';
     cue = 'Get on the bar';
     clock = String(Math.ceil(phase.dur - local));
-    sub = `Block 1 · ${phaseMinutes(phases[1])} min × ${rateFor(cfg, 0)}`;
+    sub = `Block 1 · ${phaseMinutes(phases[1])} min × ${paceAt(cfg, paces, 0, 0)}`;
     progress = local / phase.dur;
   } else if (phase.type === 'work') {
-    const reps = repsAt(cfg, view.adj, phase.block, minute);
+    const reps = repsAt(cfg, view.adj, paces, phase.block, minute);
     const signalling = sec < cfg.flashSec;
     const remain = 60 - sec;
     const blink = reducedMotion() || Math.floor(sec * 2) % 2 === 0;
@@ -154,13 +163,17 @@ export function EmomRun({ view, onTogglePause, onAdjust, onSkip, onEnd }: EmomRu
     state = 'break';
     cue = 'Service stop';
     clock = formatClock(phase.dur - local);
-    if (next) sub = `Next: block ${next.block + 1} · ${rateFor(cfg, next.block)}/min · ${formatReps(phaseMinutes(next) * rateFor(cfg, next.block))} reps`;
+    if (next) {
+      const nextPace = paceAt(cfg, paces, next.block, 0);
+      sub = `Next: block ${next.block + 1} · ${nextPace}/min · ${formatReps(phaseMinutes(next) * nextPace)} reps`;
+    }
     progress = local / phase.dur;
   }
 
   const delta = view.done - view.plan;
-  const thisReps = phase.type === 'work' ? repsAt(cfg, view.adj, phase.block, minute) : rateFor(cfg, workBlock);
-  const thisAdj = phase.type === 'work' ? view.adj[minuteKey(phase.block, minute)] ?? 0 : 0;
+  const target = paceTarget(phases, loc);
+  const pace = target ? paceAt(cfg, paces, target.block, target.minute) : 0;
+  const paceVsPlan = target ? pace - rateFor(cfg, target.block) : 0;
   const eta = new Date(view.now + (view.total - vt) * 1000);
 
   return (
@@ -270,7 +283,7 @@ export function EmomRun({ view, onTogglePause, onAdjust, onSkip, onEnd }: EmomRu
             </div>
           </section>
 
-          {phase.type === 'break' ? (
+          {phase.type === 'break' && (
             <section className="flex flex-col gap-2.5 rounded-xl border bg-card p-4">
               <span className={LABEL}>Service stop</span>
               <div className="grid grid-cols-2 gap-2">
@@ -299,32 +312,34 @@ export function EmomRun({ view, onTogglePause, onAdjust, onSkip, onEnd }: EmomRu
                 Back on the bar now
               </Button>
             </section>
-          ) : (
+          )}
+
+          {target && (
             <section className="flex flex-col gap-2.5 rounded-xl border bg-card p-4">
-              <span className={LABEL}>This minute</span>
+              <span className={LABEL}>{phase.type === 'work' ? 'Pace · from this minute' : 'Pace · next block'}</span>
               <div className="grid grid-cols-[56px_1fr_56px] items-center gap-2">
                 <button
                   type="button"
-                  aria-label="One rep fewer this minute"
-                  disabled={phase.type !== 'work' || thisReps === 0}
+                  aria-label="Pace down, one rep per minute fewer from now on"
+                  disabled={pace <= LIMITS.rate[0]}
                   onClick={() => onAdjust(-1)}
                   className="grid h-14 place-items-center rounded-xl border bg-muted/50 disabled:opacity-35"
                 >
                   <Minus className="h-5 w-5" />
                 </button>
                 <div className="text-center">
-                  <span className="block font-mono text-4xl tabular-nums leading-none" data-testid="emom-this-minute">
-                    {thisReps}
+                  <span className="block font-mono text-4xl tabular-nums leading-none" data-testid="emom-pace">
+                    {pace}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    target {rateFor(cfg, workBlock)}
-                    {thisAdj !== 0 && ` · ${thisAdj > 0 ? '+' : ''}${thisAdj}`}
+                    plan {rateFor(cfg, target.block)}
+                    {paceVsPlan !== 0 && ` · ${paceVsPlan > 0 ? '+' : ''}${paceVsPlan}`}
                   </span>
                 </div>
                 <button
                   type="button"
-                  aria-label="One rep more this minute"
-                  disabled={phase.type !== 'work'}
+                  aria-label="Pace up, one rep per minute more from now on"
+                  disabled={pace >= LIMITS.rate[1]}
                   onClick={() => onAdjust(1)}
                   className="grid h-14 place-items-center rounded-xl border bg-muted/50 disabled:opacity-35"
                 >

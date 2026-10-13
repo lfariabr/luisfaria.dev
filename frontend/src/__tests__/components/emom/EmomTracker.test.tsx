@@ -50,8 +50,8 @@ describe('EmomTracker', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Start session' }));
     advance(10_000 + 60_000 + 20_000);
 
-    fireEvent.click(screen.getByRole('button', { name: 'One rep fewer this minute' }));
-    expect(screen.getByTestId('emom-this-minute')).toHaveTextContent('4');
+    fireEvent.click(screen.getByRole('button', { name: /Pace down/ }));
+    expect(screen.getByTestId('emom-pace')).toHaveTextContent('4');
     expect(screen.getByText('-1 vs plan')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'End' }));
@@ -80,20 +80,64 @@ describe('EmomTracker', () => {
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('5 pull-ups');
   });
 
+  it('keeps a lowered pace for the following minutes and blocks', () => {
+    const cfg = { ...DEFAULT_CONFIG, rates: [5, 5], workMin: 2, breakMin: 1 };
+    window.localStorage.setItem('emom:config', JSON.stringify(cfg));
+    render(<EmomTracker />);
+    fireEvent.click(screen.getByRole('button', { name: 'Start session' }));
+    advance(10_000 + 20_000);
+
+    fireEvent.click(screen.getByRole('button', { name: /Pace down/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Pace down/ }));
+    expect(screen.getByTestId('emom-pace')).toHaveTextContent('3');
+    expect(screen.getByText('plan 5 · -2')).toBeInTheDocument();
+
+    advance(45_000);
+    expect(screen.getByTestId('emom-pace')).toHaveTextContent('3');
+    expect(screen.getByText('Go · 3 reps')).toBeInTheDocument();
+    advance(10_000);
+    expect(screen.getByText('-4 vs plan')).toBeInTheDocument();
+
+    advance(60_000);
+    expect(screen.getByText('Service stop', { selector: 'p' })).toBeInTheDocument();
+    expect(screen.getByText(/Next: block 2 · 3\/min · 6 reps/)).toBeInTheDocument();
+    expect(document.querySelectorAll('[data-state="paced"]')).toHaveLength(2);
+    fireEvent.click(screen.getByRole('button', { name: /Pace up/ }));
+    expect(screen.getByText('Pace · next block')).toBeInTheDocument();
+    expect(screen.getByTestId('emom-pace')).toHaveTextContent('4');
+
+    advance(50_000);
+    expect(screen.getByText('Go · 4 reps')).toBeInTheDocument();
+
+    const live = JSON.parse(window.localStorage.getItem('emom:live') ?? '{}');
+    expect(live.paces).toEqual([
+      { block: 0, minute: 0, rate: 3 },
+      { block: 1, minute: 0, rate: 4 },
+    ]);
+  });
+
   it('offers to resume an unfinished session, paused', () => {
     const cfg = { ...DEFAULT_CONFIG, rates: [5, 5] };
     window.localStorage.setItem(
       'emom:live',
-      JSON.stringify({ cfg, phases: buildPhases(cfg), vt: 10 + 120 + 15, adj: {}, startedAt: '2026-10-11T06:00:00.000Z' }),
+      JSON.stringify({
+        cfg,
+        phases: buildPhases(cfg),
+        vt: 10 + 120 + 15,
+        adj: {},
+        paces: [{ block: 0, minute: 1, rate: 4 }],
+        startedAt: '2026-10-11T06:00:00.000Z',
+      }),
     );
     render(<EmomTracker />);
 
-    expect(screen.getByText(/15 reps/)).toBeInTheDocument();
+    expect(screen.getByText(/13 reps/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Resume, paused' }));
 
     expect(screen.getByText('Paused')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Resume' })).toBeInTheDocument();
     advance(5_000);
     expect(screen.getByRole('timer')).toHaveTextContent('0:45');
+    expect(screen.getByTestId('emom-pace')).toHaveTextContent('4');
   });
 });
