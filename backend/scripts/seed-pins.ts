@@ -185,7 +185,6 @@ async function buildValidatedPins(rawPins: LabelledPin[], options: SeedOptions) 
       const issues = result.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`).join('; ');
       throw new Error(`${label} (${pin.placeName ?? '?'}): ${issues}`);
     }
-    // placeId is written when present; the Pin model ignores it until the field exists (#352).
     docs.push({ ...result.data, ...(placeId ? { placeId } : {}), date: new Date(result.data.date) });
   }
 

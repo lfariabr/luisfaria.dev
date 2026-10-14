@@ -12,6 +12,7 @@ export const pinTypes = `#graphql
     countryCode: String
     notes: String
     source: String
+    placeId: String
     createdAt: String!
   }
 
@@ -27,6 +28,22 @@ export const pinTypes = `#graphql
     countryCode: String
     notes: String
     source: String
+    placeId: String
+  }
+
+  input PinUpdateInput {
+    date: String
+    placeName: String
+    amount: Float
+    lat: Float
+    lng: Float
+    category: String
+    payment: String
+    city: String
+    countryCode: String
+    notes: String
+    source: String
+    placeId: String
   }
 
   type RelationshipHomeLocation {
@@ -42,5 +59,7 @@ export const pinTypes = `#graphql
 
   extend type Mutation {
     createPin(input: PinInput!): Pin!
+    updatePin(id: ID!, input: PinUpdateInput!): Pin!
+    deletePin(id: ID!): Boolean!
   }
 `;

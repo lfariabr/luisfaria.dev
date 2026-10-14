@@ -31,7 +31,7 @@ export const pinInputSchema = z.object({
     .trim()
     .min(1, 'Place name is required')
     .max(160, 'Place name cannot exceed 160 characters'),
-  amount: z.number().finite('Amount must be a finite number'),
+  amount: z.number().finite('Amount must be a finite number').positive('Amount must be a positive spend'),
   lat: z.number().finite('Latitude must be a finite number').min(-90).max(90),
   lng: z.number().finite('Longitude must be a finite number').min(-180).max(180),
   category: optionalTrimmedString(80),
@@ -45,6 +45,14 @@ export const pinInputSchema = z.object({
     .optional(),
   notes: optionalTrimmedString(500),
   source: optionalTrimmedString(80),
+  placeId: optionalTrimmedString(255),
 });
 
+export const pinUpdateSchema = pinInputSchema
+  .partial()
+  .refine((data) => Object.keys(data).length > 0, { message: 'At least one field must be provided' });
+
+export const pinIdSchema = z.string().regex(/^[a-f\d]{24}$/i, 'Invalid pin id');
+
 export type PinInput = z.infer<typeof pinInputSchema>;
+export type PinUpdateInput = z.infer<typeof pinUpdateSchema>;
