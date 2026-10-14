@@ -1,9 +1,20 @@
 import { z } from 'zod';
 
-const isoDateString = z.string().refine((value) => {
-  const parsed = new Date(value);
-  return !Number.isNaN(parsed.getTime());
-}, 'Date must be a valid ISO date string');
+const ISO_DATE_PREFIX = /^(\d{4})-(\d{2})-(\d{2})(?:T.+)?$/;
+
+/**
+ * True for `YYYY-MM-DD` or a full ISO timestamp whose date part is a real calendar day.
+ * `new Date('2026-02-30')` silently becomes 2 March, so the day is checked by round-trip.
+ */
+export const isCalendarIsoDate = (value: string): boolean => {
+  const match = ISO_DATE_PREFIX.exec(value);
+  if (!match || Number.isNaN(new Date(value).getTime())) return false;
+  const [, year, month, day] = match.map(Number);
+  const utc = new Date(Date.UTC(year, month - 1, day));
+  return utc.getUTCFullYear() === year && utc.getUTCMonth() === month - 1 && utc.getUTCDate() === day;
+};
+
+const isoDateString = z.string().refine(isCalendarIsoDate, 'Date must be a valid ISO date string');
 
 const optionalTrimmedString = (max: number) =>
   z
