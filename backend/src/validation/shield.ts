@@ -10,7 +10,7 @@ import { chatbotInputSchema } from './schemas/chatbot.schema';
 import { screamInputSchema } from './schemas/scream.schema';
 import { CheckoutInputSchema } from './schemas/checkout.schema';
 import { noteInputSchema, noteUpdateSchema, noteIdSchema, noteFiltersSchema } from './schemas/notes.schema';
-import { pinInputSchema } from './schemas/pin.schema';
+import { pinInputSchema, pinUpdateSchema, pinIdSchema } from './schemas/pin.schema';
 
 type ShieldContext = {
   user?: {
@@ -46,7 +46,8 @@ const isAdmin = rule({ cache: 'contextual' })(
   }
 );
 
-const canViewRelationshipPins = rule({ cache: 'contextual' })(
+// Places is shared by the couple: ADMIN and PARTNER read and write; only ADMIN deletes.
+const isAdminOrPartner = rule({ cache: 'contextual' })(
   async (_parent: unknown, _args: unknown, context: ShieldContext) => {
     try {
       const user = checkAuth(context);
@@ -129,6 +130,14 @@ const validatePinInput = rule({ cache: 'no_cache' })(
   validateInput(pinInputSchema, 'input')
 );
 
+const validatePinUpdate = rule({ cache: 'no_cache' })(
+  validateInput(pinUpdateSchema, 'input')
+);
+
+const validatePinId = rule({ cache: 'no_cache' })(
+  validateInput(pinIdSchema, 'id')
+);
+
 // Export shield middleware
 export const permissions = shield(
   {
@@ -151,8 +160,8 @@ export const permissions = shield(
       chatHistory: isAuthenticated,
       myNotes: and(isAuthenticated, validateNoteFilters),
       note: and(isAuthenticated, validateNoteId),
-      pins: canViewRelationshipPins,
-      relationshipHomeLocation: canViewRelationshipPins,
+      pins: isAdminOrPartner,
+      relationshipHomeLocation: isAdminOrPartner,
       payments: and(isAuthenticated, isAdmin),
     },
     Mutation: {
@@ -161,8 +170,12 @@ export const permissions = shield(
       login: validateLogin,
       createCheckoutSession: validateCheckout,
       
+      // Places (ADMIN + PARTNER write, ADMIN deletes)
+      createPin: and(isAdminOrPartner, validatePinInput),
+      updatePin: and(isAdminOrPartner, validatePinId, validatePinUpdate),
+      deletePin: and(isAdmin, validatePinId),
+
       // Admin-only mutations
-      createPin: and(isAdmin, validatePinInput),
       createProject: and(isAdmin, validateProjectInput),
       updateProject: and(isAdmin, validateProjectUpdate),
       deleteProject: isAdmin,
