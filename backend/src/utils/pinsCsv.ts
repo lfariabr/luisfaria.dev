@@ -7,6 +7,8 @@
  * Rows with both lat and lng skip geocoding.
  */
 
+import { isCalendarIsoDate } from '../validation/schemas/pin.schema';
+
 export interface PinSeedInput {
   date: string;
   placeName: string;
@@ -38,13 +40,34 @@ export const OPTIONAL_COLUMNS = [
 const KNOWN_COLUMNS: ReadonlySet<string> = new Set([...REQUIRED_COLUMNS, ...OPTIONAL_COLUMNS]);
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
-/** RFC 4180-style parser: quoted fields, doubled quotes, CRLF or LF line endings. */
-export function parseCsv(text: string): string[][] {
-  const rows: string[][] = [];
+export interface CsvRecord {
+  /** 1-based line in the file where the record starts. */
+  line: number;
+  cells: string[];
+}
+
+export interface SourcedPinSeedInput {
+  /** 1-based line in the CSV file, for error messages. */
+  line: number;
+  pin: PinSeedInput;
+}
+
+/** RFC 4180-style parser: quoted fields, doubled quotes, CRLF or LF line endings. Blank lines are dropped. */
+export function parseCsvRecords(text: string): CsvRecord[] {
+  const records: CsvRecord[] = [];
   let row: string[] = [];
   let field = '';
   let inQuotes = false;
+  let line = 1;
+  let recordLine = 1;
   const input = text.replace(/^\uFEFF/, '');
+
+  const endRecord = () => {
+    row.push(field);
+    if (row.some((cell) => cell.trim().length > 0)) records.push({ line: recordLine, cells: row });
+    row = [];
+    field = '';
+  };
 
   for (let i = 0; i < input.length; i += 1) {
     const char = input[i];
@@ -58,6 +81,7 @@ export function parseCsv(text: string): string[][] {
           inQuotes = false;
         }
       } else {
+        if (char === '\n') line += 1;
         field += char;
       }
       continue;
@@ -70,22 +94,22 @@ export function parseCsv(text: string): string[][] {
       field = '';
     } else if (char === '\n' || char === '\r') {
       if (char === '\r' && input[i + 1] === '\n') i += 1;
-      row.push(field);
-      rows.push(row);
-      row = [];
-      field = '';
+      endRecord();
+      line += 1;
+      recordLine = line;
     } else {
       field += char;
     }
   }
 
   if (inQuotes) throw new Error('CSV ends inside a quoted field');
-  if (field.length > 0 || row.length > 0) {
-    row.push(field);
-    rows.push(row);
-  }
+  if (field.length > 0 || row.length > 0) endRecord();
 
-  return rows.filter((cells) => cells.some((cell) => cell.trim().length > 0));
+  return records;
+}
+
+export function parseCsv(text: string): string[][] {
+  return parseCsvRecords(text).map((record) => record.cells);
 }
 
 function parseNumber(value: string, column: string, line: number): number {
@@ -97,11 +121,11 @@ function parseNumber(value: string, column: string, line: number): number {
 }
 
 /** Turns CSV text into seed inputs. Errors name the 1-based line in the file. */
-export function csvToPinSeedInputs(text: string): PinSeedInput[] {
-  const rows = parseCsv(text);
-  if (rows.length === 0) throw new Error('CSV is empty');
+export function csvToPinSeedInputs(text: string): SourcedPinSeedInput[] {
+  const records = parseCsvRecords(text);
+  if (records.length === 0) throw new Error('CSV is empty');
 
-  const headers = rows[0].map((header) => header.trim());
+  const headers = records[0].cells.map((header) => header.trim());
   const unknown = headers.filter((header) => !KNOWN_COLUMNS.has(header));
   if (unknown.length > 0) {
     throw new Error(`Unknown column(s): ${unknown.join(', ')}. Allowed: ${[...KNOWN_COLUMNS].join(', ')}`);
@@ -119,8 +143,7 @@ export function csvToPinSeedInputs(text: string): PinSeedInput[] {
     return value.length > 0 ? value : undefined;
   };
 
-  return rows.slice(1).map((cells, offset) => {
-    const line = offset + 2;
+  return records.slice(1).map(({ line, cells }) => {
 
     if (cells.length > headers.length) {
       throw new Error(`Row ${line}: ${cells.length} fields but ${headers.length} headers`);
@@ -131,7 +154,7 @@ export function csvToPinSeedInputs(text: string): PinSeedInput[] {
     const amountRaw = cell(cells, 'amount');
 
     if (!date) throw new Error(`Row ${line}: date is required`);
-    if (!ISO_DATE.test(date) || Number.isNaN(new Date(date).getTime())) {
+    if (!ISO_DATE.test(date) || !isCalendarIsoDate(date)) {
       throw new Error(`Row ${line}: date must be YYYY-MM-DD, got "${date}"`);
     }
     if (!placeName) throw new Error(`Row ${line}: placeName is required`);
@@ -160,6 +183,6 @@ export function csvToPinSeedInputs(text: string): PinSeedInput[] {
       pin.lng = parseNumber(lngRaw, 'lng', line);
     }
 
-    return pin;
+    return { line, pin };
   });
 }

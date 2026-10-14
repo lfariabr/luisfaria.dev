@@ -36,6 +36,12 @@ import Pin from '../src/models/Pin';
 import { pinInputSchema } from '../src/validation/schemas/pin.schema';
 import { csvToPinSeedInputs, type PinSeedInput } from '../src/utils/pinsCsv';
 
+/** A row to import plus where it came from, so errors point at the source. */
+interface LabelledPin {
+  label: string;
+  pin: PinSeedInput;
+}
+
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 interface SeedOptions {
@@ -88,18 +94,28 @@ function parseOptions(argv: string[]): SeedOptions {
   return { inputPath, ...flags };
 }
 
-function loadPins(inputPath: string): PinSeedInput[] {
+function loadPins(inputPath: string): LabelledPin[] {
   const resolvedPath = path.resolve(process.cwd(), inputPath);
   if (!fs.existsSync(resolvedPath)) throw new UsageError(`Input file not found: ${resolvedPath}`);
   const text = fs.readFileSync(resolvedPath, 'utf8');
   const extension = path.extname(resolvedPath).toLowerCase();
 
-  if (extension === '.csv') return csvToPinSeedInputs(text);
+  if (extension === '.csv') {
+    return csvToPinSeedInputs(text).map(({ line, pin }) => ({ label: `Row ${line}`, pin }));
+  }
 
   if (extension === '.json') {
     const parsed = JSON.parse(text) as unknown;
     if (!Array.isArray(parsed)) throw new Error('Input JSON must be an array of pin objects');
-    return parsed as PinSeedInput[];
+    return parsed.map((item: unknown, index) => {
+      const label = `Item ${index}`;
+      if (!item || typeof item !== 'object' || Array.isArray(item)) throw new Error(`${label}: must be an object`);
+      const pin = item as PinSeedInput;
+      if ((pin.lat === undefined) !== (pin.lng === undefined)) {
+        throw new Error(`${label}: lat and lng must be given together`);
+      }
+      return { label, pin };
+    });
   }
 
   throw new UsageError(`Unsupported input type "${extension}": use .csv or .json`);
@@ -136,11 +152,10 @@ function geocode(placeName: string, city = 'Sydney'): Promise<Coords> {
   });
 }
 
-async function buildValidatedPins(rawPins: PinSeedInput[], options: SeedOptions) {
+async function buildValidatedPins(rawPins: LabelledPin[], options: SeedOptions) {
   const docs = [];
 
-  for (const [index, pin] of rawPins.entries()) {
-    const line = index + 2;
+  for (const { label, pin } of rawPins) {
     let coords: Coords | undefined =
       pin.lat !== undefined && pin.lng !== undefined ? { lat: pin.lat, lng: pin.lng, placeId: pin.placeId } : undefined;
 
@@ -168,7 +183,7 @@ async function buildValidatedPins(rawPins: PinSeedInput[], options: SeedOptions)
     const result = pinInputSchema.safeParse({ ...pin, source: pin.source ?? DEFAULT_SOURCE, ...latLng });
     if (!result.success) {
       const issues = result.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`).join('; ');
-      throw new Error(`Row ${line} (${pin.placeName ?? '?'}): ${issues}`);
+      throw new Error(`${label} (${pin.placeName ?? '?'}): ${issues}`);
     }
     // placeId is written when present; the Pin model ignores it until the field exists (#352).
     docs.push({ ...result.data, ...(placeId ? { placeId } : {}), date: new Date(result.data.date) });
@@ -189,6 +204,13 @@ async function main() {
     docs.forEach((pin) => {
       console.log(`  DRY ${pin.date.toISOString().slice(0, 10)} ${pin.placeName} ${pin.amount}`);
     });
+    return;
+  }
+
+  if (docs.length === 0) {
+    // An empty file with --replace would otherwise wipe every pin and insert nothing.
+    if (options.replace) throw new Error('No pins to import; refusing to --replace existing pins with nothing.');
+    console.log('Nothing to import.');
     return;
   }
 

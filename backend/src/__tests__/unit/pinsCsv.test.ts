@@ -32,7 +32,7 @@ describe('csvToPinSeedInputs', () => {
       'Harbour Bistro,18.00,2026-05-03,"anniversary, dinner",',
     ].join('\n');
 
-    const pins = csvToPinSeedInputs(text);
+    const pins = csvToPinSeedInputs(text).map((row) => row.pin);
     expect(pins).toHaveLength(2);
     expect(pins[0]).toMatchObject({ date: '2026-04-26', placeName: 'Corner Cafe', amount: 42.50, city: 'Sydney' });
     expect(pins[0].notes).toBeUndefined();
@@ -42,8 +42,8 @@ describe('csvToPinSeedInputs', () => {
   });
 
   it('reads lat and lng when both are given', () => {
-    const pins = csvToPinSeedInputs('date,placeName,amount,lat,lng\n2026-04-26,X,1,-33.87,151.21');
-    expect(pins[0]).toMatchObject({ lat: -33.87, lng: 151.21 });
+    const [row] = csvToPinSeedInputs('date,placeName,amount,lat,lng\n2026-04-26,X,1,-33.87,151.21');
+    expect(row.pin).toMatchObject({ lat: -33.87, lng: 151.21 });
   });
 
   it('names the row when a required column is empty', () => {
@@ -53,6 +53,7 @@ describe('csvToPinSeedInputs', () => {
   it('rejects a non-ISO date with the row number', () => {
     expect(() => csvToPinSeedInputs(`${header}\n26/04/2026,Corner Cafe,1,,,,,`)).toThrow('Row 2: date must be YYYY-MM-DD');
     expect(() => csvToPinSeedInputs(`${header}\n2026-13-40,Corner Cafe,1,,,,,`)).toThrow('Row 2: date must be YYYY-MM-DD');
+    expect(() => csvToPinSeedInputs(`${header}\n2026-02-30,Corner Cafe,1,,,,,`)).toThrow('Row 2: date must be YYYY-MM-DD');
   });
 
   it('rejects a non-numeric amount and lat without lng', () => {
@@ -63,6 +64,14 @@ describe('csvToPinSeedInputs', () => {
   it('rejects missing required headers and unknown headers', () => {
     expect(() => csvToPinSeedInputs('date,placeName\n2026-04-26,X')).toThrow('Missing required column(s): amount');
     expect(() => csvToPinSeedInputs('date,placeName,amount,price\n2026-04-26,X,1,2')).toThrow('Unknown column(s): price');
+  });
+
+  it('reports the source line after blank lines and multi-line quoted fields', () => {
+    const text = `${header}\n\n2026-04-26,Corner Cafe,1,,,,,"two\nlines"\n\n2026-04-27,,1,,,,,`;
+    const call = () => csvToPinSeedInputs(text);
+    expect(call).toThrow('Row 6: placeName is required');
+    const ok = csvToPinSeedInputs(`${header}\n\n2026-04-26,Corner Cafe,1,,,,,`);
+    expect(ok[0].line).toBe(3);
   });
 
   it('rejects an empty file', () => {
