@@ -1,7 +1,9 @@
 import React from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useMutation, useQuery } from '@apollo/client';
-import RelationshipMapPage from '@/app/admin/relationship/page';
+import { RelationshipMap } from '@/components/relationship/RelationshipMap';
+
+const RelationshipMapPage = () => <RelationshipMap />;
 import { GET_HOME_LOCATION, GET_PINS } from '@/lib/graphql/queries/pin.queries';
 import { CREATE_PIN, DELETE_PIN, UPDATE_PIN } from '@/lib/graphql/mutations/pin.mutations';
 import { useCanViewRelationshipPins, useIsAdmin } from '@/lib/auth/isAdmin';
@@ -132,7 +134,7 @@ describe('RelationshipMapPage', () => {
   it('renders private summary and does not expose precise home address', () => {
     render(<RelationshipMapPage />);
 
-    expect(screen.getByText('Our Sydney Adventures')).toBeInTheDocument();
+    expect(screen.getByText('Our Places')).toBeInTheDocument();
     expect(screen.getByText('2 places · 2 visits')).toBeInTheDocument();
     expect(screen.getByText(/Precise home address intentionally not shown/i)).toBeInTheDocument();
     // Sentinel addresses - these strings should never render. If a regression

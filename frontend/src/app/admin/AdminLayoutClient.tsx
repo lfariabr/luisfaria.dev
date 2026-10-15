@@ -62,7 +62,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Personal',
     items: [
-      { href: '/admin/relationship', label: 'Pins', icon: MapPin },
+      { href: '/places', label: 'Places', icon: MapPin },
       { href: '/admin/emom', label: 'EMOM', icon: Timer },
     ],
   },
