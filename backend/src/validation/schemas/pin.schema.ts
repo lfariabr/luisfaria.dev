@@ -14,6 +14,17 @@ export const isCalendarIsoDate = (value: string): boolean => {
   return utc.getUTCFullYear() === year && utc.getUTCMonth() === month - 1 && utc.getUTCDate() === day;
 };
 
+const positiveAmount = z
+  .number()
+  .finite('Amount must be a finite number')
+  .positive('Amount must be a positive spend');
+
+const countryCode = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .regex(/^[A-Z]{2}$/, 'Country code must be ISO 3166-1 alpha-2 (two letters)');
+
 const isoDateString = z.string().refine(isCalendarIsoDate, 'Date must be a valid ISO date string');
 
 const optionalTrimmedString = (max: number) =>
@@ -31,18 +42,14 @@ export const pinInputSchema = z.object({
     .trim()
     .min(1, 'Place name is required')
     .max(160, 'Place name cannot exceed 160 characters'),
-  amount: z.number().finite('Amount must be a finite number').positive('Amount must be a positive spend'),
+  // Optional: a place can be pinned without a spend (a beach, a walk).
+  amount: positiveAmount.optional(),
   lat: z.number().finite('Latitude must be a finite number').min(-90).max(90),
   lng: z.number().finite('Longitude must be a finite number').min(-180).max(180),
   category: optionalTrimmedString(80),
   payment: optionalTrimmedString(80),
   city: optionalTrimmedString(80),
-  countryCode: z
-    .string()
-    .trim()
-    .toUpperCase()
-    .regex(/^[A-Z]{2}$/, 'Country code must be ISO 3166-1 alpha-2 (two letters)')
-    .optional(),
+  countryCode: countryCode.optional(),
   notes: optionalTrimmedString(500),
   source: optionalTrimmedString(80),
   placeId: optionalTrimmedString(255),
@@ -50,6 +57,16 @@ export const pinInputSchema = z.object({
 
 export const pinUpdateSchema = pinInputSchema
   .partial()
+  // null clears an optional field; the resolver turns it into $unset.
+  .extend({
+    amount: positiveAmount.nullable().optional(),
+    category: optionalTrimmedString(80).nullable(),
+    payment: optionalTrimmedString(80).nullable(),
+    city: optionalTrimmedString(80).nullable(),
+    countryCode: countryCode.nullable().optional(),
+    notes: optionalTrimmedString(500).nullable(),
+    placeId: optionalTrimmedString(255).nullable(),
+  })
   .refine((data) => Object.keys(data).length > 0, { message: 'At least one field must be provided' });
 
 export const pinIdSchema = z.string().regex(/^[a-f\d]{24}$/i, 'Invalid pin id');

@@ -3,7 +3,7 @@ export const pinTypes = `#graphql
     id: ID!
     date: String!
     placeName: String!
-    amount: Float!
+    amount: Float
     lat: Float!
     lng: Float!
     category: String
@@ -19,7 +19,7 @@ export const pinTypes = `#graphql
   input PinInput {
     date: String!
     placeName: String!
-    amount: Float!
+    amount: Float
     lat: Float!
     lng: Float!
     category: String

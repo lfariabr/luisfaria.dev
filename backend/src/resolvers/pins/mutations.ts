@@ -63,15 +63,25 @@ export const pinMutations = {
     const actor = requireWriter(context);
     const pinId = parseId(id);
     const parsed = await pinUpdateSchema.parseAsync(input);
-    const update: Record<string, unknown> = { ...parsed };
-    if (parsed.date) update.date = new Date(parsed.date);
+    const $set: Record<string, unknown> = {};
+    const $unset: Record<string, 1> = {};
+    for (const [field, value] of Object.entries(parsed)) {
+      if (value === undefined) continue;
+      if (value === null) $unset[field] = 1;
+      else $set[field] = field === 'date' ? new Date(value as string) : value;
+    }
 
     const pin = await withPinErrorHandling(
-      () => Pin.findByIdAndUpdate(pinId, { $set: update }, { new: true, runValidators: true }),
+      () =>
+        Pin.findByIdAndUpdate(
+          pinId,
+          { ...(Object.keys($set).length > 0 && { $set }), ...(Object.keys($unset).length > 0 && { $unset }) },
+          { new: true, runValidators: true }
+        ),
       'updatePin'
     );
     if (!pin) throw Errors.notFound('Pin');
-    logger.info('Pin updated', { userId: actor.id, pinId, fields: Object.keys(update) });
+    logger.info('Pin updated', { userId: actor.id, pinId, fields: Object.keys(parsed) });
     return pin;
   },
 
