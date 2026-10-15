@@ -23,6 +23,8 @@ import {
 } from './pinForm';
 
 const SYDNEY = { lat: -33.8688, lng: 151.2093 };
+// The timeline opens on the latest few visits; the rest sit behind See more.
+const TIMELINE_PREVIEW = 3;
 
 interface RelationshipMapProps {
   title?: string;
@@ -89,6 +91,7 @@ export function RelationshipMap({
   const [session, setSession] = useState<FormSession | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [picking, setPicking] = useState(false);
+  const [showAllVisits, setShowAllVisits] = useState(false);
   const mapCenter = useRef<google.maps.LatLngLiteral>(SYDNEY);
   const canEdit = useCanViewRelationshipPins();
   const isAdmin = useIsAdmin();
@@ -152,6 +155,8 @@ export function RelationshipMap({
 
   const draft = session && (picking || formOpen) ? session.values : null;
   const latestPin = pins[0];
+  const timelineVisits = showAllVisits ? pins : pins.slice(0, TIMELINE_PREVIEW);
+  const hiddenVisits = pins.length - TIMELINE_PREVIEW;
   const HeadingTag = headingLevel === 1 ? 'h1' : 'h2';
 
   return (
@@ -389,8 +394,8 @@ export function RelationshipMap({
               ) : pins.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No visits to list yet.</p>
               ) : (
-                pins.map((pin) => (
-                  <div key={pin.id} className="relative rounded-lg border transition-colors hover:bg-accent">
+                timelineVisits.map((pin) => (
+                  <div key={pin.id} data-testid="timeline-visit" className="relative rounded-lg border transition-colors hover:bg-accent">
                     <button type="button" onClick={() => showPlaceOf(pin)} className="w-full p-3 pr-10 text-left">
                       <div className="flex items-start justify-between gap-3">
                         <div>
@@ -419,6 +424,17 @@ export function RelationshipMap({
                     )}
                   </div>
                 ))
+              )}
+              {hiddenVisits > 0 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => setShowAllVisits((current) => !current)}
+                >
+                  {showAllVisits ? 'Show less' : `See more (${hiddenVisits})`}
+                </Button>
               )}
             </CardContent>
           </Card>

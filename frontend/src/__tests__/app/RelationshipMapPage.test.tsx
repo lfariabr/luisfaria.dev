@@ -447,4 +447,44 @@ describe('RelationshipMapPage', () => {
       await waitFor(() => expect(screen.queryByLabelText('Name')).not.toBeInTheDocument());
     });
   });
+
+  describe('visit timeline', () => {
+    // Newest first, as the API returns them.
+    const visits = (count: number) =>
+      Array.from({ length: count }, (_, index) => ({
+        ...pins[0],
+        id: `visit-${index}`,
+        placeName: `Visit ${index + 1}`,
+        date: `2026-05-${String(28 - index).padStart(2, '0')}T00:00:00.000Z`,
+        lat: pins[0].lat + index * 0.01,
+      }));
+    const rows = () => screen.queryAllByTestId('timeline-visit').map((row) => row.querySelector('p')?.textContent);
+
+    it('shows the latest 3 and expands and collapses the rest', () => {
+      mockQueryResults({ pins: { data: { pins: visits(5) } } });
+      render(<RelationshipMapPage />);
+
+      expect(rows()).toEqual(['Visit 1', 'Visit 2', 'Visit 3']);
+      fireEvent.click(screen.getByRole('button', { name: 'See more (2)' }));
+      expect(rows()).toEqual(['Visit 1', 'Visit 2', 'Visit 3', 'Visit 4', 'Visit 5']);
+      fireEvent.click(screen.getByRole('button', { name: 'Show less' }));
+      expect(rows()).toHaveLength(3);
+    });
+
+    it('has no toggle with 3 visits or fewer', () => {
+      mockQueryResults({ pins: { data: { pins: visits(3) } } });
+      render(<RelationshipMapPage />);
+
+      expect(rows()).toHaveLength(3);
+      expect(screen.queryByRole('button', { name: /see more|show less/i })).not.toBeInTheDocument();
+    });
+
+    it('has no toggle with no visits', () => {
+      mockQueryResults({ pins: { data: { pins: [] } } });
+      render(<RelationshipMapPage />);
+
+      expect(rows()).toHaveLength(0);
+      expect(screen.queryByRole('button', { name: /see more/i })).not.toBeInTheDocument();
+    });
+  });
 });
