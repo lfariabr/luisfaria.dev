@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, type ReactNode } from 'react';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { useMutation, useQuery } from '@apollo/client';
 import { APIProvider, Map, AdvancedMarker, InfoWindow } from '@vis.gl/react-google-maps';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { CREATE_PIN, DELETE_PIN, UPDATE_PIN } from '@/lib/graphql/mutations/pin.
 import type { Pin, PinsData, RelationshipHomeData } from '@/lib/graphql/types/pin.types';
 import { useCanViewRelationshipPins, useIsAdmin } from '@/lib/auth/isAdmin';
 import { PinFormDialog } from './PinFormDialog';
+import { groupPinsByPlace } from './placeGroups';
 import {
   applyPlaceSelection,
   emptyPinFormValues,
@@ -74,7 +75,7 @@ export function RelationshipMap({
   const { data: homeData } = useQuery<RelationshipHomeData>(GET_HOME_LOCATION, {
     errorPolicy: 'ignore',
   });
-  const [activePin, setActivePin] = useState<Pin | null>(null);
+  const [activeKey, setActiveKey] = useState<string | null>(null);
   const [homeOpen, setHomeOpen] = useState(false);
   const [session, setSession] = useState<FormSession | null>(null);
   const [formOpen, setFormOpen] = useState(false);
@@ -86,13 +87,16 @@ export function RelationshipMap({
   const [updatePin] = useMutation(UPDATE_PIN, refetchPins);
   const [deletePin] = useMutation(DELETE_PIN, refetchPins);
 
-  const pins = data?.pins ?? [];
+  const pins = useMemo(() => data?.pins ?? [], [data]);
+  const places = useMemo(() => groupPinsByPlace(pins), [pins]);
+  const activePlace = places.find((place) => place.key === activeKey) ?? null;
+  const showPlaceOf = (pin: Pin) => setActiveKey(places.find((place) => place.visits.includes(pin))?.key ?? null);
   const home = homeData?.relationshipHomeLocation ?? null;
   const totalSpent = pins.reduce((sum, p) => sum + Math.abs(p.amount ?? 0), 0);
   const mapReady = Boolean(apiKey && mapId);
 
   const openForm = (mode: 'create' | 'edit', pin?: Pin) => {
-    setActivePin(null);
+    setActiveKey(null);
     setSession({
       key: Date.now(),
       mode,
@@ -161,7 +165,7 @@ export function RelationshipMap({
             <Card className="px-4 py-3">
               <div className="flex items-center gap-2 text-sm font-medium">
                 <MapPin className="h-4 w-4 text-violet-500" />
-                {loading ? 'Loading...' : `${pins.length} places`}
+                {loading ? 'Loading...' : `${places.length} places · ${pins.length} visits`}
               </div>
             </Card>
             <Card className="px-4 py-3">
@@ -224,7 +228,7 @@ export function RelationshipMap({
                   <button
                     type="button"
                     onClick={() => {
-                      setActivePin(null);
+                      setActiveKey(null);
                       setHomeOpen(false);
                       try {
                         void Promise.resolve(refetch()).catch(() => undefined);
@@ -262,14 +266,22 @@ export function RelationshipMap({
                     if (picking && event.detail.latLng) finishPicking(event.detail.latLng);
                   }}
                 >
-                  {pins.map((pin) => (
+                  {places.map((place) => (
                     <AdvancedMarker
-                      key={pin.id}
-                      position={{ lat: pin.lat, lng: pin.lng }}
-                      onClick={() => !picking && setActivePin(pin)}
+                      key={place.key}
+                      position={{ lat: place.lat, lng: place.lng }}
+                      onClick={() => !picking && setActiveKey(place.key)}
                     >
-                      <div className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-violet-500 shadow-md transition-transform hover:scale-110">
+                      <div className="relative flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-violet-500 shadow-md transition-transform hover:scale-110">
                         <MapPin className="h-4 w-4 text-white" />
+                        {place.visits.length > 1 && (
+                          <span
+                            data-testid="visit-count"
+                            className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-gray-900 px-1 text-[10px] font-bold text-white"
+                          >
+                            {place.visits.length}
+                          </span>
+                        )}
                       </div>
                     </AdvancedMarker>
                   ))}
@@ -312,35 +324,51 @@ export function RelationshipMap({
                     </InfoWindow>
                   )}
 
-                  {activePin && (
+                  {activePlace && (
                     <InfoWindow
-                      position={{ lat: activePin.lat, lng: activePin.lng }}
-                      onCloseClick={() => setActivePin(null)}
+                      position={{ lat: activePlace.lat, lng: activePlace.lng }}
+                      onCloseClick={() => setActiveKey(null)}
                     >
-                      <div className="min-w-[180px] p-1">
-                        <p className="text-sm font-semibold">{activePin.placeName}</p>
-                        <p className="mt-0.5 text-xs text-gray-500">{formatDate(activePin.date)}</p>
-                        {activePin.amount != null && (
-                          <p className="mt-1 text-sm font-medium text-emerald-600">
-                            {formatAmount(activePin.amount)}
+                      <div className="min-w-[200px] max-w-[260px] p-1">
+                        <p className="text-sm font-semibold">{activePlace.placeName}</p>
+                        {activePlace.visits.length > 1 && (
+                          <p className="mt-0.5 text-xs text-gray-500">
+                            {activePlace.visits.length} visits
+                            {activePlace.totalSpent > 0 && ` · ${formatAmount(activePlace.totalSpent)}`}
                           </p>
                         )}
-                        {(activePin.category || activePin.payment) && (
-                          <p className="mt-1 text-xs text-gray-500">
-                            {[activePin.category, activePin.payment].filter(Boolean).join(' · ')}
-                          </p>
-                        )}
-                        {activePin.notes && <p className="mt-1 max-w-[220px] text-xs text-gray-600">{activePin.notes}</p>}
-                        {canEdit && (
-                          <button
-                            type="button"
-                            onClick={() => openForm('edit', activePin)}
-                            className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-violet-600 hover:underline"
-                          >
-                            <Pencil className="h-3 w-3" />
-                            Edit
-                          </button>
-                        )}
+                        <ul className="mt-1 max-h-60 divide-y divide-gray-200 overflow-auto">
+                          {activePlace.visits.map((visit) => (
+                            <li key={visit.id} className="py-1.5">
+                              <div className="flex items-baseline justify-between gap-3">
+                                <span className="text-xs text-gray-600">{formatDate(visit.date)}</span>
+                                {visit.amount != null && (
+                                  <span className="text-sm font-medium text-emerald-600">{formatAmount(visit.amount)}</span>
+                                )}
+                              </div>
+                              {visit.placeName !== activePlace.placeName && (
+                                <p className="text-xs text-gray-500">as {visit.placeName}</p>
+                              )}
+                              {(visit.category || visit.payment) && (
+                                <p className="text-xs text-gray-500">
+                                  {[visit.category, visit.payment].filter(Boolean).join(' · ')}
+                                </p>
+                              )}
+                              {visit.notes && <p className="text-xs text-gray-600">{visit.notes}</p>}
+                              {canEdit && (
+                                <button
+                                  type="button"
+                                  aria-label={`Edit ${visit.placeName} on ${formatDate(visit.date)}`}
+                                  onClick={() => openForm('edit', visit)}
+                                  className="mt-0.5 inline-flex items-center gap-1 text-xs font-medium text-violet-600 hover:underline"
+                                >
+                                  <Pencil className="h-3 w-3" />
+                                  Edit
+                                </button>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     </InfoWindow>
                   )}
@@ -363,7 +391,7 @@ export function RelationshipMap({
               ) : (
                 pins.map((pin) => (
                   <div key={pin.id} className="relative rounded-lg border transition-colors hover:bg-accent">
-                    <button type="button" onClick={() => setActivePin(pin)} className="w-full p-3 pr-10 text-left">
+                    <button type="button" onClick={() => showPlaceOf(pin)} className="w-full p-3 pr-10 text-left">
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <p className="text-sm font-medium">{pin.placeName}</p>

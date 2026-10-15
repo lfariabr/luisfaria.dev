@@ -133,7 +133,7 @@ describe('RelationshipMapPage', () => {
     render(<RelationshipMapPage />);
 
     expect(screen.getByText('Our Sydney Adventures')).toBeInTheDocument();
-    expect(screen.getByText('2 places')).toBeInTheDocument();
+    expect(screen.getByText('2 places · 2 visits')).toBeInTheDocument();
     expect(screen.getByText(/Precise home address intentionally not shown/i)).toBeInTheDocument();
     // Sentinel addresses - these strings should never render. If a regression
     // ever inlines a real address into the page, swap these for that pattern.
@@ -169,7 +169,7 @@ describe('RelationshipMapPage', () => {
 
     render(<RelationshipMapPage />);
 
-    expect(screen.getByText('0 places')).toBeInTheDocument();
+    expect(screen.getByText('0 places · 0 visits')).toBeInTheDocument();
     expect(screen.getByText(/NEXT_PUBLIC_GOOGLE_MAPS_API_KEY/)).toBeInTheDocument();
     expect(screen.getByText('No visits to list yet.')).toBeInTheDocument();
   });
@@ -230,7 +230,7 @@ describe('RelationshipMapPage', () => {
 
       render(<RelationshipMapPage />);
 
-      expect(screen.getByText('0 places')).toBeInTheDocument();
+      expect(screen.getByText('0 places · 0 visits')).toBeInTheDocument();
       expect(screen.getByTestId('home-marker')).toBeInTheDocument();
       expect(screen.getByText('No visits to list yet.')).toBeInTheDocument();
     });
@@ -317,6 +317,40 @@ describe('RelationshipMapPage', () => {
       else process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = ORIGINAL_KEY;
       if (ORIGINAL_MAP_ID === undefined) delete process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID;
       else process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID = ORIGINAL_MAP_ID;
+    });
+
+    it('stacks repeat visits on one marker and lists each with its own edit', () => {
+      mockQueryResults({
+        pins: {
+          data: {
+            pins: [
+              { ...pins[0], id: 'pin-new', date: '2026-06-21T00:00:00.000Z', placeId: 'place-corner', amount: 76.89 },
+              { ...pins[0], id: 'pin-old', placeName: 'Corner Cafe Potts Point', placeId: 'place-corner', amount: 72.96 },
+              pins[1],
+            ],
+          },
+        },
+      });
+
+      render(<RelationshipMapPage />);
+
+      expect(screen.getByText('2 places · 3 visits')).toBeInTheDocument();
+      expect(screen.getByTestId('visit-count')).toHaveTextContent('2');
+      fireEvent.click(screen.getByTestId('visit-count').closest('button') as HTMLButtonElement);
+
+      const popup = screen.getByTestId('info-window');
+      expect(popup).toHaveTextContent('2 visits · $149.85');
+      expect(popup).toHaveTextContent('as Corner Cafe Potts Point');
+      fireEvent.click(screen.getByRole('button', { name: /edit corner cafe potts point on/i }));
+      expect(screen.getByLabelText('Name')).toHaveValue('Corner Cafe Potts Point');
+    });
+
+    it('opens the stack from a timeline row', () => {
+      render(<RelationshipMapPage />);
+
+      fireEvent.click(screen.getByText('Harbour Bistro'));
+
+      expect(screen.getByTestId('info-window')).toHaveTextContent('Harbour Bistro');
     });
 
     it('adds a place picked on the map, with no spend', async () => {
