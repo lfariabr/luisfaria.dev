@@ -8,11 +8,11 @@ import { RelationshipMap } from '@/components/relationship/RelationshipMap';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useCanViewRelationshipPins } from '@/lib/auth/isAdmin';
 
-export default function RelationshipPageClient() {
+export default function PlacesPageClient() {
   const { status, refetchUser } = useAuth();
   const canViewRelationshipPins = useCanViewRelationshipPins();
   const router = useRouter();
-  const pathname = usePathname() ?? '/relationship';
+  const pathname = usePathname() ?? '/places';
 
   useEffect(() => {
     if (status === 'unauthenticated') {

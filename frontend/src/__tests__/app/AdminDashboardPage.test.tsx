@@ -25,7 +25,7 @@ const mockQueries = (overrides: Map<unknown, QueryResult> = new Map()) => {
     [GET_ARTICLES, { data: { articles: [{ id: 'a1', published: true, updatedAt: recent() }] } }],
     [GET_USERS, { data: { users: [{ id: 'u1', createdAt: recent() }] } }],
     [GET_PAYMENTS, { data: { payments: [{ id: 'p1', status: 'paid', amount: 500, currency: 'aud', createdAt: recent() }] } }],
-    [GET_PINS, { data: { pins: [{ id: 'pin1', placeName: 'Bistro Rex', date: recent() }] } }],
+    [GET_PINS, { data: { pins: [{ id: 'pin1', placeName: 'Corner Cafe', date: recent() }] } }],
   ]);
 
   mockedUseQuery.mockImplementation((query: unknown) => ({
@@ -79,7 +79,7 @@ describe('AdminDashboardPage', () => {
     expect(within(screen.getByTestId('tile-articles')).getByText('0 drafts')).toBeInTheDocument();
     expect(within(screen.getByTestId('tile-payments')).getByText(/AUD 5\.00/)).toBeInTheDocument();
     expect(within(screen.getByTestId('tile-users')).getByText('1 new in the last 7 days')).toBeInTheDocument();
-    expect(within(screen.getByTestId('tile-pins')).getByText('Latest: Bistro Rex')).toBeInTheDocument();
+    expect(within(screen.getByTestId('tile-places')).getByText('Latest: Corner Cafe')).toBeInTheDocument();
     expect(within(screen.getByTestId('tile-emom')).getByRole('link', { name: 'Start session' })).toHaveAttribute('href', '/admin/emom');
   });
 
@@ -108,7 +108,7 @@ describe('AdminDashboardPage', () => {
     mockQueries(new Map<unknown, QueryResult>([[GET_PINS, { loading: true }]]));
     render(<AdminDashboardPage />);
 
-    const pins = screen.getByTestId('tile-pins');
+    const pins = screen.getByTestId('tile-places');
     expect(within(pins).queryByText(/Latest/)).not.toBeInTheDocument();
     expect(pins.querySelector('.animate-pulse')).toBeInTheDocument();
   });

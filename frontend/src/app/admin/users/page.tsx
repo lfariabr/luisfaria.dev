@@ -85,7 +85,7 @@ const roleDialogTitle = (role: UserRole | null) => {
 
 const roleDialogDescription = (role: UserRole | null) => {
   if (role === UserRole.ADMIN) return 'This will give the user administrative privileges.';
-  if (role === UserRole.PARTNER) return 'This will give the user read-only access to the private relationship map, without admin privileges.';
+  if (role === UserRole.PARTNER) return 'This will let the user view, add and edit places on the private map, without admin privileges.';
   return 'This will remove elevated access from this user.';
 };
 

@@ -65,8 +65,8 @@ function MapsProvider({ apiKey, children }: { apiKey: string; children: ReactNod
 }
 
 export function RelationshipMap({
-  title = 'Our Sydney Adventures',
-  subtitle = 'Private read-only map of places visited together this year',
+  title = 'Our Places',
+  subtitle = "Places we've been together",
   headingLevel = 1,
 }: RelationshipMapProps) {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? '';

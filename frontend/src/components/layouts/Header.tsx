@@ -29,7 +29,7 @@ export function Header() {
   const { setTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
-  const canViewRelationshipMap = user?.role === 'ADMIN' || user?.role === 'PARTNER';
+  const canViewPlaces = user?.role === 'ADMIN' || user?.role === 'PARTNER';
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -124,9 +124,9 @@ export function Header() {
                     <Link href="/admin">Admin Dashboard</Link>
                   </DropdownMenuItem>
                 )}
-                {canViewRelationshipMap && (
+                {canViewPlaces && (
                   <DropdownMenuItem asChild>
-                    <Link href="/relationship">Relationship Map</Link>
+                    <Link href="/places">Places</Link>
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
@@ -210,13 +210,13 @@ export function Header() {
                 >
                   My Notes
                 </Link>
-                {canViewRelationshipMap && (
+                {canViewPlaces && (
                   <Link
-                    href="/relationship"
+                    href="/places"
                     className="text-sm font-medium py-1"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    Relationship Map
+                    Places
                   </Link>
                 )}
               </>

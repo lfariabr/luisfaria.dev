@@ -64,7 +64,7 @@ describe('AdminLayoutClient', () => {
     for (const [group, items] of [
       ['Content', ['Projects', 'Articles']],
       ['Business', ['Payments', 'Users']],
-      ['Personal', ['Pins', 'EMOM']],
+      ['Personal', ['Places', 'EMOM']],
     ] as const) {
       const section = within(nav).getByText(group).parentElement as HTMLElement;
       expect(within(section).getAllByRole('link').map((link) => link.textContent)).toEqual(items);

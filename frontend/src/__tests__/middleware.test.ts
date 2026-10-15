@@ -5,8 +5,9 @@ interface MockResponse {
 }
 
 // Mock next/server before importing proxy
-const mockRedirect = jest.fn<MockResponse, [URL]>((url: URL) => ({
-  status: 307,
+// Mirrors NextResponse.redirect: 307 unless a status is passed.
+const mockRedirect = jest.fn<MockResponse, [URL, number?]>((url: URL, status = 307) => ({
+  status,
   headers: { get: (key: string) => key === 'location' ? url.toString() : null },
 }));
 
@@ -17,7 +18,7 @@ const mockNext = jest.fn<MockResponse, []>(() => ({
 
 jest.mock('next/server', () => ({
   NextResponse: {
-    redirect: (url: URL) => mockRedirect(url),
+    redirect: (url: URL, status?: number) => mockRedirect(url, status),
     next: () => mockNext(),
   },
 }));
@@ -99,13 +100,31 @@ describe('Middleware - Admin Route Protection', () => {
       expect(response.headers.get('location')).toContain('redirect=%2Fnotes');
     });
 
-    it('redirects to /login when no token cookie is present on relationship route', () => {
-      const request = createMockRequest('/relationship');
+    it('redirects to /login when no token cookie is present on places route', () => {
+      const request = createMockRequest('/places');
       const response = proxy(request);
 
       expect(response.status).toBe(307);
       expect(response.headers.get('location')).toContain('/login');
-      expect(response.headers.get('location')).toContain('redirect=%2Frelationship');
+      expect(response.headers.get('location')).toContain('redirect=%2Fplaces');
+    });
+  });
+
+  describe('Legacy Places paths', () => {
+    it.each(['/relationship', '/admin/relationship', '/relationship/anything'])(
+      'permanently redirects %s to /places before any auth check',
+      (pathname) => {
+        const response = proxy(createMockRequest(pathname));
+
+        expect(response.status).toBe(308);
+        expect(response.headers.get('location')).toBe('http://localhost:3000/places');
+      }
+    );
+
+    it('does not treat a lookalike path as legacy', () => {
+      const response = proxy(createMockRequest('/relationships-blog'));
+
+      expect(response.status).not.toBe(308);
     });
   });
 
@@ -136,14 +155,14 @@ describe('Middleware - Admin Route Protection', () => {
       expect(response.status).toBe(200);
     });
 
-    it('allows access to relationship route with valid ADMIN token', () => {
+    it('allows access to places route with valid ADMIN token', () => {
       const token = createMockToken({
         id: '1',
         email: 'admin@test.com',
         role: 'ADMIN',
         exp: futureExp,
       });
-      const request = createMockRequest('/relationship', token);
+      const request = createMockRequest('/places', token);
       const response = proxy(request);
 
       expect(response.status).toBe(200);
@@ -206,27 +225,27 @@ describe('Middleware - Admin Route Protection', () => {
       expect(response.status).toBe(200);
     });
 
-    it('allows access to relationship route with PARTNER role token', () => {
+    it('allows access to places route with PARTNER role token', () => {
       const token = createMockToken({
         id: '4',
         email: 'partner@test.com',
         role: 'PARTNER',
         exp: futureExp,
       });
-      const request = createMockRequest('/relationship', token);
+      const request = createMockRequest('/places', token);
       const response = proxy(request);
 
       expect(response.status).toBe(200);
     });
 
-    it('redirects to / when USER role accesses relationship route', () => {
+    it('redirects to / when USER role accesses places route', () => {
       const token = createMockToken({
         id: '2',
         email: 'user@test.com',
         role: 'USER',
         exp: futureExp,
       });
-      const request = createMockRequest('/relationship', token);
+      const request = createMockRequest('/places', token);
       const response = proxy(request);
 
       expect(response.status).toBe(307);

@@ -253,13 +253,13 @@ export default function AdminDashboardPage() {
           action={{ href: '/admin/users', label: 'View' }}
         />
         <Tile
-          title="Pins"
-          href="/admin/relationship"
+          title="Places"
+          href="/places"
           icon={MapPin}
           query={pins}
           stat={pinList.length}
           detail={lastPin ? `Latest: ${lastPin.placeName}` : 'No places yet'}
-          action={{ href: '/admin/relationship', label: 'Open map' }}
+          action={{ href: '/places', label: 'Open map' }}
         />
         <Tile
           title="EMOM"

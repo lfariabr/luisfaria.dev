@@ -11,17 +11,26 @@ interface DecodedToken {
 }
 
 const normalizeRole = (role?: string) => role?.toUpperCase();
-const canViewRelationshipPins = (role?: string) => role === 'ADMIN' || role === 'PARTNER';
+const canViewPlaces = (role?: string) => role === 'ADMIN' || role === 'PARTNER';
+
+// Places lived at two addresses before v3.25; both now point at one page.
+const LEGACY_PLACES_PATHS = ['/relationship', '/admin/relationship'];
+const isLegacyPlacesPath = (pathname: string) =>
+  LEGACY_PLACES_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
 
 export function proxy(request: NextRequest) {
+  if (isLegacyPlacesPath(request.nextUrl.pathname)) {
+    return NextResponse.redirect(new URL('/places', request.url), 308);
+  }
+
   // Get token from httpOnly cookie only (no more Authorization header)
   const token = request.cookies.get('token')?.value;
 
   // Check if the path is a protected route
   const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
   const isNotesRoute = request.nextUrl.pathname.startsWith('/notes');
-  const isRelationshipRoute = request.nextUrl.pathname.startsWith('/relationship');
-  const isProtectedRoute = isAdminRoute || isNotesRoute || isRelationshipRoute;
+  const isPlacesRoute = request.nextUrl.pathname.startsWith('/places');
+  const isProtectedRoute = isAdminRoute || isNotesRoute || isPlacesRoute;
 
   if (isProtectedRoute) {
     // No token - redirect to login
@@ -51,7 +60,7 @@ export function proxy(request: NextRequest) {
         return NextResponse.redirect(new URL('/', request.url));
       }
 
-      if (isRelationshipRoute && !canViewRelationshipPins(role)) {
+      if (isPlacesRoute && !canViewPlaces(role)) {
         return NextResponse.redirect(new URL('/', request.url));
       }
     } catch (error) {
@@ -70,5 +79,5 @@ export function proxy(request: NextRequest) {
 
 // Configure which paths this proxy applies to
 export const config = {
-  matcher: ['/admin/:path*', '/notes/:path*', '/relationship/:path*'],
+  matcher: ['/admin/:path*', '/notes/:path*', '/places/:path*', '/relationship/:path*'],
 };
