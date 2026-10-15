@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useMapsLibrary } from '@vis.gl/react-google-maps';
 import { Loader2, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { logger } from '@/lib/logger';
 import type { PlaceSelection } from './pinForm';
 
 interface Suggestion {
@@ -61,7 +62,9 @@ export function PlaceSearch({ onSelect, bias }: PlaceSearchProps) {
               : []
           )
         );
-      } catch {
+      } catch (searchError) {
+        // A CSP block or a key restriction surfaces only as an opaque RPC error; log it for the console.
+        logger.warn('Place autocomplete failed', { error: String(searchError) });
         if (!cancelled) setError('Place search is unavailable. Pick the spot on the map instead.');
       }
     }, DEBOUNCE_MS);
@@ -89,7 +92,8 @@ export function PlaceSearch({ onSelect, bias }: PlaceSearchProps) {
       setQuery('');
       setSuggestions([]);
       setError(null);
-    } catch {
+    } catch (detailsError) {
+      logger.warn('Place details failed', { error: String(detailsError) });
       setError('Could not load that place. Try again or pick it on the map.');
     } finally {
       // fetchFields ends the billing session; the next search starts a new one.
