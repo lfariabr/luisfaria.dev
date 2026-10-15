@@ -7,7 +7,7 @@ Personal portfolio site with a small set of interactive features (AI chatbot, AP
 ### Support
 
 **Support FAB**:
-The floating button, shown site-wide, that opens the Support checkout. Refers to the button only: its placement, visibility and look.
+The floating button, shown site-wide except on the private pages (`/notes`, `/places`), that opens the Support checkout. Refers to the button only: its placement, visibility and look.
 _Lives in_: `frontend/src/components/stripe/StripeFab.tsx`
 _Avoid_: Stripe FAB, coffee button
 

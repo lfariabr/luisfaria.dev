@@ -66,12 +66,23 @@ describe("StripeFab", () => {
     expect(container.querySelector(".animate-ping")).toBeNull();
   });
 
-  it("is hidden on /notes pages", () => {
-    mockPathname = "/notes/some-note";
+  it.each(["/notes", "/notes/some-note", "/places", "/places/anything"])(
+    "is hidden on %s",
+    (pathname) => {
+      mockPathname = pathname;
+      render(<StripeFab />);
+      expect(
+        screen.queryByRole("button", { name: /open support checkout options/i })
+      ).not.toBeInTheDocument();
+    }
+  );
+
+  it("is shown on a lookalike public path", () => {
+    mockPathname = "/placesforever";
     render(<StripeFab />);
     expect(
-      screen.queryByRole("button", { name: /open support checkout options/i })
-    ).not.toBeInTheDocument();
+      screen.getByRole("button", { name: /open support checkout options/i })
+    ).toBeInTheDocument();
   });
 
   it("marks the selected product with the emerald accent", async () => {
