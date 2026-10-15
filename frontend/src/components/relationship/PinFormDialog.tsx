@@ -29,6 +29,12 @@ interface PinFormDialogProps {
 
 const fieldError = (message?: string) => message && <p className="text-xs text-destructive">{message}</p>;
 
+// Grid items default to min-width: auto, and iOS Safari gives a date input a wide intrinsic
+// width, so the Date cell overflowed into Spent. min-w-0 lets each cell shrink to its column.
+const CELL = 'min-w-0 space-y-2';
+// Without appearance-none iOS draws its own date control, which ignores the width and centres the text.
+const DATE_INPUT = 'appearance-none [&::-webkit-date-and-time-value]:text-left';
+
 /**
  * Add or edit a pin. Mounted with a key per session, so initialValues seed state once.
  * Below `sm` the dialog docks to the bottom edge like a sheet.
@@ -125,12 +131,18 @@ export function PinFormDialog({
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
+            <div className={CELL}>
               <Label htmlFor="pin-date">Date</Label>
-              <Input id="pin-date" type="date" value={values.date} onChange={(event) => set('date', event.target.value)} />
+              <Input
+                id="pin-date"
+                type="date"
+                value={values.date}
+                onChange={(event) => set('date', event.target.value)}
+                className={DATE_INPUT}
+              />
               {fieldError(errors.date)}
             </div>
-            <div className="space-y-2">
+            <div className={CELL}>
               <Label htmlFor="pin-amount">Spent (AUD)</Label>
               <Input
                 id="pin-amount"
@@ -147,7 +159,7 @@ export function PinFormDialog({
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
+            <div className={CELL}>
               <Label htmlFor="pin-category">Category</Label>
               <Input
                 id="pin-category"
@@ -162,7 +174,7 @@ export function PinFormDialog({
                 ))}
               </datalist>
             </div>
-            <div className="space-y-2">
+            <div className={CELL}>
               <Label htmlFor="pin-payment">Payment</Label>
               <Input
                 id="pin-payment"
