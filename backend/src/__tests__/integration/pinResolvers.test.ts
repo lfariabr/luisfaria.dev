@@ -182,6 +182,24 @@ describe('Pin Resolvers', () => {
       expect(dbPin).not.toBeNull();
     });
 
+    it('creates a pin without a spend', async () => {
+      const withoutAmount: Partial<typeof PIN_INPUT> = { ...PIN_INPUT };
+      delete withoutAmount.amount;
+      const response = await executeOperation(
+        CREATE_PIN_MUTATION,
+        { input: { ...withoutAmount, placeName: 'Park Kiosk', category: 'Visit', notes: 'sunset walk' } },
+        partnerContext
+      );
+
+      expect(response.body.kind).toBe('single');
+      if (response.body.kind !== 'single') return;
+      expect(response.body.singleResult.errors).toBeUndefined();
+      const pin = (response.body.singleResult.data as unknown as CreatePinData).createPin;
+      expect(pin.amount).toBeNull();
+      const stored = await Pin.findById(pin.id).lean();
+      expect(stored).not.toHaveProperty('amount');
+    });
+
     it.each([
       ['empty placeName', { ...PIN_INPUT, placeName: '   ' }],
       ['invalid date', { ...PIN_INPUT, date: 'not-a-date' }],
@@ -261,7 +279,7 @@ describe('Pin Resolvers', () => {
     `;
 
     interface UpdatePinData {
-      updatePin: { id: string; date: string; placeName: string; amount: number; notes: string | null; city: string | null };
+      updatePin: { id: string; date: string; placeName: string; amount: number | null; notes: string | null; city: string | null };
     }
 
     let pinId: string;
@@ -286,6 +304,46 @@ describe('Pin Resolvers', () => {
       expect(pin.date).toBe(PIN_INPUT.date);
     });
 
+    it('clears the spend when amount is null', async () => {
+      const response = await executeOperation(
+        UPDATE_PIN_MUTATION,
+        { id: pinId, input: { amount: null, notes: 'just a walk' } },
+        adminContext
+      );
+
+      expect(response.body.kind).toBe('single');
+      if (response.body.kind !== 'single') return;
+      expect(response.body.singleResult.errors).toBeUndefined();
+      const pin = (response.body.singleResult.data as unknown as UpdatePinData).updatePin;
+      expect(pin).toMatchObject({ amount: null, notes: 'just a walk' });
+      const stored = await Pin.findById(pinId).lean();
+      expect(stored).not.toHaveProperty('amount');
+    });
+
+    it('clears the spend when amount null is the only field', async () => {
+      const response = await executeOperation(UPDATE_PIN_MUTATION, { id: pinId, input: { amount: null } }, adminContext);
+
+      expect(response.body.kind).toBe('single');
+      if (response.body.kind !== 'single') return;
+      expect(response.body.singleResult.errors).toBeUndefined();
+      expect((await Pin.findById(pinId).lean())?.amount).toBeUndefined();
+    });
+
+    it('clears optional text fields set to null and keeps the rest', async () => {
+      const response = await executeOperation(
+        UPDATE_PIN_MUTATION,
+        { id: pinId, input: { city: null, notes: 'moved' } },
+        partnerContext
+      );
+
+      expect(response.body.kind).toBe('single');
+      if (response.body.kind !== 'single') return;
+      expect(response.body.singleResult.errors).toBeUndefined();
+      const stored = await Pin.findById(pinId).lean();
+      expect(stored).not.toHaveProperty('city');
+      expect(stored).toMatchObject({ notes: 'moved', placeName: 'Corner Cafe', amount: 42.5 });
+    });
+
     it('converts an updated date to a Date', async () => {
       const response = await executeOperation(UPDATE_PIN_MUTATION, { id: pinId, input: { date: '2026-05-03' } }, adminContext);
 
@@ -299,8 +357,11 @@ describe('Pin Resolvers', () => {
     it.each([
       ['empty input', {}],
       ['negative amount', { amount: -1 }],
+      ['zero amount', { amount: 0 }],
       ['latitude out of range', { lat: 120 }],
       ['empty placeName', { placeName: '  ' }],
+      ['null placeName', { placeName: null }],
+      ['null date', { date: null }],
     ])('rejects %s and leaves the pin unchanged', async (_label, input) => {
       const response = await executeOperation(UPDATE_PIN_MUTATION, { id: pinId, input }, adminContext);
 

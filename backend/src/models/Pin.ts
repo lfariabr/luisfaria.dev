@@ -3,7 +3,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface IPin extends Document {
   date: Date;
   placeName: string;
-  amount: number;
+  amount?: number;
   lat: number;
   lng: number;
   category?: string;
@@ -21,7 +21,7 @@ const PinSchema: Schema = new Schema(
   {
     date: { type: Date, required: true },
     placeName: { type: String, required: true, trim: true, maxlength: 160 },
-    amount: { type: Number, required: true, min: [0, 'amount must be a positive spend'] },
+    amount: { type: Number, min: [0, 'amount must be a positive spend'] },
     lat: { type: Number, required: true, min: -90, max: 90 },
     lng: { type: Number, required: true, min: -180, max: 180 },
     category: { type: String, trim: true, maxlength: 80 },
