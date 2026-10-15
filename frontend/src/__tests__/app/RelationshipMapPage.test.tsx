@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { useMutation, useQuery } from '@apollo/client';
 import { RelationshipMap } from '@/components/relationship/RelationshipMap';
 
@@ -136,13 +136,23 @@ describe('RelationshipMapPage', () => {
 
     expect(screen.getByText('Our Places')).toBeInTheDocument();
     expect(screen.getByText('2 places · 2 visits')).toBeInTheDocument();
-    expect(screen.getByText(/Precise home address intentionally not shown/i)).toBeInTheDocument();
     // Sentinel addresses - these strings should never render. If a regression
     // ever inlines a real address into the page, swap these for that pattern.
     expect(screen.queryByText(/123 Example Street/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Private Test Address/i)).not.toBeInTheDocument();
     expect(screen.getByText('Corner Cafe')).toBeInTheDocument();
     expect(screen.getByText('Harbour Bistro')).toBeInTheDocument();
+  });
+
+  it('shows the stats as pills and a short hint for phones', () => {
+    render(<RelationshipMapPage />);
+
+    const stats = within(screen.getByTestId('place-stats'));
+    for (const stat of ['2 places · 2 visits', '$60.50', '15 Mar 2026']) {
+      expect(stats.getByText(stat)).toHaveClass('rounded-full');
+    }
+    expect(screen.getByText('Tap a pin for details')).toHaveClass('sm:hidden');
+    expect(screen.getByText('Click a marker or list item to see details')).toHaveClass('hidden', 'sm:inline');
   });
 
   it('shows missing map key fallback without hiding the timeline', () => {

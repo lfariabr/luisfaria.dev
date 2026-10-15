@@ -48,6 +48,15 @@ function formatAmount(amount: number) {
   }).format(Math.abs(amount));
 }
 
+function StatPill({ icon, children }: { icon: ReactNode; children: ReactNode }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border bg-card px-3 py-1 text-xs font-medium shadow-xs sm:text-sm">
+      {icon}
+      {children}
+    </span>
+  );
+}
+
 /** One add or edit session. `key` remounts the dialog so it reseeds from `values`. */
 interface FormSession {
   key: number;
@@ -148,7 +157,7 @@ export function RelationshipMap({
   return (
     <MapsProvider apiKey={apiKey}>
       <div className="space-y-4">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="space-y-3">
           <div className="flex items-start justify-between gap-4">
             <div>
               <HeadingTag className="text-3xl font-bold tracking-tight">{title}</HeadingTag>
@@ -161,40 +170,24 @@ export function RelationshipMap({
               </Button>
             )}
           </div>
-          <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[520px]">
-            <Card className="px-4 py-3">
-              <div className="flex items-center gap-2 text-sm font-medium">
-                <MapPin className="h-4 w-4 text-violet-500" />
-                {loading ? 'Loading...' : `${places.length} places · ${pins.length} visits`}
-              </div>
-            </Card>
-            <Card className="px-4 py-3">
-              <div className="flex items-center gap-2 text-sm font-medium">
-                <DollarSign className="h-4 w-4 text-emerald-500" />
-                {loading ? 'Loading...' : formatAmount(totalSpent)}
-              </div>
-            </Card>
-            <Card className="px-4 py-3">
-              <div className="flex items-center gap-2 text-sm font-medium">
-                <CalendarDays className="h-4 w-4 text-sky-500" />
-                {latestPin ? formatDate(latestPin.date) : loading ? 'Loading...' : 'No visits yet'}
-              </div>
-            </Card>
-          </div>
-        </div>
 
-        <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1.5">
-            <span className="inline-block h-3 w-3 rounded-full border border-white bg-violet-500 shadow-sm" />
-            Places visited
-          </span>
-          {home && (
-            <span className="flex items-center gap-1.5">
-              <span className="inline-block h-3 w-3 rounded-full border border-white bg-amber-500 shadow-sm" />
-              {home.label}
-            </span>
-          )}
-          <span>Precise home address intentionally not shown.</span>
+          <div data-testid="place-stats" className="flex flex-wrap items-center gap-2">
+            <StatPill icon={<MapPin className="h-3.5 w-3.5 text-violet-500" />}>
+              {loading ? 'Loading...' : `${places.length} places · ${pins.length} visits`}
+            </StatPill>
+            <StatPill icon={<DollarSign className="h-3.5 w-3.5 text-emerald-500" />}>
+              {loading ? 'Loading...' : formatAmount(totalSpent)}
+            </StatPill>
+            <StatPill icon={<CalendarDays className="h-3.5 w-3.5 text-sky-500" />}>
+              {latestPin ? formatDate(latestPin.date) : loading ? 'Loading...' : 'No visits yet'}
+            </StatPill>
+            {home && (
+              <span className="flex items-center gap-1.5 px-1 text-xs text-muted-foreground">
+                <span className="inline-block h-3 w-3 rounded-full border border-white bg-amber-500 shadow-sm" />
+                {home.label}
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
@@ -213,7 +206,14 @@ export function RelationshipMap({
                 </div>
               ) : (
                 <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {error ? 'Failed to load pins' : 'Click a marker or list item to see details'}
+                  {error ? (
+                    'Failed to load pins'
+                  ) : (
+                    <>
+                      <span className="sm:hidden">Tap a pin for details</span>
+                      <span className="hidden sm:inline">Click a marker or list item to see details</span>
+                    </>
+                  )}
                 </CardTitle>
               )}
             </CardHeader>
