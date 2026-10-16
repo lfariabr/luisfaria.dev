@@ -7,12 +7,14 @@ import { SessionRetry } from '@/components/auth/SessionRetry';
 import { RelationshipMap } from '@/components/relationship/RelationshipMap';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useCanViewRelationshipPins } from '@/lib/auth/isAdmin';
+import { usePreventPagePinchZoom } from '@/lib/hooks/usePreventPagePinchZoom';
 
 export default function PlacesPageClient() {
   const { status, refetchUser } = useAuth();
   const canViewRelationshipPins = useCanViewRelationshipPins();
   const router = useRouter();
   const pathname = usePathname() ?? '/places';
+  usePreventPagePinchZoom();
 
   useEffect(() => {
     if (status === 'unauthenticated') {
