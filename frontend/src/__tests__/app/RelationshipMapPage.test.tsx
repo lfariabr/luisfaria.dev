@@ -35,7 +35,12 @@ jest.mock('@vis.gl/react-google-maps', () => ({
       {children}
     </button>
   ),
-  InfoWindow: ({ children }: { children: React.ReactNode }) => <div data-testid="info-window">{children}</div>,
+  InfoWindow: ({ children, headerContent }: { children: React.ReactNode; headerContent?: React.ReactNode }) => (
+    <div data-testid="info-window">
+      {headerContent}
+      {children}
+    </div>
+  ),
   useMapsLibrary: () => null,
 }));
 
@@ -357,6 +362,20 @@ describe('RelationshipMapPage', () => {
       expect(screen.getByLabelText('Name')).toHaveValue('Corner Cafe Potts Point');
     });
 
+    it('keeps the popup to name, location, date and amount', () => {
+      mockQueryResults({ pins: { data: { pins: [{ ...pins[1], notes: 'window seat' }] } } });
+      render(<RelationshipMapPage />);
+
+      fireEvent.click(screen.getByText('Harbour Bistro'));
+
+      const popup = screen.getByTestId('info-window');
+      expect(within(popup).getByRole('heading', { name: 'Harbour Bistro' })).toBeInTheDocument();
+      expect(popup).toHaveTextContent('Sydney, AU');
+      expect(popup).toHaveTextContent('21 Feb 2026');
+      expect(popup).toHaveTextContent('$18.00');
+      expect(popup).not.toHaveTextContent(/eat out|amex|window seat/i);
+    });
+
     it('opens the stack from a timeline row', () => {
       render(<RelationshipMapPage />);
 
@@ -485,6 +504,66 @@ describe('RelationshipMapPage', () => {
 
       expect(rows()).toHaveLength(0);
       expect(screen.queryByRole('button', { name: /see more/i })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('hiding amounts', () => {
+    beforeEach(() => window.localStorage.clear());
+
+    it('hides and shows every amount on the page', () => {
+      render(<RelationshipMapPage />);
+      expect(screen.getByText('$60.50')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Hide amounts' }));
+      expect(screen.queryByText(/\$\d/)).not.toBeInTheDocument();
+      expect(screen.getAllByText('$••••').length).toBeGreaterThanOrEqual(3); // total + two timeline rows
+
+      fireEvent.click(screen.getByRole('button', { name: 'Show amounts' }));
+      expect(screen.getByText('$60.50')).toBeInTheDocument();
+    });
+
+    it('hides amounts in the pin popup too', () => {
+      const env = process.env;
+      process.env = { ...env, NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: 'test-maps-key', NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID: 'test-map-id' };
+      try {
+        render(<RelationshipMapPage />);
+        fireEvent.click(screen.getByRole('button', { name: 'Hide amounts' }));
+        fireEvent.click(screen.getByText('Harbour Bistro'));
+
+        expect(screen.getByTestId('info-window')).toHaveTextContent('$••••');
+        expect(screen.getByTestId('info-window')).not.toHaveTextContent('$18.00');
+      } finally {
+        process.env = env;
+      }
+    });
+
+    it('remembers the choice across a reload', () => {
+      const { unmount } = render(<RelationshipMapPage />);
+      fireEvent.click(screen.getByRole('button', { name: 'Hide amounts' }));
+      unmount();
+
+      render(<RelationshipMapPage />);
+      expect(screen.getByRole('button', { name: 'Show amounts' })).toBeInTheDocument();
+      expect(screen.queryByText('$60.50')).not.toBeInTheDocument();
+    });
+
+    it('still toggles when storage is blocked', () => {
+      const getItem = jest.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+        throw new Error('blocked');
+      });
+      const setItem = jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw new Error('blocked');
+      });
+      try {
+        render(<RelationshipMapPage />);
+        fireEvent.click(screen.getByRole('button', { name: 'Hide amounts' }));
+        expect(screen.queryByText('$60.50')).not.toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Show amounts' }));
+        expect(screen.getByText('$60.50')).toBeInTheDocument();
+      } finally {
+        getItem.mockRestore();
+        setItem.mockRestore();
+      }
     });
   });
 });
