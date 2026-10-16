@@ -35,7 +35,12 @@ jest.mock('@vis.gl/react-google-maps', () => ({
       {children}
     </button>
   ),
-  InfoWindow: ({ children }: { children: React.ReactNode }) => <div data-testid="info-window">{children}</div>,
+  InfoWindow: ({ children, headerContent }: { children: React.ReactNode; headerContent?: React.ReactNode }) => (
+    <div data-testid="info-window">
+      {headerContent}
+      {children}
+    </div>
+  ),
   useMapsLibrary: () => null,
 }));
 
@@ -355,6 +360,20 @@ describe('RelationshipMapPage', () => {
       expect(popup).toHaveTextContent('as Corner Cafe Potts Point');
       fireEvent.click(screen.getByRole('button', { name: /edit corner cafe potts point on/i }));
       expect(screen.getByLabelText('Name')).toHaveValue('Corner Cafe Potts Point');
+    });
+
+    it('keeps the popup to name, location, date and amount', () => {
+      mockQueryResults({ pins: { data: { pins: [{ ...pins[1], notes: 'window seat' }] } } });
+      render(<RelationshipMapPage />);
+
+      fireEvent.click(screen.getByText('Harbour Bistro'));
+
+      const popup = screen.getByTestId('info-window');
+      expect(within(popup).getByRole('heading', { name: 'Harbour Bistro' })).toBeInTheDocument();
+      expect(popup).toHaveTextContent('Sydney, AU');
+      expect(popup).toHaveTextContent('21 Feb 2026');
+      expect(popup).toHaveTextContent('$18.00');
+      expect(popup).not.toHaveTextContent(/eat out|amex|window seat/i);
     });
 
     it('opens the stack from a timeline row', () => {

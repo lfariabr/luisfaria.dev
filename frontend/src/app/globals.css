@@ -130,3 +130,30 @@
     transform: scaleX(1);
   }
 }
+
+/*
+ * Google Maps InfoWindow follows the site theme. Google draws a white bubble whatever the
+ * page theme, so in dark mode our inherited light text vanished on it. These are Google's
+ * own class names; the close icon is a masked span with an inline colour, hence !important.
+ */
+.gm-style .gm-style-iw-c {
+  background-color: var(--popover);
+  color: var(--popover-foreground);
+  border: 1px solid var(--border);
+}
+.gm-style .gm-style-iw-tc::after {
+  background: var(--popover);
+}
+.gm-style .gm-style-iw-chr {
+  align-items: flex-start;
+}
+/* Google forces overflow: scroll, which draws light scrollbar tracks even with nothing to scroll. */
+.gm-style .gm-style-iw-d {
+  overflow: auto !important;
+}
+.dark .gm-style .gm-style-iw-d {
+  color-scheme: dark;
+}
+.gm-style .gm-ui-hover-effect > span {
+  background-color: var(--muted-foreground) !important;
+}
