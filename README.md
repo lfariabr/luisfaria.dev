@@ -148,7 +148,7 @@ luisfaria/
 | Concern | Approach |
 |---|---|
 | **API** | GraphQL with modular schema composition and resolver-level error handling |
-| **Auth** | JWT in httpOnly cookies, role-based access (ADMIN / EDITOR / USER / PARTNER), GraphQL Shield, Turnstile-protected registration, partner read-only relationship-map access |
+| **Auth** | JWT in httpOnly cookies, role-based access (ADMIN / EDITOR / USER / PARTNER), GraphQL Shield, Turnstile-protected registration, partner add/edit access to the private Places map |
 | **Rate Limiting** | Redis + atomic Lua scripts — sliding window per user per feature |
 | **Caching** | Multi-layer: Redis (server), Apollo Client cache (client) |
 | **Validation** | Zod schemas for all GraphQL inputs |
@@ -198,7 +198,7 @@ luisfaria/
 | Feature | What it does | Since |
 |---|---|---|
 | **Notes & flashcards** | `/notes` weekly/monthly checkpoints: month accordion, timeline and week/month views, search, one-item-per-line entry, dated title autofill, delete confirmation, mobile-first layout | v3.3, v3.4, v3.18 |
-| **Relationship map** | Google Maps view of outings with spend/date context; admin full access, partner read-only | v3.6 |
+| **Places** | Private `/places` Google Map of places visited together: add and edit from a phone with Google place search or map picking, optional spend, repeat visits stacked on one marker, CSV importer with `--preview`. ADMIN and PARTNER write; ADMIN deletes. [Run your own](_docs/guides/run-your-own-places-map.md) | v3.6, v3.25, v3.26 |
 | **Admin** | Manage articles, projects and user roles | v1.3 |
 
 ### Platform
@@ -267,6 +267,7 @@ luisfaria/
 |---|---|
 | Latest release notes | `_docs/releaseNotes/` |
 | Feature breakdowns | `_docs/featureBreakdown/` |
+| How-to guides | `_docs/guides/` |
 | Build-in-public Dev.to drafts | `_docs/buildInPublic/devTo/` |
 | Build-in-public LinkedIn drafts | `_docs/buildInPublic/linkedIn/` |
 | Backend implementation notes | `backend/docs/` |
@@ -332,11 +333,11 @@ docker-compose up --build
 | `TURNSTILE_SECRET_KEY` | Backend secret for Cloudflare Turnstile verification |
 | `NEXT_PUBLIC_GRAPHQL_URL` | Frontend → API (defaults to `http://localhost:4000/graphql`) |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Public Turnstile site key for the register page |
-| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Browser key for Google Maps JavaScript API; restrict by HTTP referrer |
+| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Browser key for Maps JavaScript API and Places API (New); restrict by HTTP referrer |
 | `NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID` | Google Maps Map ID required by Advanced Markers |
-| `GEOCODING_API_KEY` | Backend-only Google Geocoding key for local/private import helpers |
-| `RELATIONSHIP_HOME_LAT` | Optional backend-only admin home marker latitude |
-| `RELATIONSHIP_HOME_LNG` | Optional backend-only admin home marker longitude |
+| `GEOCODING_API_KEY` | Backend-only Google Geocoding key for the Places importer (`seed-pins.ts`) |
+| `RELATIONSHIP_HOME_LAT` | Optional backend-only home marker latitude (Places, ADMIN and PARTNER) |
+| `RELATIONSHIP_HOME_LNG` | Optional backend-only home marker longitude (Places, ADMIN and PARTNER) |
 | `RELATIONSHIP_HOME_LABEL` | Optional backend-only home marker label, defaults to `"Home base"` |
 | `COOKIE_DOMAIN` | Auth cookie domain in production (e.g. `.luisfaria.dev`) — required in prod, omit in dev |
 
@@ -396,35 +397,27 @@ NEXT_PUBLIC_TURNSTILE_SITE_KEY=your_cloudflare_turnstile_site_key
 
 ---
 
-### Relationship Pins / Google Maps Setup
+### Places / Google Maps Setup
 
-The v3.6 relationship pins map is private and admin-only at `/admin/relationship`.
-
-Frontend values are browser-visible by design:
+Places is the private map at `/places`, visible to ADMIN and PARTNER. **[Run your own Places map](_docs/guides/run-your-own-places-map.md)** walks through Google Cloud, keys, roles, the importer and the CSP.
 
 ```bash
-# frontend/.env.local
-NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_maps_javascript_api_key
-NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID=your_maps_javascript_map_id
-```
+# frontend/.env.local (browser-visible by design)
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_browser_key   # Maps JavaScript API + Places API (New)
+NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID=your_map_id         # Advanced Markers need one; DEMO_MAP_ID is localhost only
 
-- Restrict `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` in Google Cloud to trusted HTTP referrers and Maps JavaScript API.
-- Create `NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID` in Google Maps Platform → Map Management. Advanced Markers require a valid Map ID. `DEMO_MAP_ID` is suitable only for local testing.
-- Keep production CSP in sync with the Maps dependency. The Nginx file is server-local and intentionally not committed; update it manually on the host to allow Google Maps JavaScript/static endpoints and Google Analytics if tracking remains enabled.
-
-Backend-only values stay out of the browser:
-
-```bash
-# backend/.env or production server env
-GEOCODING_API_KEY=your_geocoding_key
-RELATIONSHIP_HOME_LAT=
+# backend/.env (server only)
+GEOCODING_API_KEY=your_server_key                  # importer only; optional at boot
+RELATIONSHIP_HOME_LAT=                             # optional home marker on the map
 RELATIONSHIP_HOME_LNG=
 RELATIONSHIP_HOME_LABEL="Home base"
 ```
 
-- `GEOCODING_API_KEY` is optional at boot and should be restricted to Geocoding API.
-- `RELATIONSHIP_HOME_*` is optional. If unset or invalid, the admin map renders without the home marker.
-- Never expose home coordinates through `NEXT_PUBLIC_*`; those values would be bundled into frontend JavaScript.
+- Billing must be linked to the Google Cloud project, or Places API (New) refuses requests.
+- Restrict the browser key by HTTP referrer and to those two APIs; restrict the server key to Geocoding API.
+- A production CSP must allow `https://places.googleapis.com` in `connect-src`, or place search fails with only `xhr error, error code 6` in the console. The nginx config is server-local and not committed; the guide lists every Google host it needs.
+- Import a spreadsheet: `cd backend && npx ts-node scripts/seed-pins.ts --input ./scripts/pins.csv --preview`, then run without `--preview`. Re-runs add no duplicates.
+- Never put home coordinates in `NEXT_PUBLIC_*`; those values are bundled into frontend JavaScript.
 
 ---
 
