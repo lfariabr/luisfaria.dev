@@ -1,11 +1,12 @@
 import { MapPin, Pencil } from 'lucide-react';
 import type { Pin } from '@/lib/graphql/types/pin.types';
-import { formatAmount, formatDate } from './format';
+import { displayAmount, formatDate } from './format';
 import type { PlaceGroup } from './placeGroups';
 
 interface PlacePopupProps {
   place: PlaceGroup;
   canEdit: boolean;
+  amountsHidden: boolean;
   onEdit: (visit: Pin) => void;
 }
 
@@ -15,7 +16,7 @@ export function PlacePopupTitle({ place }: { place: PlaceGroup }) {
 }
 
 /** Where the place is and each visit's date and spend. Category, payment and notes stay in the edit form. */
-export function PlacePopup({ place, canEdit, onEdit }: PlacePopupProps) {
+export function PlacePopup({ place, canEdit, amountsHidden, onEdit }: PlacePopupProps) {
   const newest = place.visits[0];
   const location = [newest.city, newest.countryCode].filter(Boolean).join(', ');
 
@@ -30,7 +31,7 @@ export function PlacePopup({ place, canEdit, onEdit }: PlacePopupProps) {
       {place.visits.length > 1 && (
         <p className="mt-1 text-xs font-medium text-muted-foreground">
           {place.visits.length} visits
-          {place.totalSpent > 0 && ` · ${formatAmount(place.totalSpent)}`}
+          {place.totalSpent > 0 && ` · ${displayAmount(place.totalSpent, amountsHidden)}`}
         </p>
       )}
       <ul className="mt-2 max-h-60 divide-y divide-border overflow-auto">
@@ -44,7 +45,7 @@ export function PlacePopup({ place, canEdit, onEdit }: PlacePopupProps) {
             </div>
             <div className="flex shrink-0 items-center gap-1">
               {visit.amount != null && (
-                <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">{formatAmount(visit.amount)}</span>
+                <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">{displayAmount(visit.amount, amountsHidden)}</span>
               )}
               {canEdit && (
                 <button

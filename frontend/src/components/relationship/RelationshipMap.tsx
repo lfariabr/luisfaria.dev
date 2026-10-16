@@ -5,14 +5,15 @@ import { useMutation, useQuery } from '@apollo/client';
 import { APIProvider, Map, AdvancedMarker, InfoWindow } from '@vis.gl/react-google-maps';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CalendarDays, Crosshair, DollarSign, Home, MapPin, Pencil, Plus, RefreshCw, X } from 'lucide-react';
+import { CalendarDays, Crosshair, DollarSign, Eye, EyeOff, Home, MapPin, Pencil, Plus, RefreshCw, X } from 'lucide-react';
 import { GET_PINS, GET_HOME_LOCATION } from '@/lib/graphql/queries/pin.queries';
 import { CREATE_PIN, DELETE_PIN, UPDATE_PIN } from '@/lib/graphql/mutations/pin.mutations';
 import type { Pin, PinsData, RelationshipHomeData } from '@/lib/graphql/types/pin.types';
 import { useCanViewRelationshipPins, useIsAdmin } from '@/lib/auth/isAdmin';
 import { PinFormDialog } from './PinFormDialog';
 import { groupPinsByPlace } from './placeGroups';
-import { formatAmount, formatDate } from './format';
+import { displayAmount, formatDate } from './format';
+import { useAmountsHidden } from './amountsVisibility';
 import { PlacePopup, PlacePopupTitle } from './PlacePopup';
 import {
   applyPlaceSelection,
@@ -76,6 +77,7 @@ export function RelationshipMap({
   const [formOpen, setFormOpen] = useState(false);
   const [picking, setPicking] = useState(false);
   const [showAllVisits, setShowAllVisits] = useState(false);
+  const [amountsHidden, toggleAmounts] = useAmountsHidden();
   const mapCenter = useRef<google.maps.LatLngLiteral>(SYDNEY);
   const canEdit = useCanViewRelationshipPins();
   const isAdmin = useIsAdmin();
@@ -165,11 +167,20 @@ export function RelationshipMap({
               {loading ? 'Loading...' : `${places.length} places · ${pins.length} visits`}
             </StatPill>
             <StatPill icon={<DollarSign className="h-3.5 w-3.5 text-emerald-500" />}>
-              {loading ? 'Loading...' : formatAmount(totalSpent)}
+              {loading ? 'Loading...' : displayAmount(totalSpent, amountsHidden)}
             </StatPill>
             <StatPill icon={<CalendarDays className="h-3.5 w-3.5 text-sky-500" />}>
               {latestPin ? formatDate(latestPin.date) : loading ? 'Loading...' : 'No visits yet'}
             </StatPill>
+            <button
+              type="button"
+              onClick={toggleAmounts}
+              aria-label={amountsHidden ? 'Show amounts' : 'Hide amounts'}
+              title={amountsHidden ? 'Show amounts' : 'Hide amounts'}
+              className="inline-flex h-7 w-7 items-center justify-center rounded-full border bg-card text-muted-foreground shadow-xs transition-colors hover:bg-accent hover:text-foreground"
+            >
+              {amountsHidden ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+            </button>
             {home && (
               <span className="flex items-center gap-1.5 px-1 text-xs text-muted-foreground">
                 <span className="inline-block h-3 w-3 rounded-full border border-white bg-amber-500 shadow-sm" />
@@ -319,7 +330,7 @@ export function RelationshipMap({
                       onCloseClick={() => setActiveKey(null)}
                       headerContent={<PlacePopupTitle place={activePlace} />}
                     >
-                      <PlacePopup place={activePlace} canEdit={canEdit} onEdit={(visit) => openForm('edit', visit)} />
+                      <PlacePopup place={activePlace} canEdit={canEdit} amountsHidden={amountsHidden} onEdit={(visit) => openForm('edit', visit)} />
                     </InfoWindow>
                   )}
                 </Map>
@@ -348,7 +359,7 @@ export function RelationshipMap({
                           <p className="text-xs text-muted-foreground">{formatDate(pin.date)}</p>
                         </div>
                         {pin.amount != null && (
-                          <p className="text-sm font-semibold text-emerald-600">{formatAmount(pin.amount)}</p>
+                          <p className="text-sm font-semibold text-emerald-600">{displayAmount(pin.amount, amountsHidden)}</p>
                         )}
                       </div>
                       {(pin.category || pin.payment) && (

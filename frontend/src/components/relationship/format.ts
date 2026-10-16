@@ -15,3 +15,8 @@ export function formatAmount(amount: number) {
     currency: 'AUD',
   }).format(Math.abs(amount));
 }
+
+/** Stands in for an amount while amounts are hidden; same width whatever the spend. */
+export const HIDDEN_AMOUNT = '$••••';
+
+export const displayAmount = (amount: number, hidden: boolean) => (hidden ? HIDDEN_AMOUNT : formatAmount(amount));
