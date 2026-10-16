@@ -95,6 +95,7 @@ Open `/places` on your phone.
 - **Add place:** search Google Maps or tap **Pick on map**, then set the date. The spend is optional, for visits where nothing was spent.
 - **Repeat visits:** visits that share a Google place or the exact same coordinates stack on one marker with a count. Tap it to see every visit and edit each one.
 - **Timeline:** shows the latest 3 visits, with **See more** for the rest.
+- **Pin popup:** for places linked to Google (added through search, or geocoded by the importer), the popup fetches Google's photo, star rating, review count and a Maps link when it opens. It asks once per place per page load. Rating and photos are billed Places API (New) requests, so the budget alert and caps from step 1 matter here.
 
 ## 6. Production: the Content-Security-Policy
 
@@ -108,7 +109,9 @@ img-src     … data: https:
 worker-src  'self' blob:
 ```
 
-The trap we hit: without `https://places.googleapis.com` in `connect-src`, the map loads, but search shows "Place search is unavailable. Pick the spot on the map instead." The browser console says only `xhr error, error code 6`. The key is fine, so a curl test passes.
+Second trap: if the server sends `Referrer-Policy: no-referrer` (this repo's does), Google rejects photo requests from a referrer-restricted key. The popup's `<img>` sets `referrerPolicy="origin"`, which sends only your domain.
+
+The first trap we hit: without `https://places.googleapis.com` in `connect-src`, the map loads, but search shows "Place search is unavailable. Pick the spot on the map instead." The browser console says only `xhr error, error code 6`. The key is fine, so a curl test passes.
 
 ## 7. Make it yours
 

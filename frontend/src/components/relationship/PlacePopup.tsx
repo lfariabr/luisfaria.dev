@@ -1,7 +1,8 @@
-import { MapPin, Pencil } from 'lucide-react';
+import { ExternalLink, MapPin, Pencil, Star } from 'lucide-react';
 import type { Pin } from '@/lib/graphql/types/pin.types';
 import { displayAmount, formatDate } from './format';
 import type { PlaceGroup } from './placeGroups';
+import { usePlaceDetails } from './placeDetails';
 
 interface PlacePopupProps {
   place: PlaceGroup;
@@ -18,15 +19,69 @@ export function PlacePopupTitle({ place }: { place: PlaceGroup }) {
 /** Where the place is and each visit's date and spend. Category, payment and notes stay in the edit form. */
 export function PlacePopup({ place, canEdit, amountsHidden, onEdit }: PlacePopupProps) {
   const newest = place.visits[0];
-  const location = [newest.city, newest.countryCode].filter(Boolean).join(', ');
+  const google = usePlaceDetails(place.visits.find((visit) => visit.placeId)?.placeId);
+  const location = google?.address ?? [newest.city, newest.countryCode].filter(Boolean).join(', ');
 
   return (
     <div className="min-w-[200px] max-w-[260px] text-popover-foreground">
+      {google?.photo && (
+        <figure className="mb-2">
+          {/* Google photo URLs are short-lived and per-request; they must not go through next/image's cache.
+              The site sends Referrer-Policy: no-referrer, but the browser key is restricted by referrer,
+              so the photo request carries the origin (never the path) or Google refuses it. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={google.photo.url}
+            alt={place.placeName}
+            loading="lazy"
+            referrerPolicy="origin"
+            className="h-28 w-full rounded-md object-cover"
+          />
+          {google.photo.author && (
+            <figcaption className="mt-0.5 truncate text-[10px] text-muted-foreground">
+              Photo:{' '}
+              {google.photo.author.url ? (
+                <a href={google.photo.author.url} target="_blank" rel="noopener noreferrer" className="underline">
+                  {google.photo.author.name}
+                </a>
+              ) : (
+                google.photo.author.name
+              )}
+            </figcaption>
+          )}
+        </figure>
+      )}
       {location && (
         <p className="flex items-center gap-1 text-xs text-muted-foreground">
           <MapPin className="h-3 w-3 shrink-0" />
           {location}
         </p>
+      )}
+      {(google?.rating !== undefined || google?.mapsUrl) && (
+        <div className="mt-1 flex items-center justify-between gap-3 text-xs">
+          {google.rating !== undefined ? (
+            <span className="flex items-center gap-1">
+              <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+              <span className="font-medium">{google.rating.toFixed(1)}</span>
+              {google.ratingCount !== undefined && (
+                <span className="text-muted-foreground">({google.ratingCount.toLocaleString('en-AU')})</span>
+              )}
+            </span>
+          ) : (
+            <span />
+          )}
+          {google.mapsUrl && (
+            <a
+              href={google.mapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-0.5 font-medium text-violet-600 hover:underline dark:text-violet-400"
+            >
+              Google Maps
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          )}
+        </div>
       )}
       {place.visits.length > 1 && (
         <p className="mt-1 text-xs font-medium text-muted-foreground">
