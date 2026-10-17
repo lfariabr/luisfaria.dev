@@ -39,13 +39,23 @@ describe('pinForm', () => {
       expect(validatePinForm(valid)).toEqual({});
     });
 
-    it.each(['0', '-4', 'abc'])('rejects amount %s', (amount) => {
+    it.each(['0', '-4', 'abc', '1,234.50', '4.567', '12.', ',5'])('rejects amount %s', (amount) => {
       expect(validatePinForm({ ...valid, amount }).amount).toBeDefined();
+    });
+
+    // iPhones set to a comma-decimal region type 58,74 on the decimal keypad.
+    it.each(['58.74', '58,74', ' 58,7 ', '58'])('accepts amount %s', (amount) => {
+      expect(validatePinForm({ ...valid, amount })).toEqual({});
     });
 
     it('requires a name, a date and a location', () => {
       expect(Object.keys(validatePinForm(emptyPinFormValues('')))).toEqual(['date', 'placeName', 'location']);
     });
+  });
+
+  it('stores a decimal comma as a dot', () => {
+    const input = toCreateInput({ ...emptyPinFormValues('2026-05-03'), placeName: 'Park Kiosk', lat: 1, lng: 2, amount: '58,74' });
+    expect(input.amount).toBe(58.74);
   });
 
   it('builds a create input without blank fields', () => {

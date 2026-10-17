@@ -440,6 +440,8 @@ describe('RelationshipMapPage', () => {
 
       const spent = screen.getByLabelText(/spent/i);
       expect(spent).toHaveAttribute('inputmode', 'decimal');
+      // type="number" empties itself when Safari's keypad types a decimal comma.
+      expect(spent).toHaveAttribute('type', 'text');
       expect(spent).toHaveAttribute('enterkeyhint', 'next');
       expect(spent.parentElement).toHaveTextContent('$');
       expect(screen.getByLabelText('Payment')).toHaveAttribute('enterkeyhint', 'done');
