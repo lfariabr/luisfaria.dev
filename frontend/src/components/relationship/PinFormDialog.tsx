@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Crosshair, Loader2, MapPin, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useKeyboardInset } from '@/lib/hooks/useKeyboardInset';
 import { NO_AUTOFILL } from './noAutofill';
 import { PlaceSearch } from './PlaceSearch';
 import { applyPlaceSelection, validatePinForm, type PinFormErrors, type PinFormValues } from './pinForm';
@@ -35,10 +36,13 @@ const fieldError = (message?: string) => message && <p className="text-xs text-d
 const CELL = 'min-w-0 space-y-2';
 // Without appearance-none iOS draws its own date control, which ignores the width and centres the text.
 const DATE_INPUT = 'appearance-none [&::-webkit-date-and-time-value]:text-left';
+// The iOS keyboard animates in for about this long; centring the field before it settles misses.
+const KEYBOARD_SETTLE_MS = 300;
 
 /**
  * Add or edit a pin. Mounted with a key per session, so initialValues seed state once.
- * Below `sm` the dialog docks to the bottom edge like a sheet.
+ * Below `sm` it is a full-height sheet: the header and the Add place footer stay put and only
+ * the fields scroll, and the sheet is inset to the area above the iOS keyboard.
  */
 export function PinFormDialog({
   open,
@@ -59,6 +63,10 @@ export function PinFormDialog({
   const [saving, setSaving] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const inset = useKeyboardInset();
+  const focusTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  useEffect(() => () => clearTimeout(focusTimer.current), []);
 
   const set = <K extends keyof PinFormValues>(key: K, value: PinFormValues[K]) =>
     setValues((current) => ({ ...current, [key]: value }));
@@ -83,152 +91,164 @@ export function PinFormDialog({
     void run(() => onSubmit(values));
   };
 
+  const centreFocusedField = (event: React.FocusEvent<HTMLFormElement>) => {
+    const field = event.target;
+    if (!(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement)) return;
+    clearTimeout(focusTimer.current);
+    focusTimer.current = setTimeout(() => field.scrollIntoView({ block: 'center' }), KEYBOARD_SETTLE_MS);
+  };
+
   const hasLocation = values.lat !== null && values.lng !== null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90dvh] overflow-y-auto max-sm:bottom-0 max-sm:top-auto max-sm:max-w-none max-sm:translate-y-0 max-sm:rounded-b-none sm:max-w-lg">
-        <DialogHeader>
+      <DialogContent
+        style={{ '--kb-top': `${inset.top}px`, '--kb': `${inset.bottom}px` } as React.CSSProperties}
+        className="flex max-h-[90dvh] flex-col gap-0 p-0 sm:max-w-lg max-sm:inset-x-0 max-sm:top-(--kb-top) max-sm:bottom-(--kb) max-sm:max-h-none max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none max-sm:border-x-0"
+      >
+        <DialogHeader className="shrink-0 border-b px-6 pb-4 pr-12 pt-5">
           <DialogTitle>{mode === 'create' ? 'Add a place' : 'Edit place'}</DialogTitle>
           <DialogDescription>
             {mode === 'create' ? 'Search for it, or pick the spot on the map.' : 'Change what you need; the rest stays.'}
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off" noValidate>
-          <div className="space-y-2">
-            <Label>Location</Label>
-            {mapsEnabled && (
-              <PlaceSearch bias={searchBias} onSelect={(place) => setValues((current) => applyPlaceSelection(current, place))} />
-            )}
-            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-              <span className={hasLocation ? 'flex items-center gap-1 text-emerald-600' : 'text-muted-foreground'}>
-                {hasLocation ? (
-                  <>
-                    <MapPin className="h-3.5 w-3.5" />
-                    {values.placeId ? 'Google place' : 'Picked on map'} ({values.lat?.toFixed(4)}, {values.lng?.toFixed(4)})
-                  </>
-                ) : (
-                  'No location yet'
-                )}
-              </span>
-              <Button type="button" variant="outline" size="sm" disabled={!mapsEnabled} onClick={() => onPickOnMap(values)}>
-                <Crosshair className="mr-1 h-3.5 w-3.5" />
-                Pick on map
-              </Button>
-            </div>
-            {fieldError(errors.location)}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="pin-place-name">Name</Label>
-            <Input
-              id="pin-place-name"
-              name="place"
-              enterKeyHint="next"
-              {...NO_AUTOFILL}
-              value={values.placeName}
-              onChange={(event) => set('placeName', event.target.value)}
-              maxLength={160}
-            />
-            {fieldError(errors.placeName)}
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className={CELL}>
-              <Label htmlFor="pin-date">Date</Label>
-              <Input
-                id="pin-date"
-                name="visitDate"
-                type="date"
-                {...NO_AUTOFILL}
-                value={values.date}
-                onChange={(event) => set('date', event.target.value)}
-                className={DATE_INPUT}
-              />
-              {fieldError(errors.date)}
-            </div>
-            <div className={CELL}>
-              <Label htmlFor="pin-amount">Spent (AUD)</Label>
-              <div className="relative">
-                <span aria-hidden className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                  $
+        <form onSubmit={handleSubmit} onFocus={centreFocusedField} className="flex min-h-0 flex-1 flex-col" autoComplete="off" noValidate>
+          <div data-testid="pin-form-body" className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-6 py-4">
+            <div className="space-y-2">
+              <Label>Location</Label>
+              {mapsEnabled && (
+                <PlaceSearch bias={searchBias} onSelect={(place) => setValues((current) => applyPlaceSelection(current, place))} />
+              )}
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                <span className={hasLocation ? 'flex items-center gap-1 text-emerald-600' : 'text-muted-foreground'}>
+                  {hasLocation ? (
+                    <>
+                      <MapPin className="h-3.5 w-3.5" />
+                      {values.placeId ? 'Google place' : 'Picked on map'} ({values.lat?.toFixed(4)}, {values.lng?.toFixed(4)})
+                    </>
+                  ) : (
+                    'No location yet'
+                  )}
                 </span>
-                <Input
-                  id="pin-amount"
-                  name="spent"
-                  type="number"
-                  inputMode="decimal"
-                  enterKeyHint="next"
-                  min="0.01"
-                  step="0.01"
-                  placeholder="Optional"
-                  className="pl-6"
-                  {...NO_AUTOFILL}
-                  value={values.amount}
-                  onChange={(event) => set('amount', event.target.value)}
-                />
+                <Button type="button" variant="outline" size="sm" disabled={!mapsEnabled} onClick={() => onPickOnMap(values)}>
+                  <Crosshair className="mr-1 h-3.5 w-3.5" />
+                  Pick on map
+                </Button>
               </div>
-              {fieldError(errors.amount)}
+              {fieldError(errors.location)}
             </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className={CELL}>
-              <Label htmlFor="pin-category">Category</Label>
+            <div className="space-y-2">
+              <Label htmlFor="pin-place-name">Name</Label>
               <Input
-                id="pin-category"
-                name="category"
-                list="pin-category-options"
+                id="pin-place-name"
+                name="place"
                 enterKeyHint="next"
                 {...NO_AUTOFILL}
-                value={values.category}
-                onChange={(event) => set('category', event.target.value)}
-                maxLength={80}
+                value={values.placeName}
+                onChange={(event) => set('placeName', event.target.value)}
+                maxLength={160}
               />
-              <datalist id="pin-category-options">
-                {categories.map((value) => (
-                  <option key={value} value={value} />
-                ))}
-              </datalist>
+              {fieldError(errors.placeName)}
             </div>
-            <div className={CELL}>
-              <Label htmlFor="pin-paid-with">Payment</Label>
-              <Input
-                id="pin-paid-with"
-                name="paidWith"
-                list="pin-paid-with-options"
-                enterKeyHint="done"
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className={CELL}>
+                <Label htmlFor="pin-date">Date</Label>
+                <Input
+                  id="pin-date"
+                  name="visitDate"
+                  type="date"
+                  {...NO_AUTOFILL}
+                  value={values.date}
+                  onChange={(event) => set('date', event.target.value)}
+                  className={DATE_INPUT}
+                />
+                {fieldError(errors.date)}
+              </div>
+              <div className={CELL}>
+                <Label htmlFor="pin-amount">Spent (AUD)</Label>
+                <div className="relative">
+                  <span aria-hidden className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                    $
+                  </span>
+                  <Input
+                    id="pin-amount"
+                    name="spent"
+                    type="number"
+                    inputMode="decimal"
+                    enterKeyHint="next"
+                    min="0.01"
+                    step="0.01"
+                    placeholder="Optional"
+                    className="pl-6"
+                    {...NO_AUTOFILL}
+                    value={values.amount}
+                    onChange={(event) => set('amount', event.target.value)}
+                  />
+                </div>
+                {fieldError(errors.amount)}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className={CELL}>
+                <Label htmlFor="pin-category">Category</Label>
+                <Input
+                  id="pin-category"
+                  name="category"
+                  list="pin-category-options"
+                  enterKeyHint="next"
+                  {...NO_AUTOFILL}
+                  value={values.category}
+                  onChange={(event) => set('category', event.target.value)}
+                  maxLength={80}
+                />
+                <datalist id="pin-category-options">
+                  {categories.map((value) => (
+                    <option key={value} value={value} />
+                  ))}
+                </datalist>
+              </div>
+              <div className={CELL}>
+                <Label htmlFor="pin-paid-with">Payment</Label>
+                <Input
+                  id="pin-paid-with"
+                  name="paidWith"
+                  list="pin-paid-with-options"
+                  enterKeyHint="done"
+                  {...NO_AUTOFILL}
+                  value={values.payment}
+                  onChange={(event) => set('payment', event.target.value)}
+                  maxLength={80}
+                />
+                <datalist id="pin-paid-with-options">
+                  {payments.map((value) => (
+                    <option key={value} value={value} />
+                  ))}
+                </datalist>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="pin-notes">Notes</Label>
+              <Textarea
+                id="pin-notes"
+                name="notes"
+                rows={3}
                 {...NO_AUTOFILL}
-                value={values.payment}
-                onChange={(event) => set('payment', event.target.value)}
-                maxLength={80}
+                value={values.notes}
+                onChange={(event) => set('notes', event.target.value)}
+                maxLength={500}
+                placeholder="What made it worth remembering"
               />
-              <datalist id="pin-paid-with-options">
-                {payments.map((value) => (
-                  <option key={value} value={value} />
-                ))}
-              </datalist>
             </div>
+
+            {submitError && <p className="text-sm text-destructive">{submitError}</p>}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="pin-notes">Notes</Label>
-            <Textarea
-              id="pin-notes"
-              name="notes"
-              rows={3}
-              {...NO_AUTOFILL}
-              value={values.notes}
-              onChange={(event) => set('notes', event.target.value)}
-              maxLength={500}
-              placeholder="What made it worth remembering"
-            />
-          </div>
-
-          {submitError && <p className="text-sm text-destructive">{submitError}</p>}
-
-          <DialogFooter className="gap-2 sm:justify-between">
+          <DialogFooter className="shrink-0 gap-2 border-t px-6 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:justify-between">
             {mode === 'edit' && canDelete && onDelete ? (
               confirmingDelete ? (
                 <div className="flex items-center gap-2">

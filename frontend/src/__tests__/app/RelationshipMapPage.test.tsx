@@ -445,6 +445,50 @@ describe('RelationshipMapPage', () => {
       expect(screen.getByLabelText('Payment')).toHaveAttribute('enterkeyhint', 'done');
     });
 
+    it('keeps the header and Add place outside the part that scrolls', () => {
+      render(<RelationshipMapPage />);
+      fireEvent.click(screen.getByRole('button', { name: /add place/i }));
+
+      const body = screen.getByTestId('pin-form-body');
+      expect(body).toContainElement(screen.getByLabelText('Name'));
+      expect(body).not.toContainElement(screen.getByRole('heading', { name: 'Add a place' }));
+      expect(body).not.toContainElement(screen.getByRole('button', { name: /^add place$/i }));
+    });
+
+    it('fits the sheet to the area above the iOS keyboard', () => {
+      class FakeVisualViewport extends EventTarget {
+        height = 500;
+        offsetTop = 40;
+      }
+      Object.defineProperty(window, 'visualViewport', { value: new FakeVisualViewport(), configurable: true });
+      Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true });
+      render(<RelationshipMapPage />);
+      fireEvent.click(screen.getByRole('button', { name: /add place/i }));
+
+      const sheet = screen.getByRole('dialog');
+      expect(sheet.style.getPropertyValue('--kb-top')).toBe('40px');
+      expect(sheet.style.getPropertyValue('--kb')).toBe('260px');
+      Object.defineProperty(window, 'visualViewport', { value: undefined, configurable: true });
+    });
+
+    it('scrolls a focused field to the middle once the keyboard is up', () => {
+      jest.useFakeTimers();
+      const scrollIntoView = jest.fn();
+      Element.prototype.scrollIntoView = scrollIntoView;
+      render(<RelationshipMapPage />);
+      fireEvent.click(screen.getByRole('button', { name: /add place/i }));
+
+      fireEvent.focus(screen.getByLabelText('Notes'));
+      expect(scrollIntoView).not.toHaveBeenCalled();
+      act(() => {
+        jest.advanceTimersByTime(300);
+      });
+
+      expect(scrollIntoView).toHaveBeenCalledWith({ block: 'center' });
+      expect(scrollIntoView.mock.contexts[0]).toBe(screen.getByLabelText('Notes'));
+      jest.useRealTimers();
+    });
+
     it('does not submit without a location', async () => {
       render(<RelationshipMapPage />);
 
