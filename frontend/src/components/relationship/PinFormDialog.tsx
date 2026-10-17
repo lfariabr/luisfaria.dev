@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Crosshair, Loader2, MapPin, Trash2 } from 'lucide-react';
+import { Crosshair, Loader2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useKeyboardInset } from '@/lib/hooks/useKeyboardInset';
 import { NO_AUTOFILL } from './noAutofill';
+import { PlaceChip } from './PlaceChip';
 import { PlaceSearch } from './PlaceSearch';
 import { applyPlaceSelection, validatePinForm, type PinFormErrors, type PinFormValues } from './pinForm';
 
@@ -63,6 +64,7 @@ export function PinFormDialog({
   const [saving, setSaving] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [changingPlace, setChangingPlace] = useState(false);
   const inset = useKeyboardInset();
   const focusTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -100,6 +102,12 @@ export function PinFormDialog({
 
   const hasLocation = values.lat !== null && values.lng !== null;
 
+  // Change keeps the name: it is about where the place is, not what it is called.
+  const clearLocation = () => {
+    setValues((current) => ({ ...current, lat: null, lng: null, placeId: '', address: '', city: '', countryCode: '' }));
+    setChangingPlace(true);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -117,25 +125,26 @@ export function PinFormDialog({
           <div data-testid="pin-form-body" className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-6 py-4">
             <div className="space-y-2">
               <Label>Location</Label>
-              {mapsEnabled && (
-                <PlaceSearch bias={searchBias} onSelect={(place) => setValues((current) => applyPlaceSelection(current, place))} />
-              )}
-              <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-                <span className={hasLocation ? 'flex items-center gap-1 text-emerald-600' : 'text-muted-foreground'}>
-                  {hasLocation ? (
-                    <>
-                      <MapPin className="h-3.5 w-3.5" />
-                      {values.placeId ? 'Google place' : 'Picked on map'} ({values.lat?.toFixed(4)}, {values.lng?.toFixed(4)})
-                    </>
-                  ) : (
-                    'No location yet'
+              {hasLocation ? (
+                <PlaceChip values={values} onChange={clearLocation} />
+              ) : (
+                <>
+                  {mapsEnabled && (
+                    <PlaceSearch
+                      bias={searchBias}
+                      autoFocus={changingPlace}
+                      onSelect={(place) => setValues((current) => applyPlaceSelection(current, place))}
+                    />
                   )}
-                </span>
-                <Button type="button" variant="outline" size="sm" disabled={!mapsEnabled} onClick={() => onPickOnMap(values)}>
-                  <Crosshair className="mr-1 h-3.5 w-3.5" />
-                  Pick on map
-                </Button>
-              </div>
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <span className="text-muted-foreground">No location yet</span>
+                    <Button type="button" variant="outline" size="sm" disabled={!mapsEnabled} onClick={() => onPickOnMap(values)}>
+                      <Crosshair className="mr-1 h-3.5 w-3.5" />
+                      Pick on map
+                    </Button>
+                  </div>
+                </>
+              )}
               {fieldError(errors.location)}
             </div>
 

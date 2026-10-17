@@ -58,6 +58,25 @@ describe('pinForm', () => {
     expect(input.amount).toBe(58.74);
   });
 
+  describe('the picked place address', () => {
+    const base = { ...emptyPinFormValues('2026-05-03'), placeName: 'Park Kiosk' };
+
+    it('comes with a Google place', () => {
+      const values = applyPlaceSelection(base, { placeName: 'Harbour Bistro', address: '12 Harbour St, Potts Point', lat: 1, lng: 2, placeId: 'place-hb' });
+      expect(values.address).toBe('12 Harbour St, Potts Point');
+    });
+
+    it('is dropped by a map tap', () => {
+      const google = applyPlaceSelection(base, { address: '12 Harbour St, Potts Point', lat: 1, lng: 2, placeId: 'place-hb' });
+      expect(applyPlaceSelection(google, { lat: 3, lng: 4 }).address).toBe('');
+    });
+
+    it('is shown in the form only, never saved', () => {
+      const values = applyPlaceSelection(base, { address: '12 Harbour St, Potts Point', lat: 1, lng: 2, placeId: 'place-hb' });
+      expect(toCreateInput(values)).not.toHaveProperty('address');
+    });
+  });
+
   it('builds a create input without blank fields', () => {
     const input = toCreateInput({ ...emptyPinFormValues('2026-05-03'), placeName: ' Park Kiosk ', lat: 1, lng: 2, notes: 'walk' });
     expect(input).toEqual({ date: '2026-05-03', placeName: 'Park Kiosk', lat: 1, lng: 2, notes: 'walk', source: 'app' });

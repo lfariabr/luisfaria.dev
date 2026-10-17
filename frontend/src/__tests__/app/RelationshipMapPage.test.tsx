@@ -499,6 +499,21 @@ describe('RelationshipMapPage', () => {
       jest.useRealTimers();
     });
 
+    it('shows the saved place as a chip, and Change goes back to search', () => {
+      render(<RelationshipMapPage />);
+      fireEvent.click(screen.getByRole('button', { name: /edit corner cafe/i }));
+
+      expect(screen.getByText('Sydney, AU')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Search for a place')).not.toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Change place' }));
+
+      // Focus is covered in PlaceSearch's own test; here the places library never loads.
+      expect(screen.getByLabelText('Search for a place')).toBeInTheDocument();
+      expect(screen.getByText('No location yet')).toBeInTheDocument();
+      // The name stays: Change is about where, not what it is called.
+      expect(screen.getByLabelText('Name')).toHaveValue('Corner Cafe');
+    });
+
     it('does not submit without a location', async () => {
       render(<RelationshipMapPage />);
 
