@@ -26,8 +26,10 @@ import {
 } from './pinForm';
 
 const SYDNEY = { lat: -33.8688, lng: 151.2093 };
-// The timeline opens on the latest few visits; the rest sit behind See more.
+// The timeline opens on the latest few visits; See more reveals a few at a time, so one tap
+// never turns into a page of every visit.
 const TIMELINE_PREVIEW = 3;
+const TIMELINE_STEP = 5;
 
 interface RelationshipMapProps {
   title?: string;
@@ -76,7 +78,7 @@ export function RelationshipMap({
   const [session, setSession] = useState<FormSession | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [picking, setPicking] = useState(false);
-  const [showAllVisits, setShowAllVisits] = useState(false);
+  const [visibleVisits, setVisibleVisits] = useState(TIMELINE_PREVIEW);
   const [amountsHidden, toggleAmounts] = useAmountsHidden();
   const mapCenter = useRef<google.maps.LatLngLiteral>(SYDNEY);
   const canEdit = useCanViewRelationshipPins();
@@ -141,8 +143,8 @@ export function RelationshipMap({
 
   const draft = session && (picking || formOpen) ? session.values : null;
   const latestPin = pins[0];
-  const timelineVisits = showAllVisits ? pins : pins.slice(0, TIMELINE_PREVIEW);
-  const hiddenVisits = pins.length - TIMELINE_PREVIEW;
+  const timelineVisits = pins.slice(0, visibleVisits);
+  const nextVisits = Math.min(TIMELINE_STEP, pins.length - visibleVisits);
   const HeadingTag = headingLevel === 1 ? 'h1' : 'h2';
 
   return (
@@ -381,16 +383,31 @@ export function RelationshipMap({
                   </div>
                 ))
               )}
-              {hiddenVisits > 0 && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="w-full"
-                  onClick={() => setShowAllVisits((current) => !current)}
-                >
-                  {showAllVisits ? 'Show less' : `See more (${hiddenVisits})`}
-                </Button>
+              {(nextVisits > 0 || visibleVisits > TIMELINE_PREVIEW) && (
+                <div className="flex gap-2">
+                  {nextVisits > 0 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => setVisibleVisits((current) => current + TIMELINE_STEP)}
+                    >
+                      See {nextVisits} more
+                    </Button>
+                  )}
+                  {visibleVisits > TIMELINE_PREVIEW && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => setVisibleVisits(TIMELINE_PREVIEW)}
+                    >
+                      Show less
+                    </Button>
+                  )}
+                </div>
               )}
             </CardContent>
           </Card>

@@ -508,15 +508,29 @@ describe('RelationshipMapPage', () => {
       }));
     const rows = () => screen.queryAllByTestId('timeline-visit').map((row) => row.querySelector('p')?.textContent);
 
-    it('shows the latest 3 and expands and collapses the rest', () => {
-      mockQueryResults({ pins: { data: { pins: visits(5) } } });
+    it('shows the latest 3 and adds 5 more per tap', () => {
+      mockQueryResults({ pins: { data: { pins: visits(15) } } });
       render(<RelationshipMapPage />);
 
       expect(rows()).toEqual(['Visit 1', 'Visit 2', 'Visit 3']);
-      fireEvent.click(screen.getByRole('button', { name: 'See more (2)' }));
-      expect(rows()).toEqual(['Visit 1', 'Visit 2', 'Visit 3', 'Visit 4', 'Visit 5']);
+      expect(screen.queryByRole('button', { name: 'Show less' })).not.toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'See 5 more' }));
+      expect(rows()).toHaveLength(8);
+      expect(rows()[7]).toBe('Visit 8');
+      fireEvent.click(screen.getByRole('button', { name: 'See 5 more' }));
+      expect(rows()).toHaveLength(13);
+      fireEvent.click(screen.getByRole('button', { name: 'See 2 more' }));
+      expect(rows()).toHaveLength(15);
+      expect(screen.queryByRole('button', { name: /^see \d+ more$/i })).not.toBeInTheDocument();
+    });
+
+    it('collapses back to 3 with Show less', () => {
+      mockQueryResults({ pins: { data: { pins: visits(15) } } });
+      render(<RelationshipMapPage />);
+
+      fireEvent.click(screen.getByRole('button', { name: 'See 5 more' }));
       fireEvent.click(screen.getByRole('button', { name: 'Show less' }));
-      expect(rows()).toHaveLength(3);
+      expect(rows()).toEqual(['Visit 1', 'Visit 2', 'Visit 3']);
     });
 
     it('has no toggle with 3 visits or fewer', () => {
