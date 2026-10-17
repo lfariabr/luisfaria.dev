@@ -176,11 +176,10 @@ export function PinFormDialog({
                   <Input
                     id="pin-amount"
                     name="spent"
-                    type="number"
+                    // Not type="number": Safari empties it when the keypad types a decimal comma.
+                    type="text"
                     inputMode="decimal"
                     enterKeyHint="next"
-                    min="0.01"
-                    step="0.01"
                     placeholder="Optional"
                     className="pl-6"
                     {...NO_AUTOFILL}

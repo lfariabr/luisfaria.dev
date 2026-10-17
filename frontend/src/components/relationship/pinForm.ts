@@ -75,9 +75,14 @@ export const applyPlaceSelection = (values: PinFormValues, place: PlaceSelection
   placeId: place.placeId ?? '',
 });
 
+// Dot or comma before the cents: iPhones set to a comma-decimal region type 58,74.
+const AMOUNT = /^\d+([.,]\d{1,2})?$/;
+
+/** undefined for blank, NaN for anything that is not a plain amount. */
 const parseAmount = (raw: string): number | undefined => {
   const trimmed = raw.trim();
-  return trimmed === '' ? undefined : Number(trimmed);
+  if (trimmed === '') return undefined;
+  return AMOUNT.test(trimmed) ? Number(trimmed.replace(',', '.')) : NaN;
 };
 
 export const validatePinForm = (values: PinFormValues): PinFormErrors => {
