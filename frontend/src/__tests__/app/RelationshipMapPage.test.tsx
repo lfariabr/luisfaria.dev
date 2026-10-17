@@ -549,6 +549,15 @@ describe('RelationshipMapPage', () => {
       expect(mutate.update).toHaveBeenCalledWith({ variables: { id: 'pin-1', input: { category: null } } });
     });
 
+    it('lets Notes grow from 3 to 8 lines before it scrolls', () => {
+      render(<RelationshipMapPage />);
+      fireEvent.click(screen.getByRole('button', { name: /add place/i }));
+
+      expect(screen.getByLabelText('Notes').className).toMatch(/field-sizing-content/);
+      expect(screen.getByLabelText('Notes').className).toMatch(/min-h-\[calc\(3lh\+1rem\)\]/);
+      expect(screen.getByLabelText('Notes').className).toMatch(/max-h-\[calc\(8lh\+1rem\)\]/);
+    });
+
     it('does not submit without a location', async () => {
       render(<RelationshipMapPage />);
 

@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useAutoGrow } from '@/lib/hooks/useAutoGrow';
 import { useKeyboardInset } from '@/lib/hooks/useKeyboardInset';
 import { ChipPicker } from './ChipPicker';
 import { NO_AUTOFILL } from './noAutofill';
@@ -40,6 +41,8 @@ const CELL = 'min-w-0 space-y-2';
 const DATE_INPUT = 'appearance-none [&::-webkit-date-and-time-value]:text-left';
 // The iOS keyboard animates in for about this long; centring the field before it settles misses.
 const KEYBOARD_SETTLE_MS = 300;
+// Notes grow with what is typed, from 3 lines to 8, then scroll. 1rem is the vertical padding.
+const NOTES = 'field-sizing-content min-h-[calc(3lh+1rem)] max-h-[calc(8lh+1rem)] resize-none';
 // Category chips for someone with no visits yet; after that, their own most-used values.
 const CATEGORY_SEEDS = ['Eat out', 'Coffee', 'Drinks', 'Groceries', 'Activity'];
 
@@ -69,6 +72,7 @@ export function PinFormDialog({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [changingPlace, setChangingPlace] = useState(false);
   const inset = useKeyboardInset();
+  const notesRef = useAutoGrow<HTMLTextAreaElement>(values.notes);
   const focusTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => () => clearTimeout(focusTimer.current), []);
@@ -225,7 +229,9 @@ export function PinFormDialog({
               <Textarea
                 id="pin-notes"
                 name="notes"
+                ref={notesRef}
                 rows={3}
+                className={NOTES}
                 {...NO_AUTOFILL}
                 value={values.notes}
                 onChange={(event) => set('notes', event.target.value)}
