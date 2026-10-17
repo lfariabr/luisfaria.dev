@@ -42,6 +42,14 @@ jest.mock('@vis.gl/react-google-maps', () => ({
     </div>
   ),
   useMapsLibrary: () => null,
+  useMap: () => mockMap,
+}));
+
+const mockMap = { panTo: jest.fn(), setCenter: jest.fn(), setZoom: jest.fn() };
+const mockToastSuccess = jest.fn();
+
+jest.mock('sonner', () => ({
+  toast: { success: (...args: unknown[]) => mockToastSuccess(...args) },
 }));
 
 jest.mock('@/lib/auth/isAdmin', () => ({
@@ -539,6 +547,111 @@ describe('RelationshipMapPage', () => {
 
       expect(mutate.delete).toHaveBeenCalledWith({ variables: { id: 'pin-1' } });
       await waitFor(() => expect(screen.queryByLabelText('Name')).not.toBeInTheDocument());
+    });
+  });
+
+  describe('after saving', () => {
+    // The refetch after a save brings the new pin back; the mock already has it.
+    const parkKiosk = {
+      ...pins[0],
+      id: 'pin-new',
+      placeName: 'Park Kiosk',
+      date: '2026-04-01T00:00:00.000Z',
+      lat: -33.9,
+      lng: 151.25,
+    };
+    const scrollIntoView = jest.fn();
+
+    const reduceMotion = (reduce: boolean) =>
+      jest.spyOn(window, 'matchMedia').mockImplementation(
+        (query: string) => ({ matches: reduce && query.includes('reduce'), media: query }) as MediaQueryList
+      );
+
+    const addParkKiosk = async () => {
+      fireEvent.click(screen.getByRole('button', { name: /add place/i }));
+      fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Park Kiosk' } });
+      fireEvent.click(screen.getByRole('button', { name: /pick on map/i }));
+      fireEvent.click(screen.getByRole('button', { name: 'tap map' }));
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /^add place$/i }));
+      });
+    };
+
+    const ORIGINAL_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    const ORIGINAL_MAP_ID = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID;
+
+    beforeEach(() => {
+      process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = 'test-maps-key';
+      process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID = 'test-map-id';
+      Element.prototype.scrollIntoView = scrollIntoView;
+      mockQueryResults({ pins: { data: { pins: [parkKiosk, ...pins] } } });
+      mutate.create.mockResolvedValue({ data: { createPin: parkKiosk } });
+      reduceMotion(false);
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+      if (ORIGINAL_KEY === undefined) delete process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+      else process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = ORIGINAL_KEY;
+      if (ORIGINAL_MAP_ID === undefined) delete process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID;
+      else process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID = ORIGINAL_MAP_ID;
+    });
+
+    it('confirms the new place, opens its popup and flies the map to it', async () => {
+      render(<RelationshipMapPage />);
+      await addParkKiosk();
+
+      expect(mockToastSuccess).toHaveBeenCalledWith('Park Kiosk added');
+      expect(screen.queryByLabelText('Name')).not.toBeInTheDocument();
+      expect(screen.getByTestId('info-window')).toHaveTextContent('Park Kiosk');
+      expect(mockMap.panTo).toHaveBeenCalledWith({ lat: -33.9, lng: 151.25 });
+      expect(mockMap.setZoom).toHaveBeenCalledWith(17);
+      expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+      expect(scrollIntoView.mock.contexts[0]).toContainElement(screen.getByTestId('google-map'));
+    });
+
+    it('rings the new visit in the timeline for a moment', async () => {
+      render(<RelationshipMapPage />);
+      await addParkKiosk();
+
+      const row = () => screen.getAllByTestId('timeline-visit')[0];
+      expect(row()).toHaveTextContent('Park Kiosk');
+      expect(row()).toHaveAttribute('data-highlighted', 'true');
+      // Real timers: faking them before the save stalls the mutation's promise chain.
+      await waitFor(() => expect(row()).not.toHaveAttribute('data-highlighted'), { timeout: 2500 });
+    });
+
+    it('jumps instead of gliding when reduced motion is on', async () => {
+      reduceMotion(true);
+      render(<RelationshipMapPage />);
+      await addParkKiosk();
+
+      expect(mockMap.setCenter).toHaveBeenCalledWith({ lat: -33.9, lng: 151.25 });
+      expect(mockMap.panTo).not.toHaveBeenCalled();
+      expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'auto', block: 'start' });
+    });
+
+    it('does the same after an edit, saying updated', async () => {
+      render(<RelationshipMapPage />);
+      fireEvent.click(screen.getByRole('button', { name: /edit corner cafe/i }));
+      fireEvent.change(screen.getByLabelText('Notes'), { target: { value: 'window seat' } });
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+      });
+
+      expect(mockToastSuccess).toHaveBeenCalledWith('Corner Cafe updated');
+      expect(screen.getByTestId('info-window')).toHaveTextContent('Corner Cafe');
+      expect(mockMap.panTo).toHaveBeenCalledWith({ lat: -33.8717, lng: 151.2252 });
+    });
+
+    it('stays quiet when the save fails', async () => {
+      mutate.create.mockRejectedValue(new Error('Network down'));
+      render(<RelationshipMapPage />);
+      await addParkKiosk();
+
+      expect(mockToastSuccess).not.toHaveBeenCalled();
+      expect(screen.getByText('Network down')).toBeInTheDocument();
+      expect(mockMap.panTo).not.toHaveBeenCalled();
     });
   });
 

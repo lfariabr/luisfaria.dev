@@ -1,8 +1,9 @@
 'use client';
 
-import { useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useMutation, useQuery } from '@apollo/client';
-import { APIProvider, Map, AdvancedMarker, InfoWindow } from '@vis.gl/react-google-maps';
+import { APIProvider, Map, AdvancedMarker, InfoWindow, useMap } from '@vis.gl/react-google-maps';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CalendarDays, Crosshair, DollarSign, Eye, EyeOff, Home, MapPin, Pencil, Plus, RefreshCw, X } from 'lucide-react';
@@ -30,6 +31,11 @@ const SYDNEY = { lat: -33.8688, lng: 151.2093 };
 // never turns into a page of every visit.
 const TIMELINE_PREVIEW = 3;
 const TIMELINE_STEP = 5;
+// After a save the map flies to street level on the new pin, and its timeline row rings briefly.
+const FOCUS_ZOOM = 17;
+const HIGHLIGHT_MS = 1500;
+
+const prefersReducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
 interface RelationshipMapProps {
   title?: string;
@@ -58,6 +64,20 @@ interface FormSession {
 
 const refetchPins = { refetchQueries: [{ query: GET_PINS }], awaitRefetchQueries: true };
 
+/** Moves the camera to `target` each time it changes. Inside <Map>, where useMap can see it. */
+function MapFocus({ target }: { target: google.maps.LatLngLiteral | null }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map || !target) return;
+    if (prefersReducedMotion()) map.setCenter(target);
+    else map.panTo(target);
+    map.setZoom(FOCUS_ZOOM);
+  }, [map, target]);
+
+  return null;
+}
+
 function MapsProvider({ apiKey, children }: { apiKey: string; children: ReactNode }) {
   return apiKey ? <APIProvider apiKey={apiKey}>{children}</APIProvider> : <>{children}</>;
 }
@@ -80,10 +100,15 @@ export function RelationshipMap({
   const [picking, setPicking] = useState(false);
   const [visibleVisits, setVisibleVisits] = useState(TIMELINE_PREVIEW);
   const [amountsHidden, toggleAmounts] = useAmountsHidden();
+  // Set by a save; once the refetched pins include it, the page shows that pin and clears it.
+  const [savedPinId, setSavedPinId] = useState<string | null>(null);
+  const [mapFocus, setMapFocus] = useState<google.maps.LatLngLiteral | null>(null);
+  const [highlightId, setHighlightId] = useState<string | null>(null);
+  const mapCard = useRef<HTMLDivElement>(null);
   const mapCenter = useRef<google.maps.LatLngLiteral>(SYDNEY);
   const canEdit = useCanViewRelationshipPins();
   const isAdmin = useIsAdmin();
-  const [createPin] = useMutation(CREATE_PIN, refetchPins);
+  const [createPin] = useMutation<{ createPin: Pin }>(CREATE_PIN, refetchPins);
   const [updatePin] = useMutation(UPDATE_PIN, refetchPins);
   const [deletePin] = useMutation(DELETE_PIN, refetchPins);
 
@@ -94,6 +119,26 @@ export function RelationshipMap({
   const home = homeData?.relationshipHomeLocation ?? null;
   const totalSpent = pins.reduce((sum, p) => sum + Math.abs(p.amount ?? 0), 0);
   const mapReady = Boolean(apiKey && mapId);
+
+  // Adjusting state while rendering, as React suggests over an effect: the saved pin turns up
+  // in `places` after the refetch, and its place opens in the same pass.
+  const savedPlace = savedPinId ? places.find((place) => place.visits.some((visit) => visit.id === savedPinId)) : undefined;
+  if (savedPinId && savedPlace) {
+    setSavedPinId(null);
+    setActiveKey(savedPlace.key);
+    setMapFocus({ lat: savedPlace.lat, lng: savedPlace.lng });
+    setHighlightId(savedPinId);
+  }
+
+  useEffect(() => {
+    if (mapFocus) mapCard.current?.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
+  }, [mapFocus]);
+
+  useEffect(() => {
+    if (!highlightId) return;
+    const timer = setTimeout(() => setHighlightId(null), HIGHLIGHT_MS);
+    return () => clearTimeout(timer);
+  }, [highlightId]);
 
   const openForm = (mode: 'create' | 'edit', pin?: Pin) => {
     setActiveKey(null);
@@ -126,13 +171,21 @@ export function RelationshipMap({
   };
 
   const handleSubmit = async (values: PinFormValues) => {
+    let savedId: string | undefined;
+    let changed = true;
     if (session?.mode === 'edit' && session.pin) {
       const input = toUpdateInput(session.pin, values);
-      if (Object.keys(input).length > 0) await updatePin({ variables: { id: session.pin.id, input } });
+      changed = Object.keys(input).length > 0;
+      if (changed) await updatePin({ variables: { id: session.pin.id, input } });
+      savedId = session.pin.id;
     } else {
-      await createPin({ variables: { input: toCreateInput(values) } });
+      const result = await createPin({ variables: { input: toCreateInput(values) } });
+      savedId = result.data?.createPin.id;
     }
     closeForm();
+    if (!savedId) return;
+    if (changed) toast.success(`${values.placeName.trim()} ${session?.mode === 'edit' ? 'updated' : 'added'}`);
+    setSavedPinId(savedId);
   };
 
   const handleDelete = async () => {
@@ -193,7 +246,7 @@ export function RelationshipMap({
         </div>
 
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
-          <Card>
+          <Card ref={mapCard} className="scroll-mt-4">
             <CardHeader>
               {picking ? (
                 <div className="flex items-center justify-between gap-3 rounded-md bg-violet-500/10 px-3 py-2 text-sm text-violet-700 dark:text-violet-300">
@@ -268,6 +321,7 @@ export function RelationshipMap({
                     if (picking && event.detail.latLng) finishPicking(event.detail.latLng);
                   }}
                 >
+                  <MapFocus target={mapFocus} />
                   {places.map((place) => (
                     <AdvancedMarker
                       key={place.key}
@@ -353,7 +407,12 @@ export function RelationshipMap({
                 <p className="text-sm text-muted-foreground">No visits to list yet.</p>
               ) : (
                 timelineVisits.map((pin) => (
-                  <div key={pin.id} data-testid="timeline-visit" className="relative rounded-lg border transition-colors hover:bg-accent">
+                  <div
+                    key={pin.id}
+                    data-testid="timeline-visit"
+                    data-highlighted={pin.id === highlightId || undefined}
+                    className="relative rounded-lg border transition-[background-color,box-shadow] hover:bg-accent data-highlighted:ring-2 data-highlighted:ring-violet-500 motion-reduce:transition-none"
+                  >
                     <button type="button" onClick={() => showPlaceOf(pin)} className="w-full p-3 pr-10 text-left">
                       <div className="flex items-start justify-between gap-3">
                         <div>
