@@ -23,15 +23,20 @@ const OPTIONS: AddEventListenerOptions = { passive: false };
  * Stops the browser zooming the whole page on a pinch, for pages built around a map: a pinch
  * that starts with a finger off the map zooms the page, not the map, and is hard to undo.
  *
- * iOS Safari ignores `maximum-scale` and `user-scalable=no` in the viewport, so this cancels
- * its gesture events and any two-finger move. preventDefault stops only the browser's own
- * zoom: Google Maps still receives the touches and zooms the map. Other browsers also get
- * the page's `viewport` export.
+ * iOS Safari ignores `maximum-scale` and `user-scalable=no` in the viewport. `touch-action:
+ * pan-x pan-y` on the root tells it never to start a page pinch, while one finger still scrolls.
+ * The listeners stay as a fallback for older iOS, but they cannot stop a pinch that began as a
+ * scroll: iOS makes that touch's moves uncancelable. Neither stops Google Maps, which handles
+ * the touches itself and zooms the map. Other browsers also get the page's `viewport` export.
  */
 export function usePreventPagePinchZoom() {
   useEffect(() => {
+    const root = document.documentElement.style;
+    const previousTouchAction = root.touchAction;
+    root.touchAction = 'pan-x pan-y';
     for (const [type, listener] of LISTENERS) document.addEventListener(type, listener, OPTIONS);
     return () => {
+      root.touchAction = previousTouchAction;
       for (const [type, listener] of LISTENERS) document.removeEventListener(type, listener, OPTIONS);
     };
   }, []);

@@ -70,3 +70,25 @@ describe('/places viewport', () => {
     expect(viewport).toMatchObject({ initialScale: 1, maximumScale: 1, userScalable: false });
   });
 });
+
+describe('usePreventPagePinchZoom with touch-action', () => {
+  afterEach(() => {
+    document.documentElement.style.touchAction = '';
+  });
+
+  // Once a finger has started scrolling, iOS makes its touchmoves uncancelable, so a pinch that
+  // starts on the timeline slipped past the listeners. touch-action stops Safari starting one.
+  it('lets the page pan but not pinch while mounted', () => {
+    renderHook(() => usePreventPagePinchZoom());
+
+    expect(document.documentElement.style.touchAction).toBe('pan-x pan-y');
+  });
+
+  it('restores the previous touch-action on unmount', () => {
+    document.documentElement.style.touchAction = 'manipulation';
+    const { unmount } = renderHook(() => usePreventPagePinchZoom());
+    unmount();
+
+    expect(document.documentElement.style.touchAction).toBe('manipulation');
+  });
+});
