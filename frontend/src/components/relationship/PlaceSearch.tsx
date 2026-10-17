@@ -6,6 +6,7 @@ import { Loader2, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { logger } from '@/lib/logger';
 import type { PlaceSelection } from './pinForm';
+import { NO_AUTOFILL } from './noAutofill';
 
 interface Suggestion {
   placeId: string;
@@ -113,7 +114,8 @@ export function PlaceSearch({ onSelect, bias }: PlaceSearchProps) {
           disabled={!places || busy}
           onChange={(event) => setQuery(event.target.value)}
           className="pl-9"
-          autoComplete="off"
+          enterKeyHint="search"
+          {...NO_AUTOFILL}
         />
         {busy && <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />}
       </div>
