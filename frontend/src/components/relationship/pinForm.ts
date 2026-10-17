@@ -13,6 +13,8 @@ export interface PinFormValues {
   city: string;
   countryCode: string;
   placeId: string;
+  /** Google's short address for a searched place. Shown in the form only, never saved. */
+  address: string;
 }
 
 /** A place chosen from Autocomplete or tapped on the map. */
@@ -23,6 +25,7 @@ export interface PlaceSelection {
   city?: string;
   countryCode?: string;
   placeId?: string;
+  address?: string;
 }
 
 export type PinFormErrors = Partial<Record<'date' | 'placeName' | 'amount' | 'location', string>>;
@@ -45,6 +48,7 @@ export const emptyPinFormValues = (today = todayInputValue()): PinFormValues => 
   city: '',
   countryCode: '',
   placeId: '',
+  address: '',
 });
 
 export const pinToFormValues = (pin: Pin): PinFormValues => ({
@@ -59,6 +63,7 @@ export const pinToFormValues = (pin: Pin): PinFormValues => ({
   city: pin.city ?? '',
   countryCode: pin.countryCode ?? '',
   placeId: pin.placeId ?? '',
+  address: '',
 });
 
 /**
@@ -73,6 +78,7 @@ export const applyPlaceSelection = (values: PinFormValues, place: PlaceSelection
   city: place.city ?? (place.placeId ? '' : values.city),
   countryCode: place.countryCode ?? (place.placeId ? '' : values.countryCode),
   placeId: place.placeId ?? '',
+  address: place.address ?? '',
 });
 
 // Dot or comma before the cents: iPhones set to a comma-decimal region type 58,74.

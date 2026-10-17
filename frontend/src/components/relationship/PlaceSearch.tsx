@@ -19,6 +19,8 @@ interface PlaceSearchProps {
   onSelect: (place: PlaceSelection) => void;
   /** Biases results toward what the map is showing. */
   bias?: google.maps.LatLngLiteral;
+  /** Focus the box on mount, for when the user has just asked to change the place. */
+  autoFocus?: boolean;
 }
 
 const DEBOUNCE_MS = 250;
@@ -29,7 +31,7 @@ const component = (place: google.maps.places.Place, type: string, short = false)
 };
 
 /** Google Places (New) autocomplete with our own input and list, so it themes and tests like the rest of the form. */
-export function PlaceSearch({ onSelect, bias }: PlaceSearchProps) {
+export function PlaceSearch({ onSelect, bias, autoFocus }: PlaceSearchProps) {
   const places = useMapsLibrary('places');
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
@@ -80,10 +82,12 @@ export function PlaceSearch({ onSelect, bias }: PlaceSearchProps) {
     setBusy(true);
     try {
       const place = suggestion.prediction.toPlace();
-      await place.fetchFields({ fields: ['id', 'displayName', 'location', 'addressComponents'] });
+      // shortFormattedAddress is an Essentials field; displayName already makes this a Pro request.
+      await place.fetchFields({ fields: ['id', 'displayName', 'location', 'addressComponents', 'shortFormattedAddress'] });
       if (!place.location) throw new Error('Place has no location');
       onSelect({
         placeName: place.displayName ?? suggestion.mainText,
+        address: place.shortFormattedAddress ?? undefined,
         lat: place.location.lat(),
         lng: place.location.lng(),
         city: component(place, 'locality') ?? component(place, 'postal_town'),
@@ -114,6 +118,7 @@ export function PlaceSearch({ onSelect, bias }: PlaceSearchProps) {
           disabled={!places || busy}
           onChange={(event) => setQuery(event.target.value)}
           className="pl-9"
+          autoFocus={autoFocus}
           enterKeyHint="search"
           {...NO_AUTOFILL}
         />

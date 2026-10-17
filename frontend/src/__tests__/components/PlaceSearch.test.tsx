@@ -11,6 +11,7 @@ const fetchAutocompleteSuggestions = jest.fn();
 const place = {
   id: 'place-hb',
   displayName: 'Harbour Bistro',
+  shortFormattedAddress: '12 Harbour St, Potts Point',
   location: { lat: () => -33.86, lng: () => 151.21 },
   addressComponents: [
     { types: ['locality'], longText: 'Potts Point', shortText: 'Potts Point' },
@@ -47,7 +48,7 @@ describe('PlaceSearch', () => {
 
   afterEach(() => jest.useRealTimers());
 
-  it('fills name, coordinates, city, country and placeId from a suggestion', async () => {
+  it('fills name, address, coordinates, city, country and placeId from a suggestion', async () => {
     const onSelect = jest.fn();
     render(<PlaceSearch onSelect={onSelect} bias={{ lat: -33.87, lng: 151.21 }} />);
 
@@ -63,9 +64,13 @@ describe('PlaceSearch', () => {
       fireEvent.click(screen.getByRole('button', { name: /harbour bistro/i }));
     });
 
-    expect(fetchFields).toHaveBeenCalledWith({ fields: ['id', 'displayName', 'location', 'addressComponents'] });
+    // shortFormattedAddress is an Essentials field: displayName already makes this a Pro request.
+    expect(fetchFields).toHaveBeenCalledWith({
+      fields: ['id', 'displayName', 'location', 'addressComponents', 'shortFormattedAddress'],
+    });
     expect(onSelect).toHaveBeenCalledWith({
       placeName: 'Harbour Bistro',
+      address: '12 Harbour St, Potts Point',
       lat: -33.86,
       lng: 151.21,
       city: 'Potts Point',
@@ -92,5 +97,11 @@ describe('PlaceSearch', () => {
       jest.advanceTimersByTime(300);
     });
     expect(screen.getByText(/pick the spot on the map instead/i)).toBeInTheDocument();
+  });
+
+  it('can take focus straight away, for Change on a picked place', () => {
+    render(<PlaceSearch onSelect={jest.fn()} autoFocus />);
+
+    expect(screen.getByLabelText('Search for a place')).toHaveFocus();
   });
 });
