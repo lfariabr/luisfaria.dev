@@ -185,8 +185,25 @@ describe('RelationshipMapPage', () => {
 
     render(<RelationshipMapPage />);
 
-    expect(screen.getAllByText('Loading...')).toHaveLength(3);
-    expect(screen.getByText('Loading relationship pins...')).toBeInTheDocument();
+    // Placeholders the size of what replaces them, so nothing jumps when the pins arrive.
+    expect(within(screen.getByTestId('place-stats')).getAllByTestId('stat-skeleton')).toHaveLength(3);
+    expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+    expect(screen.getByTestId('map-placeholder')).toHaveStyle({ height: 'min(68vh, 620px)', minHeight: '420px' });
+  });
+
+  it('hides the map hint while a popup is open, keeping its space', () => {
+    render(<RelationshipMapPage />);
+    const hint = screen.getByText('Tap a pin for details').parentElement as HTMLElement;
+    expect(hint).not.toHaveClass('invisible');
+
+    fireEvent.click(screen.getByText('Harbour Bistro'));
+    expect(hint).toHaveClass('invisible');
+  });
+
+  it('gives the timeline edit pencil a 44px tap target', () => {
+    render(<RelationshipMapPage />);
+
+    expect(screen.getByRole('button', { name: 'Edit Corner Cafe' })).toHaveClass('h-11', 'w-11');
   });
 
   it('shows empty state', () => {
@@ -236,6 +253,14 @@ describe('RelationshipMapPage', () => {
       } else {
         process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID = ORIGINAL_MAP_ID;
       }
+    });
+
+    it('draws the map straight away while the pins are still loading', () => {
+      mockedUseQuery.mockReturnValue({ data: undefined, loading: true, error: undefined, refetch: jest.fn() });
+      render(<RelationshipMapPage />);
+
+      expect(screen.getByTestId('google-map')).toBeInTheDocument();
+      expect(screen.queryByTestId('map-placeholder')).not.toBeInTheDocument();
     });
 
     it('renders home marker and legend entry when home query returns data', () => {
