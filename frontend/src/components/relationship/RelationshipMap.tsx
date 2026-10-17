@@ -146,7 +146,8 @@ export function RelationshipMap({
       key: Date.now(),
       mode,
       pin,
-      values: pin ? pinToFormValues(pin) : emptyPinFormValues(),
+      // A new visit starts on the payment used last; an edit keeps what was saved.
+      values: pin ? pinToFormValues(pin) : { ...emptyPinFormValues(), payment: pins[0]?.payment ?? '' },
       bias: mapCenter.current,
     });
     setFormOpen(true);
