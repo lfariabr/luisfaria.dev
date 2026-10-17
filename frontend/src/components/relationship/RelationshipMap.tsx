@@ -35,12 +35,20 @@ const TIMELINE_STEP = 5;
 const FOCUS_ZOOM = 17;
 const HIGHLIGHT_MS = 1500;
 
+// One size for the map and its placeholders, so nothing moves when the map takes their place.
+const MAP_SIZE = { width: '100%', height: 'min(68vh, 620px)', minHeight: '420px' };
+
 const prefersReducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
 interface RelationshipMapProps {
   title?: string;
   subtitle?: string;
   headingLevel?: 1 | 2;
+}
+
+// Roughly as wide as the text that replaces each one, so the pill row wraps the same way.
+function StatSkeleton({ width }: { width: string }) {
+  return <span data-testid="stat-skeleton" className={`inline-block h-4 animate-pulse rounded bg-muted ${width}`} />;
 }
 
 function StatPill({ icon, children }: { icon: ReactNode; children: ReactNode }) {
@@ -220,13 +228,13 @@ export function RelationshipMap({
 
           <div data-testid="place-stats" className="flex flex-wrap items-center gap-2">
             <StatPill icon={<MapPin className="h-3.5 w-3.5 text-violet-500" />}>
-              {loading ? 'Loading...' : `${places.length} places · ${pins.length} visits`}
+              {loading ? <StatSkeleton width="w-32" /> : `${places.length} places · ${pins.length} visits`}
             </StatPill>
             <StatPill icon={<DollarSign className="h-3.5 w-3.5 text-emerald-500" />}>
-              {loading ? 'Loading...' : displayAmount(totalSpent, amountsHidden)}
+              {loading ? <StatSkeleton width="w-16" /> : displayAmount(totalSpent, amountsHidden)}
             </StatPill>
             <StatPill icon={<CalendarDays className="h-3.5 w-3.5 text-sky-500" />}>
-              {latestPin ? formatDate(latestPin.date) : loading ? 'Loading...' : 'No visits yet'}
+              {latestPin ? formatDate(latestPin.date) : loading ? <StatSkeleton width="w-20" /> : 'No visits yet'}
             </StatPill>
             <button
               type="button"
@@ -261,7 +269,8 @@ export function RelationshipMap({
                   </Button>
                 </div>
               ) : (
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+                // invisible, not removed: the open popup says what the hint did, and the map stays put.
+                <CardTitle className={`text-sm font-medium text-muted-foreground ${activePlace ? 'invisible' : ''}`}>
                   {error ? (
                     'Failed to load pins'
                   ) : (
@@ -274,10 +283,8 @@ export function RelationshipMap({
               )}
             </CardHeader>
             <CardContent className="overflow-hidden rounded-b-xl p-0">
-              {loading ? (
-                <div className="flex h-[520px] items-center justify-center bg-muted/40 text-sm text-muted-foreground">
-                  Loading relationship pins...
-                </div>
+              {loading && !mapReady ? (
+                <div data-testid="map-placeholder" style={MAP_SIZE} className="animate-pulse bg-muted/40" />
               ) : error ? (
                 <div className="flex h-[520px] flex-col items-center justify-center gap-3 px-6 text-center text-sm text-muted-foreground">
                   <p>Unable to load pins from GraphQL.</p>
@@ -308,7 +315,7 @@ export function RelationshipMap({
                 </div>
               ) : (
                 <Map
-                  style={{ width: '100%', height: 'min(68vh, 620px)', minHeight: '420px' }}
+                  style={MAP_SIZE}
                   defaultCenter={SYDNEY}
                   defaultZoom={13}
                   mapId={mapId}
@@ -435,7 +442,7 @@ export function RelationshipMap({
                         type="button"
                         aria-label={`Edit ${pin.placeName}`}
                         onClick={() => openForm('edit', pin)}
-                        className="absolute bottom-2 right-2 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+                        className="absolute bottom-0 right-0 inline-flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </button>

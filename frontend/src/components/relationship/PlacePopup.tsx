@@ -107,7 +107,7 @@ export function PlacePopup({ place, canEdit, amountsHidden, onEdit }: PlacePopup
                   type="button"
                   aria-label={`Edit ${visit.placeName} on ${formatDate(visit.date)}`}
                   onClick={() => onEdit(visit)}
-                  className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  className="-my-3 -mr-3 inline-flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                 >
                   <Pencil className="h-3.5 w-3.5" />
                 </button>

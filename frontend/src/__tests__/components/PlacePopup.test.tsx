@@ -102,3 +102,12 @@ describe('PlacePopup with Google place details', () => {
     expect(logger.warn).toHaveBeenCalledWith('Place details failed', expect.objectContaining({ placeId: 'place-c' }));
   });
 });
+
+describe('PlacePopup edit pencil', () => {
+  it('is a 44px tap target', () => {
+    (useMapsLibrary as jest.Mock).mockReturnValue(null);
+    render(<PlacePopup place={groupPinsByPlace([pin()])[0]} canEdit amountsHidden={false} onEdit={jest.fn()} />);
+
+    expect(screen.getByRole('button', { name: /edit corner cafe/i })).toHaveClass('h-11', 'w-11');
+  });
+});
