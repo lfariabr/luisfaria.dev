@@ -416,6 +416,35 @@ describe('RelationshipMapPage', () => {
       expect(mutate.create.mock.calls[0][0].variables.input).not.toHaveProperty('amount');
     });
 
+    it('does not look like a card form to Safari or password managers', () => {
+      render(<RelationshipMapPage />);
+      fireEvent.click(screen.getByRole('button', { name: /add place/i }));
+
+      const form = screen.getByLabelText('Name').closest('form') as HTMLFormElement;
+      expect(form).toHaveAttribute('autocomplete', 'off');
+      for (const field of form.querySelectorAll('input, textarea')) {
+        expect(field).toHaveAttribute('autocomplete', 'off');
+        expect(field).toHaveAttribute('data-1p-ignore');
+        expect(field).toHaveAttribute('data-lpignore', 'true');
+      }
+      // "payment" in a field's name or id is what makes Safari offer saved cards.
+      for (const field of form.querySelectorAll('[id], [name], [list]')) {
+        expect(`${field.id} ${field.getAttribute('name')} ${field.getAttribute('list')}`).not.toMatch(/payment/i);
+      }
+      expect(screen.getByLabelText('Payment')).toHaveAttribute('name', 'paidWith');
+    });
+
+    it('gives Spent a dollar prefix, the decimal keypad and a next key', () => {
+      render(<RelationshipMapPage />);
+      fireEvent.click(screen.getByRole('button', { name: /add place/i }));
+
+      const spent = screen.getByLabelText(/spent/i);
+      expect(spent).toHaveAttribute('inputmode', 'decimal');
+      expect(spent).toHaveAttribute('enterkeyhint', 'next');
+      expect(spent.parentElement).toHaveTextContent('$');
+      expect(screen.getByLabelText('Payment')).toHaveAttribute('enterkeyhint', 'done');
+    });
+
     it('does not submit without a location', async () => {
       render(<RelationshipMapPage />);
 

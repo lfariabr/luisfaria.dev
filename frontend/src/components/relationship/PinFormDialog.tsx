@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { NO_AUTOFILL } from './noAutofill';
 import { PlaceSearch } from './PlaceSearch';
 import { applyPlaceSelection, validatePinForm, type PinFormErrors, type PinFormValues } from './pinForm';
 
@@ -94,7 +95,7 @@ export function PinFormDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+        <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off" noValidate>
           <div className="space-y-2">
             <Label>Location</Label>
             {mapsEnabled && (
@@ -123,6 +124,9 @@ export function PinFormDialog({
             <Label htmlFor="pin-place-name">Name</Label>
             <Input
               id="pin-place-name"
+              name="place"
+              enterKeyHint="next"
+              {...NO_AUTOFILL}
               value={values.placeName}
               onChange={(event) => set('placeName', event.target.value)}
               maxLength={160}
@@ -135,7 +139,9 @@ export function PinFormDialog({
               <Label htmlFor="pin-date">Date</Label>
               <Input
                 id="pin-date"
+                name="visitDate"
                 type="date"
+                {...NO_AUTOFILL}
                 value={values.date}
                 onChange={(event) => set('date', event.target.value)}
                 className={DATE_INPUT}
@@ -144,16 +150,25 @@ export function PinFormDialog({
             </div>
             <div className={CELL}>
               <Label htmlFor="pin-amount">Spent (AUD)</Label>
-              <Input
-                id="pin-amount"
-                type="number"
-                inputMode="decimal"
-                min="0.01"
-                step="0.01"
-                placeholder="Optional"
-                value={values.amount}
-                onChange={(event) => set('amount', event.target.value)}
-              />
+              <div className="relative">
+                <span aria-hidden className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                  $
+                </span>
+                <Input
+                  id="pin-amount"
+                  name="spent"
+                  type="number"
+                  inputMode="decimal"
+                  enterKeyHint="next"
+                  min="0.01"
+                  step="0.01"
+                  placeholder="Optional"
+                  className="pl-6"
+                  {...NO_AUTOFILL}
+                  value={values.amount}
+                  onChange={(event) => set('amount', event.target.value)}
+                />
+              </div>
               {fieldError(errors.amount)}
             </div>
           </div>
@@ -163,7 +178,10 @@ export function PinFormDialog({
               <Label htmlFor="pin-category">Category</Label>
               <Input
                 id="pin-category"
+                name="category"
                 list="pin-category-options"
+                enterKeyHint="next"
+                {...NO_AUTOFILL}
                 value={values.category}
                 onChange={(event) => set('category', event.target.value)}
                 maxLength={80}
@@ -175,15 +193,18 @@ export function PinFormDialog({
               </datalist>
             </div>
             <div className={CELL}>
-              <Label htmlFor="pin-payment">Payment</Label>
+              <Label htmlFor="pin-paid-with">Payment</Label>
               <Input
-                id="pin-payment"
-                list="pin-payment-options"
+                id="pin-paid-with"
+                name="paidWith"
+                list="pin-paid-with-options"
+                enterKeyHint="done"
+                {...NO_AUTOFILL}
                 value={values.payment}
                 onChange={(event) => set('payment', event.target.value)}
                 maxLength={80}
               />
-              <datalist id="pin-payment-options">
+              <datalist id="pin-paid-with-options">
                 {payments.map((value) => (
                   <option key={value} value={value} />
                 ))}
@@ -195,7 +216,9 @@ export function PinFormDialog({
             <Label htmlFor="pin-notes">Notes</Label>
             <Textarea
               id="pin-notes"
+              name="notes"
               rows={3}
+              {...NO_AUTOFILL}
               value={values.notes}
               onChange={(event) => set('notes', event.target.value)}
               maxLength={500}
