@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useKeyboardInset } from '@/lib/hooks/useKeyboardInset';
+import { ChipPicker } from './ChipPicker';
 import { NO_AUTOFILL } from './noAutofill';
 import { PlaceChip } from './PlaceChip';
 import { PlaceSearch } from './PlaceSearch';
@@ -39,6 +40,8 @@ const CELL = 'min-w-0 space-y-2';
 const DATE_INPUT = 'appearance-none [&::-webkit-date-and-time-value]:text-left';
 // The iOS keyboard animates in for about this long; centring the field before it settles misses.
 const KEYBOARD_SETTLE_MS = 300;
+// Category chips for someone with no visits yet; after that, their own most-used values.
+const CATEGORY_SEEDS = ['Eat out', 'Coffee', 'Drinks', 'Groceries', 'Activity'];
 
 /**
  * Add or edit a pin. Mounted with a key per session, so initialValues seed state once.
@@ -200,44 +203,22 @@ export function PinFormDialog({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className={CELL}>
-                <Label htmlFor="pin-category">Category</Label>
-                <Input
-                  id="pin-category"
-                  name="category"
-                  list="pin-category-options"
-                  enterKeyHint="next"
-                  {...NO_AUTOFILL}
-                  value={values.category}
-                  onChange={(event) => set('category', event.target.value)}
-                  maxLength={80}
-                />
-                <datalist id="pin-category-options">
-                  {categories.map((value) => (
-                    <option key={value} value={value} />
-                  ))}
-                </datalist>
-              </div>
-              <div className={CELL}>
-                <Label htmlFor="pin-paid-with">Payment</Label>
-                <Input
-                  id="pin-paid-with"
-                  name="paidWith"
-                  list="pin-paid-with-options"
-                  enterKeyHint="done"
-                  {...NO_AUTOFILL}
-                  value={values.payment}
-                  onChange={(event) => set('payment', event.target.value)}
-                  maxLength={80}
-                />
-                <datalist id="pin-paid-with-options">
-                  {payments.map((value) => (
-                    <option key={value} value={value} />
-                  ))}
-                </datalist>
-              </div>
-            </div>
+            <ChipPicker
+              label="Category"
+              name="category"
+              options={categories}
+              seeds={CATEGORY_SEEDS}
+              value={values.category}
+              onChange={(value) => set('category', value)}
+            />
+            <ChipPicker
+              label="Payment"
+              name="paidWith"
+              options={payments}
+              value={values.payment}
+              onChange={(value) => set('payment', value)}
+              enterKeyHint="done"
+            />
 
             <div className="space-y-2">
               <Label htmlFor="pin-notes">Notes</Label>

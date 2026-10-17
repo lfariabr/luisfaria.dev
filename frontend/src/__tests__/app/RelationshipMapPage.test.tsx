@@ -439,7 +439,8 @@ describe('RelationshipMapPage', () => {
       for (const field of form.querySelectorAll('[id], [name], [list]')) {
         expect(`${field.id} ${field.getAttribute('name')} ${field.getAttribute('list')}`).not.toMatch(/payment/i);
       }
-      expect(screen.getByLabelText('Payment')).toHaveAttribute('name', 'paidWith');
+      fireEvent.click(screen.getByRole('button', { name: 'New payment' }));
+      expect(screen.getByLabelText('New payment')).toHaveAttribute('name', 'paidWith');
     });
 
     it('gives Spent a dollar prefix, the decimal keypad and a next key', () => {
@@ -452,7 +453,8 @@ describe('RelationshipMapPage', () => {
       expect(spent).toHaveAttribute('type', 'text');
       expect(spent).toHaveAttribute('enterkeyhint', 'next');
       expect(spent.parentElement).toHaveTextContent('$');
-      expect(screen.getByLabelText('Payment')).toHaveAttribute('enterkeyhint', 'done');
+      fireEvent.click(screen.getByRole('button', { name: 'New payment' }));
+      expect(screen.getByLabelText('New payment')).toHaveAttribute('enterkeyhint', 'done');
     });
 
     it('keeps the header and Add place outside the part that scrolls', () => {
@@ -512,6 +514,39 @@ describe('RelationshipMapPage', () => {
       expect(screen.getByText('No location yet')).toBeInTheDocument();
       // The name stays: Change is about where, not what it is called.
       expect(screen.getByLabelText('Name')).toHaveValue('Corner Cafe');
+    });
+
+    it('preselects the payment from the most recent visit on a new place', () => {
+      mockQueryResults({ pins: { data: { pins: [{ ...pins[0], payment: 'Debit' }, pins[1]] } } });
+      render(<RelationshipMapPage />);
+      fireEvent.click(screen.getByRole('button', { name: /add place/i }));
+
+      const payment = screen.getByRole('radiogroup', { name: 'Payment' });
+      expect(within(payment).getByRole('radio', { name: 'Debit' })).toHaveAttribute('aria-checked', 'true');
+      const category = screen.getByRole('radiogroup', { name: 'Category' });
+      expect(within(category).queryByRole('radio', { checked: true })).not.toBeInTheDocument();
+    });
+
+    it('keeps the saved payment when editing', () => {
+      mockQueryResults({ pins: { data: { pins: [{ ...pins[0], payment: 'Debit' }, { ...pins[1], payment: 'Cash' }] } } });
+      render(<RelationshipMapPage />);
+      fireEvent.click(screen.getByRole('button', { name: /edit harbour bistro/i }));
+
+      const payment = screen.getByRole('radiogroup', { name: 'Payment' });
+      expect(within(payment).getByRole('radio', { name: 'Cash' })).toHaveAttribute('aria-checked', 'true');
+      expect(within(payment).getByRole('radio', { name: 'Debit' })).toHaveAttribute('aria-checked', 'false');
+    });
+
+    it('saves a tapped category', async () => {
+      render(<RelationshipMapPage />);
+      fireEvent.click(screen.getByRole('button', { name: /edit corner cafe/i }));
+      fireEvent.click(within(screen.getByRole('radiogroup', { name: 'Category' })).getByRole('radio', { name: 'Eat out' }));
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+      });
+
+      // Eat out was selected; tapping it again clears it.
+      expect(mutate.update).toHaveBeenCalledWith({ variables: { id: 'pin-1', input: { category: null } } });
     });
 
     it('does not submit without a location', async () => {
