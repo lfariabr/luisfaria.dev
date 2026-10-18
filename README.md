@@ -198,7 +198,7 @@ luisfaria/
 | Feature | What it does | Since |
 |---|---|---|
 | **Notes & flashcards** | `/notes` weekly/monthly checkpoints: month accordion, timeline and week/month views, search, one-item-per-line entry, dated title autofill, delete confirmation, mobile-first layout | v3.3, v3.4, v3.18 |
-| **Places** | Private `/places` Google Map of places visited together: add and edit from a phone with Google place search or map picking, optional spend, repeat visits stacked on one marker, CSV importer with `--preview`. ADMIN and PARTNER write; ADMIN deletes. [Run your own](_docs/guides/run-your-own-places-map.md) | v3.6, v3.25, v3.26 |
+| **Places** | Private `/places` Google Map of places visited together. Logging a visit from a phone takes under 15 seconds: Google place search or map picking, a name and address chip, tap-to-pick category and payment, and a bottom sheet that stays above the iPhone keyboard. After saving, the map flies to the new pin. The pin popup shows the Google rating, a photo and a Maps link. Also: a full screen map with one-finger pan, a hide-amounts toggle, repeat visits stacked on one marker, and a CSV importer with `--preview`. ADMIN and PARTNER write; ADMIN deletes. [Run your own](_docs/guides/run-your-own-places-map.md) | v3.6, v3.25–v3.29 |
 | **Admin** | Manage articles, projects and user roles | v1.3 |
 
 ### Platform
@@ -214,7 +214,7 @@ luisfaria/
 | **Security** | Dependabot alerts kept at zero; production on Ubuntu 26.04 LTS with Docker 29 | v2.2, v3.17 |
 
 <details>
-<summary><strong>Release history</strong> (v1.1 → v3.18.4)</summary>
+<summary><strong>Release history</strong> (v1.1 → v3.29.0)</summary>
 
 | Version | Feature | Description |
 |---|---|---|
@@ -256,6 +256,14 @@ luisfaria/
 | v3.18.2 | Delete Confirmation | Notes ask before deleting; failures keep the dialog open |
 | v3.18.3 | ESLint Gate | Native flat config, 44 lint errors fixed, lint gates CI |
 | v3.18.4 | CI Hygiene | SEO gate runs after deploy; 67 lint warnings → 0 with `--max-warnings 0` |
+| v3.19 | Admin EMOM Tracker | `/admin/emom` EMOM timer for long pull-up sessions, with Beast presets |
+| v3.21 | Payments & Booking | FAB stack; signed Stripe webhook records every Payment; thank-you email; book a session after paying for a meeting |
+| v3.23 | Rate Limiting as a Domain | One `rateLimiting/` module and one list of limits; fail closed for paid services when Redis is down |
+| v3.24 | EMOM Sticky Pace | Changing reps per minute holds until the next change |
+| v3.25 | Places | The pins map becomes a map that two people keep up to date from their phones: add, edit, PARTNER role, committed importer |
+| v3.26–v3.27 | Places on Mobile | Compact header, shorter timeline, no page pinch zoom, themed popup with Google rating and photo, hide amounts, run-your-own guide |
+| v3.28 | Places: 15-second Logging | Sheet stays above the keyboard, no card autofill, decimal comma, fly to the new pin, place chip, tap-to-pick chips, notes that grow, steady load |
+| v3.29 | Places Full Screen Map | Full screen map with one-finger pan, including on iPhone Safari |
 
 </details>
 
@@ -275,8 +283,9 @@ luisfaria/
 
 Latest release docs:
 
-- `_docs/releaseNotes/v.3.18.4_CI-SEO-After-Deploy-Zero-Warnings.md`
-- `_docs/featureBreakdown/v3.18.4-ci-seo-after-deploy-zero-warnings.md`
+- `_docs/releaseNotes/v.3.29.0_Places-Fullscreen-Map.md`
+- `_docs/featureBreakdown/v3.29-places-fullscreen-map.md`
+- `_docs/featureBreakdown/v3.28-places-fast-logging.md` (epic: log a place in 15 seconds)
 
 ---
 
