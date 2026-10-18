@@ -19,11 +19,13 @@ jest.mock('@vis.gl/react-google-maps', () => ({
   Map: ({
     children,
     onClick,
+    gestureHandling,
   }: {
     children: React.ReactNode;
     onClick?: (event: { detail: { latLng: { lat: number; lng: number } } }) => void;
+    gestureHandling?: string;
   }) => (
-    <div data-testid="google-map">
+    <div data-testid="google-map" data-gesture-handling={gestureHandling}>
       <button type="button" onClick={() => onClick?.({ detail: { latLng: { lat: -33.9, lng: 151.25 } } })}>
         tap map
       </button>
@@ -850,6 +852,57 @@ describe('RelationshipMapPage', () => {
         getItem.mockRestore();
         setItem.mockRestore();
       }
+    });
+  });
+
+  describe('full screen map', () => {
+    const env = process.env;
+
+    beforeEach(() => {
+      process.env = { ...env, NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: 'test-maps-key', NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID: 'test-map-id' };
+    });
+
+    afterEach(() => {
+      process.env = env;
+      document.body.style.overflow = '';
+    });
+
+    const mapCard = () => screen.getByTestId('google-map').closest('[data-slot="card"]');
+
+    it('covers the screen and pans with one finger', () => {
+      render(<RelationshipMapPage />);
+      expect(screen.getByTestId('google-map')).toHaveAttribute('data-gesture-handling', 'cooperative');
+
+      fireEvent.click(screen.getByRole('button', { name: 'Full screen map' }));
+
+      expect(mapCard()).toHaveClass('fixed', 'inset-0');
+      expect(screen.getByTestId('google-map')).toHaveAttribute('data-gesture-handling', 'greedy');
+      expect(document.body.style.overflow).toBe('hidden');
+      expect(screen.getByRole('button', { name: 'Exit full screen' })).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    it('goes back to the page from the button or Escape', () => {
+      render(<RelationshipMapPage />);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Full screen map' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Exit full screen' }));
+      expect(mapCard()).not.toHaveClass('fixed');
+      expect(screen.getByTestId('google-map')).toHaveAttribute('data-gesture-handling', 'cooperative');
+      expect(document.body.style.overflow).toBe('');
+
+      fireEvent.click(screen.getByRole('button', { name: 'Full screen map' }));
+      fireEvent.keyDown(window, { key: 'Escape' });
+      expect(mapCard()).not.toHaveClass('fixed');
+    });
+
+    it('keeps pins and popups working while full screen', () => {
+      render(<RelationshipMapPage />);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Full screen map' }));
+      fireEvent.click(within(screen.getByTestId('google-map')).getAllByRole('button', { name: '' })[0]);
+
+      expect(screen.getByTestId('info-window')).toBeInTheDocument();
+      expect(mapCard()).toHaveClass('fixed');
     });
   });
 });

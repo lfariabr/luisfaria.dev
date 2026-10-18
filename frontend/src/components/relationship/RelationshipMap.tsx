@@ -6,7 +6,7 @@ import { APIProvider, Map, AdvancedMarker, InfoWindow, useMap } from '@vis.gl/re
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CalendarDays, Crosshair, DollarSign, Eye, EyeOff, Home, MapPin, Pencil, Plus, RefreshCw, X } from 'lucide-react';
+import { CalendarDays, Crosshair, DollarSign, Eye, EyeOff, Home, MapPin, Maximize2, Minimize2, Pencil, Plus, RefreshCw, X } from 'lucide-react';
 import { GET_PINS, GET_HOME_LOCATION } from '@/lib/graphql/queries/pin.queries';
 import { CREATE_PIN, DELETE_PIN, UPDATE_PIN } from '@/lib/graphql/mutations/pin.mutations';
 import type { Pin, PinsData, RelationshipHomeData } from '@/lib/graphql/types/pin.types';
@@ -37,6 +37,7 @@ const HIGHLIGHT_MS = 1500;
 
 // One size for the map and its placeholders, so nothing moves when the map takes their place.
 const MAP_SIZE = { width: '100%', height: 'min(68vh, 620px)', minHeight: '420px' };
+const FULLSCREEN_SIZE = { width: '100%', height: '100%' };
 
 const prefersReducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
@@ -107,6 +108,7 @@ export function RelationshipMap({
   const [formOpen, setFormOpen] = useState(false);
   const [picking, setPicking] = useState(false);
   const [visibleVisits, setVisibleVisits] = useState(TIMELINE_PREVIEW);
+  const [fullscreen, setFullscreen] = useState(false);
   const [amountsHidden, toggleAmounts] = useAmountsHidden();
   // Set by a save; once the refetched pins include it, the page shows that pin and clears it.
   const [savedPinId, setSavedPinId] = useState<string | null>(null);
@@ -147,6 +149,23 @@ export function RelationshipMap({
     const timer = setTimeout(() => setHighlightId(null), HIGHLIGHT_MS);
     return () => clearTimeout(timer);
   }, [highlightId]);
+
+  // The map covers the page, so the page behind it must not scroll, and Escape leaves.
+  // Escape while the form is open belongs to the form.
+  useEffect(() => {
+    if (!fullscreen) return;
+    const body = document.body.style;
+    const previousOverflow = body.overflow;
+    body.overflow = 'hidden';
+    const exitOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !formOpen) setFullscreen(false);
+    };
+    window.addEventListener('keydown', exitOnEscape);
+    return () => {
+      body.overflow = previousOverflow;
+      window.removeEventListener('keydown', exitOnEscape);
+    };
+  }, [fullscreen, formOpen]);
 
   const openForm = (mode: 'create' | 'edit', pin?: Pin) => {
     setActiveKey(null);
@@ -255,7 +274,15 @@ export function RelationshipMap({
         </div>
 
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
-          <Card ref={mapCard} className="scroll-mt-4">
+          <Card
+            ref={mapCard}
+            data-fullscreen={fullscreen || undefined}
+            className={
+              fullscreen
+                ? 'fixed inset-0 z-40 gap-3 rounded-none border-0 pt-[max(0.75rem,env(safe-area-inset-top))] pb-0'
+                : 'scroll-mt-4'
+            }
+          >
             <CardHeader>
               {picking ? (
                 <div className="flex items-center justify-between gap-3 rounded-md bg-violet-500/10 px-3 py-2 text-sm text-violet-700 dark:text-violet-300">
@@ -282,7 +309,7 @@ export function RelationshipMap({
                 </CardTitle>
               )}
             </CardHeader>
-            <CardContent className="overflow-hidden rounded-b-xl p-0">
+            <CardContent className={`relative overflow-hidden p-0 ${fullscreen ? 'flex-1' : 'rounded-b-xl'}`}>
               {loading && !mapReady ? (
                 <div data-testid="map-placeholder" style={MAP_SIZE} className="animate-pulse bg-muted/40" />
               ) : error ? (
@@ -314,90 +341,105 @@ export function RelationshipMap({
                   Set <code className="mx-1 rounded bg-muted px-1 font-mono">NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID</code> (AdvancedMarker requires a Map ID with Advanced Markers enabled).
                 </div>
               ) : (
-                <Map
-                  style={MAP_SIZE}
-                  defaultCenter={SYDNEY}
-                  defaultZoom={13}
-                  mapId={mapId}
-                  gestureHandling="cooperative"
-                  disableDefaultUI={false}
-                  draggableCursor={picking ? 'crosshair' : undefined}
-                  onCameraChanged={(event) => {
-                    mapCenter.current = event.detail.center;
-                  }}
-                  onClick={(event) => {
-                    if (picking && event.detail.latLng) finishPicking(event.detail.latLng);
-                  }}
-                >
-                  <MapFocus target={mapFocus} />
-                  {places.map((place) => (
-                    <AdvancedMarker
-                      key={place.key}
-                      position={{ lat: place.lat, lng: place.lng }}
-                      onClick={() => !picking && setActiveKey(place.key)}
-                    >
-                      <div className="relative flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-violet-500 shadow-md transition-transform hover:scale-110">
-                        <MapPin className="h-4 w-4 text-white" />
-                        {place.visits.length > 1 && (
-                          <span
-                            data-testid="visit-count"
-                            className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-gray-900 px-1 text-[10px] font-bold text-white"
-                          >
-                            {place.visits.length}
-                          </span>
-                        )}
-                      </div>
-                    </AdvancedMarker>
-                  ))}
-
-                  {draft && draft.lat !== null && draft.lng !== null && (
-                    <AdvancedMarker position={{ lat: draft.lat, lng: draft.lng }} zIndex={20}>
-                      <div
-                        data-testid="draft-marker"
-                        className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-rose-500 shadow-lg"
+                <>
+                  <Map
+                    style={fullscreen ? FULLSCREEN_SIZE : MAP_SIZE}
+                    defaultCenter={SYDNEY}
+                    defaultZoom={13}
+                    mapId={mapId}
+                    // On the page one finger scrolls past the map; full screen there is no page, so it pans.
+                    gestureHandling={fullscreen ? 'greedy' : 'cooperative'}
+                    disableDefaultUI={false}
+                    // Google's own button uses the Fullscreen API, which iPhone Safari lacks.
+                    fullscreenControl={false}
+                    draggableCursor={picking ? 'crosshair' : undefined}
+                    onCameraChanged={(event) => {
+                      mapCenter.current = event.detail.center;
+                    }}
+                    onClick={(event) => {
+                      if (picking && event.detail.latLng) finishPicking(event.detail.latLng);
+                    }}
+                  >
+                    <MapFocus target={mapFocus} />
+                    {places.map((place) => (
+                      <AdvancedMarker
+                        key={place.key}
+                        position={{ lat: place.lat, lng: place.lng }}
+                        onClick={() => !picking && setActiveKey(place.key)}
                       >
-                        <Plus className="h-4 w-4 text-white" />
-                      </div>
-                    </AdvancedMarker>
-                  )}
+                        <div className="relative flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-violet-500 shadow-md transition-transform hover:scale-110">
+                          <MapPin className="h-4 w-4 text-white" />
+                          {place.visits.length > 1 && (
+                            <span
+                              data-testid="visit-count"
+                              className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-gray-900 px-1 text-[10px] font-bold text-white"
+                            >
+                              {place.visits.length}
+                            </span>
+                          )}
+                        </div>
+                      </AdvancedMarker>
+                    ))}
 
-                  {home && (
-                    <AdvancedMarker
-                      position={{ lat: home.lat, lng: home.lng }}
-                      onClick={() => setHomeOpen(true)}
-                      zIndex={10}
-                    >
-                      <div
-                        data-testid="home-marker"
-                        className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-amber-500 shadow-lg transition-transform hover:scale-110"
-                        aria-label={home.label}
+                    {draft && draft.lat !== null && draft.lng !== null && (
+                      <AdvancedMarker position={{ lat: draft.lat, lng: draft.lng }} zIndex={20}>
+                        <div
+                          data-testid="draft-marker"
+                          className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-rose-500 shadow-lg"
+                        >
+                          <Plus className="h-4 w-4 text-white" />
+                        </div>
+                      </AdvancedMarker>
+                    )}
+
+                    {home && (
+                      <AdvancedMarker
+                        position={{ lat: home.lat, lng: home.lng }}
+                        onClick={() => setHomeOpen(true)}
+                        zIndex={10}
                       >
-                        <Home className="h-4 w-4 text-white" />
-                      </div>
-                    </AdvancedMarker>
-                  )}
+                        <div
+                          data-testid="home-marker"
+                          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-amber-500 shadow-lg transition-transform hover:scale-110"
+                          aria-label={home.label}
+                        >
+                          <Home className="h-4 w-4 text-white" />
+                        </div>
+                      </AdvancedMarker>
+                    )}
 
-                  {home && homeOpen && (
-                    <InfoWindow
-                      position={{ lat: home.lat, lng: home.lng }}
-                      onCloseClick={() => setHomeOpen(false)}
-                    >
-                      <div className="min-w-[120px] p-1">
-                        <p className="text-sm font-semibold">{home.label}</p>
-                      </div>
-                    </InfoWindow>
-                  )}
+                    {home && homeOpen && (
+                      <InfoWindow
+                        position={{ lat: home.lat, lng: home.lng }}
+                        onCloseClick={() => setHomeOpen(false)}
+                      >
+                        <div className="min-w-[120px] p-1">
+                          <p className="text-sm font-semibold">{home.label}</p>
+                        </div>
+                      </InfoWindow>
+                    )}
 
-                  {activePlace && (
-                    <InfoWindow
-                      position={{ lat: activePlace.lat, lng: activePlace.lng }}
-                      onCloseClick={() => setActiveKey(null)}
-                      headerContent={<PlacePopupTitle place={activePlace} />}
-                    >
-                      <PlacePopup place={activePlace} canEdit={canEdit} amountsHidden={amountsHidden} onEdit={(visit) => openForm('edit', visit)} />
-                    </InfoWindow>
-                  )}
-                </Map>
+                    {activePlace && (
+                      <InfoWindow
+                        position={{ lat: activePlace.lat, lng: activePlace.lng }}
+                        onCloseClick={() => setActiveKey(null)}
+                        headerContent={<PlacePopupTitle place={activePlace} />}
+                      >
+                        <PlacePopup place={activePlace} canEdit={canEdit} amountsHidden={amountsHidden} onEdit={(visit) => openForm('edit', visit)} />
+                      </InfoWindow>
+                    )}
+                  </Map>
+                  <button
+                    type="button"
+                    onClick={() => setFullscreen((current) => !current)}
+                    aria-label={fullscreen ? 'Exit full screen' : 'Full screen map'}
+                    aria-pressed={fullscreen}
+                    title={fullscreen ? 'Exit full screen' : 'Full screen map'}
+                    className="absolute right-2.5 top-2.5 inline-flex h-11 w-11 items-center justify-center rounded-sm bg-white text-gray-700 shadow-md transition-colors hover:text-gray-950"
+                  >
+                    {fullscreen ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
+                  </button>
+                </>
               )}
             </CardContent>
           </Card>
