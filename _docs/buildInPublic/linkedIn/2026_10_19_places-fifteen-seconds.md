@@ -1,39 +1,38 @@
-# LinkedIn post - Places: log a coffee in 15 seconds
+# LinkedIn post - Places: from a spreadsheet to a map of everywhere we've been
 
-Video: the before (35s) and after ([X]s) recordings side by side, or the after recording alone.
+Image/video: a screenshot of the zoomed-out map with pins across Australia, or the screen recording of logging a coffee in under 15 seconds.
 Put the GitHub / dev.to link in the FIRST comment, not the body, so the post is not down-ranked for an outbound link.
-Fill in [X] with the re-recorded time before posting.
 
 ---
 
-I asked Nayara to log one coffee on my open source app and record her screen.
+For a long time, every place my wife and I went to lived in a spreadsheet.
 
-It worked. It took 35 seconds.
+Date. Place. Amount. Note.
 
-Watching it frame by frame, almost none of that time was the app being slow. It was the form getting in the way:
+It did the job. It was also the most boring way possible to remember a year of going out.
 
-- The iPhone keyboard pushed the form's header off the screen and hid the Save button
-- Safari decided a field called "Payment" meant a credit card form and offered to fill it in
-- The place she picked showed up as raw coordinates
-- Typing "4,50" with a decimal comma silently emptied the amount
-- After saving, she had to pinch the map to find what she'd just added
+So I turned it into part of my open source portfolio, and now it's a map.
 
-None of these would fail a test, and every one of them cost her time.
+You open the website, type the name of the place, tap it, and it's logged. A few seconds, standing at the counter with the coffee still hot. ☕
 
-So I wrote the goal down as a number: same person, same flow, under 15 seconds.
+And Sydney is THE place for going out for a coffee, a bacon and egg roll, a long brunch on a Sunday... so the pins add up fast.
 
-10 small PRs later, each one checked on a real iPhone before the next merged, the same coffee takes [X] seconds.
+The best part isn't the logging, though. It's zooming out.
 
-Most of the fixes were one line:
-→ visualViewport to keep the sheet above the keyboard
-→ autocomplete off and neutral field names to stop the card autofill
-→ inputMode="decimal" instead of type="number"
-→ touch-action: pan-x pan-y to stop the whole page zooming
+Pins all over Sydney. Then Thredbo. Forster. Then all the way across the country to WA: Perth, Wave Rock, Albany, Esperance.
 
-The rest swapped typing for tapping: chips built from past entries, payment preselected, and the map flying to the new pin after you save.
+Every one of them is a day we remember, and seeing them together on a map shows how much of Australia we've been discovering, not only Sydney.
 
-What I'm taking from it: "make it smoother" is a wish. "Under 15 seconds, recorded on her phone" is something you can finish. Once we hit it, I closed three of the four nice-to-have issues as not needed.
+A spreadsheet can't give you that feeling. 🗺️
 
-Code and the full write-up in the first comment 👇
+Getting the logging fast took real work. The first time my wife recorded herself logging a coffee on her iPhone, it took 35 seconds. The keyboard covered the Save button, Safari thought the form wanted a credit card, and the place showed up as raw coordinates.
 
-#OpenSource #WebDev #UX #NextJS #BuildInPublic
+I set one goal: under 15 seconds, same flow, recorded on her phone. Ten small PRs later, each one checked on a real iPhone, it is.
+
+Now it's: search, tap a category, Save, and the map flies straight to the new pin.
+
+It's open source, and there's a guide if you want to run your own map of your places. Link in the first comment 👇
+
+Where should our next pin be? 📍
+
+#OpenSource #BuildInPublic #NextJS #Sydney #Australia
