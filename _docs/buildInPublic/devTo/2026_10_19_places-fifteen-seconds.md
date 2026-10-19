@@ -2,7 +2,7 @@
 
 **Tags:** `webdev` `ios` `react` `ux`
 
-**I asked Nayara, who uses my private Places map with me, to log a coffee run on her iPhone while recording the screen. It worked, and it took about 35 seconds, most of it spent fighting the form. Ten PRs later the same flow takes [X] seconds. Most of the fixes were one line long. Finding them was the hard part.**
+**I asked my wife, who uses Places feature with me, to log a coffee run on her iPhone while recording the screen. It worked, and it took about 35 seconds, most of it spent fighting the form. Ten PRs later the same flow takes 10 seconds. Most of the fixes were one line long.**
 
 > *"It works" and "it's fast" are different features.*
 
@@ -26,7 +26,7 @@
 
 [luisfaria.dev](https://luisfaria.dev) has a private `/places` page: a Google Map of places we've been to together, with the date, what we spent and a note. It's Next.js with Apollo GraphQL, and it's built to be used on the spot, from a phone.
 
-The recording was 63 seconds. Going through it frame by frame:
+Going through the recording frame by frame:
 
 - The keyboard pushed the form's header and close button off the top, and the **Add place** button hid behind the keyboard.
 - Safari showed its key, card and location autofill icons, and suggested "Amex" in the Spent field.
@@ -47,6 +47,8 @@ Before touching any code I answered 19 design questions in two rounds: what ship
 That turned into one epic and ten issues, ranked P0 (feels broken), P1 (makes it fast) and P2 (polish). Each one was one PR, and each was checked on a real iPhone after deploy before the next one merged.
 
 **So what:** a measurable finish line stopped the polish list from growing forever. Three of the four "nice to have" issues were later closed as not needed, because the goal had already been met.
+
+The grilling came straight from Matt Pocock's Skill Repo. If you're not using it, check it out: [Skills For Real Engineers](https://github.com/mattpocock/skills)
 
 <sub>[↑ Back to contents](#contents)</sub>
 
