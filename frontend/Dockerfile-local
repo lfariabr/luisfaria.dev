@@ -1,5 +1,5 @@
 # Use Node.js LTS as the base image
-FROM node:20-alpine AS deps
+FROM node:24.22.1-alpine AS deps
 
 # Set working directory
 WORKDIR /app
@@ -12,7 +12,7 @@ COPY package.json package-lock.json* ./
 RUN npm install --force
 
 # Builder stage - create production build
-FROM node:20-alpine AS builder
+FROM node:24.22.1-alpine AS builder
 
 # Set working directory
 WORKDIR /app
@@ -32,7 +32,7 @@ ENV NEXT_LINT=false
 RUN npm run build
 
 # Production stage - minimal runtime image
-FROM node:20-alpine AS runner
+FROM node:24.22.1-alpine AS runner
 
 WORKDIR /app
 

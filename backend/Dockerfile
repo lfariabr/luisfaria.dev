@@ -1,5 +1,5 @@
-# Use Node.js 18 as the base image
-FROM node:18-alpine AS builder
+# Use Node.js 24 (patched for CVE-2026-111497) as the base image
+FROM node:24.22.1-alpine AS builder
 
 # Set working directory
 WORKDIR /app
@@ -18,7 +18,7 @@ COPY src ./src
 RUN npm run build:prod
 
 # Create production image
-FROM node:18-alpine AS production
+FROM node:24.22.1-alpine AS production
 
 # Set environment variables
 ENV NODE_ENV=production
