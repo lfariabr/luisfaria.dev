@@ -15,7 +15,7 @@ import { trackClientEvent } from "@/utils/analytics";
 import { sendDiscordWebhook } from "@/utils/discord";
 
 // Private pages where a support prompt has no audience and only covers the content.
-const HIDDEN_ON = ['/notes', '/places'];
+const HIDDEN_ON = ['/notes', '/places', '/emom', '/admin/emom'];
 
 const isHiddenOn = (pathname: string | null) =>
   pathname !== null && HIDDEN_ON.some((path) => pathname === path || pathname.startsWith(`${path}/`));
