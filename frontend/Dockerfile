@@ -1,9 +1,9 @@
-FROM node:20-alpine AS deps
+FROM node:24.22.1-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm install --force
 
-FROM node:20-alpine AS builder
+FROM node:24.22.1-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -22,7 +22,7 @@ ENV NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID=${NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID}
 RUN npm run build
 RUN test -f .next/standalone/server.js || (echo "ERROR: Next.js standalone build failed - server.js not found" && exit 1)
 
-FROM node:20-alpine AS runner
+FROM node:24.22.1-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 # Set the environment variable for runtime as well
