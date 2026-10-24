@@ -7,9 +7,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { blockSummaries, formatClock, formatPace, formatReps, sessionGoal, warRoomLogLine } from '@/lib/emom/plan';
 import type { FinishedSession } from '@/lib/emom/useEmomSession';
 import { cn } from '@/lib/utils';
-import { SIGNAL } from './signal';
+import { SIGNAL, WARN_TEXT } from './signal';
 
 const LABEL = 'text-xs font-semibold uppercase tracking-widest text-muted-foreground';
+const STAT = 'font-mono text-[clamp(1.125rem,6vw,2.25rem)] leading-tight tabular-nums';
 
 interface EmomSummaryProps {
   session: FinishedSession;
@@ -52,20 +53,20 @@ export function EmomSummary({ session, note, onNoteChange, onBack }: EmomSummary
           : 'Saved what you did in this browser. It still counts toward the month.'}
       </div>
 
-      <dl className="grid grid-cols-3 gap-3">
-        <div>
+      <dl className="grid grid-cols-3 gap-4">
+        <div className="min-w-0">
           <dt className={LABEL}>Time</dt>
-          <dd className="font-mono text-3xl tabular-nums md:text-4xl">{formatClock(secs, true)}</dd>
+          <dd className={STAT}>{formatClock(secs)}</dd>
         </div>
-        <div>
+        <div className="min-w-0">
           <dt className={LABEL}>Rate</dt>
-          <dd className="font-mono text-3xl tabular-nums md:text-4xl">{secs > 0 ? formatReps(Math.round(done / (secs / 3600))) : '—'}</dd>
+          <dd className={STAT}>{secs > 0 ? formatReps(Math.round(done / (secs / 3600))) : '—'}</dd>
           <dd className="text-xs text-muted-foreground">reps / hour</dd>
         </div>
-        <div>
+        <div className="min-w-0">
           <dt className={LABEL}>Vs goal</dt>
-          <dd className="font-mono text-3xl tabular-nums md:text-4xl">
-            {vsGoal === 0 ? 'On goal' : `${vsGoal > 0 ? '+' : ''}${formatReps(vsGoal)}`}
+          <dd className={cn(STAT, 'whitespace-nowrap', vsGoal >= 0 ? signal.text : WARN_TEXT)}>
+            {vsGoal === 0 ? 'On goal' : `${vsGoal > 0 ? '+' : '−'}${formatReps(Math.abs(vsGoal))}`}
           </dd>
         </div>
       </dl>
