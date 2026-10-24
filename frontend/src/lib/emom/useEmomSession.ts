@@ -161,9 +161,14 @@ export function useEmomSession(onFinish: (session: FinishedSession) => void) {
     if (!e) return;
     const total = totalSeconds(e.phases);
     const secs = Math.min(e.vt, total);
+    const complete = e.vt >= total;
     engine.current = null;
     saveLive(null);
     wake.release();
+    if (complete && e.cfg.sound) {
+      beep(784, 0.15);
+      window.setTimeout(() => beep(1046, 0.35), 170);
+    }
     onFinishRef.current({
       cfg: e.cfg,
       phases: e.phases,
@@ -171,11 +176,11 @@ export function useEmomSession(onFinish: (session: FinishedSession) => void) {
       paces: e.paces,
       secs,
       done: tally(e.cfg, e.phases, e.adj, e.paces, secs).done,
-      complete: e.vt >= total,
+      complete,
       startedAt: e.startedAt,
     });
     redraw();
-  }, [redraw, wake]);
+  }, [beep, redraw, wake]);
 
   const reachedEnd = useCallback((): boolean => {
     const e = engine.current;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   EmomConfig,
@@ -23,10 +23,14 @@ import {
   saveLog,
 } from '@/lib/emom/storage';
 import { FinishedSession, useEmomSession } from '@/lib/emom/useEmomSession';
+import { EmomDone } from './EmomDone';
 import { EmomRun } from './EmomRun';
 import { EmomSetup } from './EmomSetup';
 import { EmomSummary } from './EmomSummary';
 import { EmomTrainingLog } from './EmomTrainingLog';
+
+/** How long the DONE card holds before the summary takes over. */
+const DONE_HOLD_MS = 1500;
 
 const sessionLabel = (cfg: EmomConfig) => PRESETS.find((p) => matchesPreset(cfg, p))?.name ?? 'Custom EMOM';
 
@@ -64,6 +68,19 @@ export function EmomTracker() {
   const [log, setLog] = useState<LoggedSession[]>(loadLog);
   const [live, setLive] = useState<LiveSnapshot | null>(loadLive);
   const [finished, setFinished] = useState<{ session: FinishedSession; id: string } | null>(null);
+  const [celebrating, setCelebrating] = useState(false);
+
+  useEffect(() => {
+    if (!finished) return;
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+  }, [finished, celebrating]);
+
+  useEffect(() => {
+    if (!celebrating) return;
+    const id = window.setTimeout(() => setCelebrating(false), DONE_HOLD_MS);
+    return () => window.clearTimeout(id);
+  }, [celebrating]);
 
   const updateLog = useCallback((update: (prev: LoggedSession[]) => LoggedSession[]) => {
     setLog((prev) => {
@@ -86,6 +103,7 @@ export function EmomTracker() {
       };
       updateLog((prev) => [...prev.filter((s) => s.id !== entry.id), entry]);
       setFinished({ session, id: entry.id });
+      setCelebrating(session.complete);
     },
     [updateLog],
   );
@@ -107,6 +125,10 @@ export function EmomTracker() {
         onEnd={session.end}
       />
     );
+  }
+
+  if (finished && celebrating) {
+    return <EmomDone session={finished.session} onSkip={() => setCelebrating(false)} />;
   }
 
   if (finished) {

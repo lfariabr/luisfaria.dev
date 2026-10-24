@@ -213,6 +213,14 @@ export function extensionPhase(cfg: EmomConfig, phases: Phase[], adj: Adjustment
   return { type: 'work', start: end, dur: Math.ceil(deficit / lastRate(cfg)) * 60, block, extra: true };
 }
 
+/** True in the last minute of the last phase when no goal extension will follow it. */
+export function isFinalMinute(cfg: EmomConfig, phases: Phase[], adj: Adjustments, paces: PaceChange[], loc: Located): boolean {
+  const { phase, local, index } = loc;
+  if (index !== phases.length - 1 || phase.type !== 'work') return false;
+  if (Math.floor(local / 60) !== phaseMinutes(phase) - 1) return false;
+  return extensionPhase(cfg, phases, adj, paces) === null;
+}
+
 export interface BlockSummary {
   label: string;
   /** Configured reps per minute for the block. */

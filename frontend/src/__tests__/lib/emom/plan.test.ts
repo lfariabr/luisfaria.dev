@@ -10,6 +10,8 @@ import {
   extraMinutes,
   formatClock,
   formatPace,
+  isFinalMinute,
+  locate,
   minuteKey,
   paceAt,
   planReps,
@@ -81,6 +83,25 @@ describe('emom plan', () => {
 
     const ext = extensionPhase(goal, buildPhases(goal), adj, []);
     expect(ext).toMatchObject({ type: 'work', extra: true, dur: 60, block: 1 });
+  });
+
+  it('flags the final minute only when no goal extension follows it', () => {
+    const cfg = { ...DEFAULT_CONFIG, rates: [5], workMin: 10, breakMin: 0 };
+    const phases = buildPhases(cfg);
+    const end = totalSeconds(phases);
+    const at = (vt: number, c = cfg, adj = {}) => isFinalMinute(c, phases, adj, [], locate(phases, vt)!);
+
+    expect(at(end - 3)).toBe(true);
+    expect(at(end - 59)).toBe(true);
+    expect(at(end - 61)).toBe(false);
+
+    const goal = { ...cfg, goal: 50 };
+    expect(at(end - 3, goal)).toBe(true);
+    expect(at(end - 3, goal, { [minuteKey(0, 0)]: -1 })).toBe(false);
+
+    const twoBlocks = { ...cfg, rates: [5, 5], breakMin: 2 };
+    const twoPhases = buildPhases(twoBlocks);
+    expect(isFinalMinute(twoBlocks, twoPhases, {}, [], locate(twoPhases, COUNT_IN_SEC + 600 - 3)!)).toBe(false);
   });
 
   it('summarises blocks and writes a War Room log line', () => {

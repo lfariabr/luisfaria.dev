@@ -8,6 +8,7 @@ import {
   Phase,
   formatClock,
   formatReps,
+  isFinalMinute,
   isSlowBlock,
   minuteKey,
   minutesDone,
@@ -144,7 +145,8 @@ export function EmomRun({ view, onTogglePause, onAdjust, onSkip, onEnd }: EmomRu
     const remain = 60 - sec;
     const blink = reducedMotion() || Math.floor(sec * 2) % 2 === 0;
     state = signalling ? (cfg.mode === 'panel' && blink ? 'go' : 'go-off') : remain <= 3 ? 'warn' : 'idle';
-    cue = signalling ? `Go · ${reps} reps` : remain <= 3 ? 'Next minute' : 'Hang loose';
+    const finishing = remain <= 3 && isFinalMinute(cfg, phases, view.adj, paces, loc);
+    cue = signalling ? `Go · ${reps} reps` : finishing ? 'Finish' : remain <= 3 ? 'Next minute' : 'Hang loose';
     clock = formatClock(Math.min(59.99, remain));
     const blockLeft = formatClock(phase.dur - local);
     sub = phase.extra
@@ -155,6 +157,7 @@ export function EmomRun({ view, onTogglePause, onAdjust, onSkip, onEnd }: EmomRu
           ? `Block ${phase.block + 2} in ${blockLeft}`
           : `Last block · ${blockLeft} left`;
     if (isSlowBlock(cfg, phase.block)) sub += ` · slower block, ${rateFor(cfg, phase.block)}/min`;
+    if (finishing) sub = `Last minute · ${clock} left`;
     progress = sec / 60;
     if (signalling && cfg.mode === 'full' && running) {
       overlay = { seconds: Math.ceil(cfg.flashSec - sec), reps, fill: 1 - sec / cfg.flashSec };
