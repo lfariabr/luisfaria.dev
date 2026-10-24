@@ -15,16 +15,18 @@ const STAT = 'font-mono text-[clamp(1.125rem,6vw,2.25rem)] leading-tight tabular
 interface EmomSummaryProps {
   session: FinishedSession;
   note: string;
+  /** This session's number in the training log, for the War Room row. */
+  sessionNumber: number;
   onNoteChange: (note: string) => void;
   onBack: () => void;
 }
 
-export function EmomSummary({ session, note, onNoteChange, onBack }: EmomSummaryProps) {
+export function EmomSummary({ session, note, sessionNumber, onNoteChange, onBack }: EmomSummaryProps) {
   const [copied, setCopied] = useState<'idle' | 'copied' | 'failed'>('idle');
   const heading = useRef<HTMLHeadingElement>(null);
   const { cfg, phases, adj, paces, secs, done, complete, startedAt } = session;
   const blocks = blockSummaries(cfg, phases, adj, paces, secs);
-  const logLine = warRoomLogLine(cfg, blocks, done, secs, startedAt);
+  const logLine = warRoomLogLine(cfg, blocks, done, secs, startedAt, sessionNumber);
   const vsGoal = done - sessionGoal(cfg);
   const signal = SIGNAL[cfg.color];
 

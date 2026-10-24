@@ -138,6 +138,7 @@ export function EmomTracker() {
       <EmomSummary
         session={finished.session}
         note={note}
+        sessionNumber={log.findIndex((s) => s.id === finished.id) + 1}
         onNoteChange={(text) => updateLog((prev) => prev.map((s) => (s.id === finished.id ? { ...s, note: text } : s)))}
         onBack={() => setFinished(null)}
       />
