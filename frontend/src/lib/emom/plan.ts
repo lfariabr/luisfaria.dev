@@ -282,12 +282,15 @@ export const formatReps = (n: number) => n.toLocaleString('en-AU');
 
 export const localDateKey = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
-export function warRoomLogLine(cfg: EmomConfig, blocks: BlockSummary[], done: number, secs: number, date: Date): string {
+/** The paces run across the whole session in the table's format, so the log line and the table agree. */
+export function sessionPace(cfg: EmomConfig, blocks: BlockSummary[]): string {
+  const run = blocks.flatMap((b) => b.paces).filter((pace, i, all) => i === 0 || pace !== all[i - 1]);
+  return formatPace({ rate: blocks[0]?.rate ?? cfg.rates[0], paces: run.length ? run : [cfg.rates[0]] });
+}
+
+/** A row for the War Room table. `n` is the session's number in the training log. */
+export function warRoomLogLine(cfg: EmomConfig, blocks: BlockSummary[], done: number, secs: number, date: Date, n: number): string {
   const label = date.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' });
-  const used = blocks.flatMap((b) => b.paces);
-  const rates = used.length ? used : cfg.rates;
-  const distinct = new Set(rates);
-  const pace = distinct.size > 1 ? `${Math.max(...rates)}→${Math.min(...rates)}/min` : `${rates[0]}/min`;
   const parts = blocks.map((b) => `\`${b.reps}\`/${b.minutes}min`).join(' → stop → ');
-  return `| # | **${label}** | **\`${formatReps(done)}\`** | ${parts} | EMOM \`${pace}\`, FIT \`${formatClock(secs, true)}\` |`;
+  return `| ${n} | **${label}** | **\`${formatReps(done)}\`** | ${parts} | EMOM \`${sessionPace(cfg, blocks)}\`, FIT \`${formatClock(secs, true)}\` |`;
 }

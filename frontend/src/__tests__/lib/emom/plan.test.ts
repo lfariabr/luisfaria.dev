@@ -14,6 +14,7 @@ import {
   locate,
   minuteKey,
   paceAt,
+  sessionPace,
   planReps,
   sessionGoal,
   setPace,
@@ -115,10 +116,11 @@ describe('emom plan', () => {
       { label: 'Block 1', rate: 5, paces: [5], minutes: 10, reps: 50, shortMinutes: 0 },
       { label: 'Block 2', rate: 4, paces: [4], minutes: 10, reps: 39, shortMinutes: 1 },
     ]);
-    const line = warRoomLogLine(cfg, blocks, 89, secs, new Date('2026-10-11T07:00:00'));
+    const line = warRoomLogLine(cfg, blocks, 89, secs, new Date('2026-10-11T07:00:00'), 7);
+    expect(line).toMatch(/^\| 7 \| \*\*Sun, 11 Oct\*\* \|/);
     expect(line).toContain('**`89`**');
     expect(line).toContain('`50`/10min → stop → `39`/10min');
-    expect(line).toContain('EMOM `5→4/min`');
+    expect(line).toContain('EMOM `5 → 4/min`');
   });
 
   it('holds a pace change until the next one, across blocks and over the plan taper', () => {
@@ -166,8 +168,10 @@ describe('emom plan', () => {
     expect(formatPace(blocks[1])).toBe('5 → 4 → 3/min');
     expect(formatPace({ rate: 5, paces: [5] })).toBe('5/min');
 
-    const line = warRoomLogLine(cfg, blocks, 75, secs, new Date('2026-10-11T07:00:00'));
-    expect(line).toContain('EMOM `5→3/min`');
+    expect(sessionPace(cfg, blocks)).toBe('5 → 4 → 3/min');
+    const line = warRoomLogLine(cfg, blocks, 75, secs, new Date('2026-10-11T07:00:00'), 1);
+    expect(line).toContain(`EMOM \`${sessionPace(cfg, blocks)}\``);
+    expect(sessionPace(cfg, [blocks[1]])).toBe(formatPace(blocks[1]));
   });
 
   it('formats clocks with and without hours', () => {

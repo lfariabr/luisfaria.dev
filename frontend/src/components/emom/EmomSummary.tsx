@@ -15,25 +15,35 @@ const STAT = 'font-mono text-[clamp(1.125rem,6vw,2.25rem)] leading-tight tabular
 interface EmomSummaryProps {
   session: FinishedSession;
   note: string;
+  /** This session's number in the training log, for the War Room row. */
+  sessionNumber: number;
   onNoteChange: (note: string) => void;
   onBack: () => void;
 }
 
-export function EmomSummary({ session, note, onNoteChange, onBack }: EmomSummaryProps) {
+export function EmomSummary({ session, note, sessionNumber, onNoteChange, onBack }: EmomSummaryProps) {
   const [copied, setCopied] = useState<'idle' | 'copied' | 'failed'>('idle');
+  const [noteSaved, setNoteSaved] = useState(false);
   const heading = useRef<HTMLHeadingElement>(null);
+  const copiedTimer = useRef<number | undefined>(undefined);
   const { cfg, phases, adj, paces, secs, done, complete, startedAt } = session;
   const blocks = blockSummaries(cfg, phases, adj, paces, secs);
-  const logLine = warRoomLogLine(cfg, blocks, done, secs, startedAt);
+  const logLine = warRoomLogLine(cfg, blocks, done, secs, startedAt, sessionNumber);
+  const showSkipped = blocks.some((b) => b.shortMinutes > 0);
   const vsGoal = done - sessionGoal(cfg);
   const signal = SIGNAL[cfg.color];
 
   useEffect(() => heading.current?.focus({ preventScroll: true }), []);
+  useEffect(() => () => window.clearTimeout(copiedTimer.current), []);
 
   const copy = () => {
     navigator.clipboard
       ?.writeText(logLine)
-      .then(() => setCopied('copied'))
+      .then(() => {
+        setCopied('copied');
+        window.clearTimeout(copiedTimer.current);
+        copiedTimer.current = window.setTimeout(() => setCopied('idle'), 2000);
+      })
       .catch(() => setCopied('failed'));
   };
 
@@ -82,7 +92,11 @@ export function EmomSummary({ session, note, onNoteChange, onBack }: EmomSummary
               <th className={cn(LABEL, 'py-2 pr-2 text-right')}>Pace</th>
               <th className={cn(LABEL, 'py-2 pr-2 text-right')}>Time</th>
               <th className={cn(LABEL, 'py-2 pr-2 text-right')}>Reps</th>
-              <th className={cn(LABEL, 'py-2 text-right')}>Short min</th>
+              {showSkipped && (
+                <th className={cn(LABEL, 'py-2 text-right')} title="Minutes logged below the pace, i.e. skipped">
+                  Skipped
+                </th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -92,7 +106,7 @@ export function EmomSummary({ session, note, onNoteChange, onBack }: EmomSummary
                 <td className="py-2 pr-2 text-right">{formatPace(b)}</td>
                 <td className="py-2 pr-2 text-right">{b.minutes} min</td>
                 <td className="py-2 pr-2 text-right">{formatReps(b.reps)}</td>
-                <td className="py-2 text-right">{b.shortMinutes || '—'}</td>
+                {showSkipped && <td className="py-2 text-right">{b.shortMinutes || '—'}</td>}
               </tr>
             ))}
           </tbody>
@@ -106,30 +120,37 @@ export function EmomSummary({ session, note, onNoteChange, onBack }: EmomSummary
         <Textarea
           id="emom-notes"
           defaultValue={note}
-          onBlur={(e) => onNoteChange(e.target.value.trim())}
-          placeholder="Cramps in the last block, callus on the ring finger, ~40g carbs/h"
+          onChange={() => setNoteSaved(false)}
+          onBlur={(e) => {
+            onNoteChange(e.target.value.trim());
+            setNoteSaved(true);
+          }}
+          placeholder="e.g. skin, elbows, fuel…"
+          className="placeholder:italic placeholder:text-muted-foreground/70"
         />
-        <p className="text-xs text-muted-foreground">Saved with the session when you leave the field.</p>
+        <p aria-live="polite" className="min-h-4 text-xs text-muted-foreground">
+          {noteSaved && 'Saved ✓'}
+        </p>
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <div className="flex items-center justify-between">
-          <span className={LABEL}>War Room log line</span>
-          <Button variant="outline" size="sm" onClick={copy}>
-            {copied === 'copied' ? 'Copied' : 'Copy'}
-          </Button>
-        </div>
+        <span className={LABEL}>War Room log line</span>
         <pre className="whitespace-pre-wrap break-words rounded-lg border bg-muted/50 p-3 font-mono text-xs select-all">{logLine}</pre>
         {copied === 'failed' && <p className="text-xs text-muted-foreground">Copy was blocked. Select the line above and copy it manually.</p>}
       </div>
 
-      <button
-        type="button"
-        onClick={onBack}
-        className={cn('rounded-xl py-4 text-xl font-extrabold uppercase tracking-widest hover:brightness-105', signal.fill, signal.ink)}
-      >
-        Back to setup
-      </button>
+      <div className="flex flex-col gap-3">
+        <button
+          type="button"
+          onClick={copy}
+          className={cn('rounded-xl py-4 text-xl font-extrabold uppercase tracking-widest hover:brightness-105', signal.fill, signal.ink)}
+        >
+          <span aria-live="polite">{copied === 'copied' ? 'Copied ✓' : 'Copy log line'}</span>
+        </button>
+        <Button variant="outline" size="lg" className="h-12 rounded-xl text-base" onClick={onBack}>
+          Back to setup
+        </Button>
+      </div>
     </div>
   );
 }
