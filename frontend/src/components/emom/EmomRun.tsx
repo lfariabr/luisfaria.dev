@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Minus, Plus } from 'lucide-react';
+import { Maximize, Minus, Pause, Play, Plus, Square } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   LIMITS,
@@ -30,6 +30,8 @@ type PanelState = 'count' | 'go' | 'go-off' | 'warn' | 'idle' | 'break';
 
 interface EmomRunProps {
   view: SessionView;
+  /** The screen wake lock is held. */
+  awake: boolean;
   onTogglePause: () => void;
   onAdjust: (delta: number) => void;
   onSkip: () => void;
@@ -51,7 +53,7 @@ function MinuteStrip({ view, phase }: { view: SessionView; phase: Phase }) {
   const signal = SIGNAL[view.cfg.color];
 
   return (
-    <div className="grid gap-[3px]" style={{ gridTemplateColumns: `repeat(${Math.min(minutes, 25)}, minmax(0, 1fr))` }}>
+    <div className="grid gap-[3px]" style={{ gridTemplateColumns: `repeat(${Math.min(minutes, 10)}, minmax(0, 1fr))` }}>
       {Array.from({ length: minutes }, (_, m) => {
         const skipped = (view.adj[minuteKey(phase.block, m)] ?? 0) < 0;
         const under = rateFor(view.cfg, phase.block) - paceAt(view.cfg, view.paces, phase.block, m);
@@ -80,7 +82,7 @@ function MinuteStrip({ view, phase }: { view: SessionView; phase: Phase }) {
   );
 }
 
-export function EmomRun({ view, onTogglePause, onAdjust, onSkip, onEnd }: EmomRunProps) {
+export function EmomRun({ view, awake, onTogglePause, onAdjust, onSkip, onEnd }: EmomRunProps) {
   const [endArmed, setEndArmed] = useState(false);
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const endTimer = useRef<number | undefined>(undefined);
@@ -145,19 +147,21 @@ export function EmomRun({ view, onTogglePause, onAdjust, onSkip, onEnd }: EmomRu
     const remain = 60 - sec;
     const blink = reducedMotion() || Math.floor(sec * 2) % 2 === 0;
     state = signalling ? (cfg.mode === 'panel' && blink ? 'go' : 'go-off') : remain <= 3 ? 'warn' : 'idle';
-    const finishing = remain <= 3 && isFinalMinute(cfg, phases, view.adj, paces, loc);
+    const final = isFinalMinute(cfg, phases, view.adj, paces, loc);
+    const finishing = final && remain <= 3;
     cue = signalling ? `Go · ${reps} reps` : finishing ? 'Finish' : remain <= 3 ? 'Next minute' : 'Hang loose';
     clock = formatClock(Math.min(59.99, remain));
     const blockLeft = formatClock(phase.dur - local);
-    sub = phase.extra
+    const upNext = minute + 1 < phaseMinutes(phase) ? `Next: ${repsAt(cfg, view.adj, paces, phase.block, minute + 1)} reps · ` : '';
+    sub = upNext + (phase.extra
       ? `Extra time · ${formatReps(Math.max(0, cfg.goal - view.done))} to ${formatReps(cfg.goal)}`
       : next?.type === 'break'
         ? `Service stop in ${blockLeft}`
         : next
           ? `Block ${phase.block + 2} in ${blockLeft}`
-          : `Last block · ${blockLeft} left`;
+          : `Last block · ${blockLeft} left`);
     if (isSlowBlock(cfg, phase.block)) sub += ` · slower block, ${rateFor(cfg, phase.block)}/min`;
-    if (finishing) sub = `Last minute · ${clock} left`;
+    if (final) sub = finishing ? `Last minute · ${clock} left` : 'Last minute';
     progress = sec / 60;
     if (signalling && cfg.mode === 'full' && running) {
       overlay = { seconds: Math.ceil(cfg.flashSec - sec), reps, fill: 1 - sec / cfg.flashSec };
@@ -178,54 +182,56 @@ export function EmomRun({ view, onTogglePause, onAdjust, onSkip, onEnd }: EmomRu
   const pace = target ? paceAt(cfg, paces, target.block, target.minute) : 0;
   const paceVsPlan = target ? pace - rateFor(cfg, target.block) : 0;
   const eta = new Date(view.now + (view.total - vt) * 1000);
+  const canFullscreen = document.fullscreenEnabled;
+  const where = [
+    phase.type === 'break' ? 'Stop' : phase.extra ? 'Extra' : `B${workBlock + 1}/${cfg.rates.length}`,
+    phase.type === 'work' && `M${minute + 1}/${phaseMinutes(phase)}`,
+    formatClock(vt, true),
+  ];
+  const announce = phase.type === 'break' ? 'Service stop' : phase.extra ? 'Extra time' : phase.type === 'work' ? `Block ${phase.block + 1}` : '';
+  const bar =
+    state === 'go'
+      ? 'bg-foreground/40'
+      : state === 'warn' || state === 'count'
+        ? 'bg-amber-500'
+        : state === 'break'
+          ? 'bg-blue-500/60'
+          : signal.fill;
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-        <dl className="flex flex-wrap gap-x-6 gap-y-2">
-          <div>
-            <dt className={LABEL}>{phase.type === 'break' ? 'Service stop' : 'Block'}</dt>
-            <dd className="font-mono text-xl tabular-nums">
-              {phase.extra ? 'Extra' : `${workBlock + 1} / ${cfg.rates.length}`}
-            </dd>
-          </div>
-          <div>
-            <dt className={LABEL}>Minute</dt>
-            <dd className="font-mono text-xl tabular-nums">
-              {phase.type === 'work' ? `${minute + 1} / ${phaseMinutes(phase)}` : '—'}
-            </dd>
-          </div>
-          <div>
-            <dt className={LABEL}>Session</dt>
-            <dd className="font-mono text-xl tabular-nums">{formatClock(vt, true)}</dd>
-          </div>
-          <div>
-            <dt className={LABEL}>Ends ~</dt>
-            <dd className="font-mono text-xl tabular-nums">
-              {eta.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })}
-            </dd>
-          </div>
-        </dl>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-            <i className="h-1.5 w-1.5 rounded-full bg-green-600 dark:bg-green-500" />
-            Saved in browser
-          </span>
-          <Button variant="outline" size="sm" onClick={onTogglePause}>
-            {running ? 'Pause' : 'Resume'}
+      <div className="sticky top-14 z-30 -mx-4 -mt-4 flex h-14 items-center gap-2 border-b bg-background/95 px-4 backdrop-blur md:top-0 md:-mx-6 md:-mt-6 md:px-6">
+        <p className="min-w-0 flex-1 truncate font-mono text-sm tabular-nums sm:text-base">{where.filter(Boolean).join(' · ')}</p>
+        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <i role="img" aria-label="Saved in browser" title="Saved in browser" className="h-1.5 w-1.5 rounded-full bg-green-600 dark:bg-green-500" />
+          {awake && (
+            <>
+              <i role="img" aria-label="Screen stays on" title="Screen stays on" className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
+              <span aria-hidden className="hidden sm:inline">Screen stays on</span>
+            </>
+          )}
+        </span>
+        <Button variant="outline" size="icon" className="size-11" onClick={onTogglePause} aria-label={running ? 'Pause' : 'Resume'}>
+          {running ? <Pause /> : <Play />}
+        </Button>
+        {canFullscreen && (
+          <Button variant="outline" size="icon" className="size-11" onClick={toggleFullscreen} aria-label="Fullscreen">
+            <Maximize />
           </Button>
-          <Button variant="outline" size="sm" onClick={toggleFullscreen}>
-            Fullscreen
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleEnd}
-            className={cn(endArmed && 'border-destructive text-destructive')}
-          >
-            {endArmed ? 'Tap again to end' : 'End'}
-          </Button>
-        </div>
+        )}
+        <Button
+          variant="outline"
+          size={endArmed ? 'default' : 'icon'}
+          onClick={handleEnd}
+          aria-label={endArmed ? 'Tap again to end' : 'End'}
+          className={cn('h-11', endArmed ? 'border-destructive text-destructive' : 'w-11')}
+        >
+          {endArmed ? 'Tap again to end' : <Square />}
+        </Button>
+      </div>
+
+      <div aria-live="assertive" className="sr-only">
+        {announce}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
@@ -233,7 +239,7 @@ export function EmomRun({ view, onTogglePause, onAdjust, onSkip, onEnd }: EmomRu
           data-testid="emom-panel"
           data-state={state}
           className={cn(
-            'relative flex min-h-[360px] flex-col items-center justify-center gap-1.5 overflow-hidden rounded-2xl border bg-card px-4 py-7',
+            'relative flex flex-col items-center justify-center gap-1.5 overflow-hidden rounded-2xl border bg-card px-4 py-5 lg:min-h-[360px] lg:py-7',
             state === 'go' && cn(signal.fill, 'border-transparent'),
             state === 'break' && 'border-blue-500/40 bg-blue-500/5',
           )}
@@ -254,8 +260,9 @@ export function EmomRun({ view, onTogglePause, onAdjust, onSkip, onEnd }: EmomRu
           </p>
           <p
             role="timer"
+            aria-live="off"
             className={cn(
-              'font-mono text-[clamp(96px,20vw,240px)] font-medium leading-[0.9] tracking-tighter tabular-nums',
+              'font-mono text-[min(28vw,9rem)] font-medium leading-none tracking-tighter tabular-nums lg:text-[clamp(96px,20vw,240px)] lg:leading-[0.9]',
               state === 'go' && signal.ink,
               (state === 'warn' || state === 'count') && WARN_TEXT,
               state === 'break' && REST_TEXT,
@@ -265,7 +272,7 @@ export function EmomRun({ view, onTogglePause, onAdjust, onSkip, onEnd }: EmomRu
           </p>
           <p className={cn('text-center text-sm text-muted-foreground', state === 'go' && signal.ink)}>{sub}</p>
           <div className="absolute inset-x-0 bottom-0 h-1.5 bg-muted">
-            <div className="h-full bg-foreground/40" style={{ width: `${progress * 100}%` }} />
+            <div className={cn('h-full', bar)} style={{ width: `${progress * 100}%` }} />
           </div>
         </div>
 
@@ -282,7 +289,10 @@ export function EmomRun({ view, onTogglePause, onAdjust, onSkip, onEnd }: EmomRu
               <span className={cn('font-mono', delta < 0 && WARN_TEXT, delta > 0 && signal.text)}>
                 {delta === 0 ? 'On plan' : `${delta > 0 ? '+' : ''}${delta} vs plan`}
               </span>
-              <span className="text-muted-foreground">{formatReps(Math.max(0, goal - view.done))} to go</span>
+              <span className="text-muted-foreground">
+                {formatReps(Math.max(0, goal - view.done))} to go · ends ~
+                {eta.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })}
+              </span>
             </div>
           </section>
 
@@ -323,7 +333,7 @@ export function EmomRun({ view, onTogglePause, onAdjust, onSkip, onEnd }: EmomRu
               <div className="grid grid-cols-[56px_1fr_56px] items-center gap-2">
                 <button
                   type="button"
-                  aria-label="Pace down, one rep per minute fewer from now on"
+                  aria-label="Decrease pace"
                   disabled={pace <= LIMITS.rate[0]}
                   onClick={() => onAdjust(-1)}
                   className="grid h-14 place-items-center rounded-xl border bg-muted/50 disabled:opacity-35"
@@ -341,7 +351,7 @@ export function EmomRun({ view, onTogglePause, onAdjust, onSkip, onEnd }: EmomRu
                 </div>
                 <button
                   type="button"
-                  aria-label="Pace up, one rep per minute more from now on"
+                  aria-label="Increase pace"
                   disabled={pace >= LIMITS.rate[1]}
                   onClick={() => onAdjust(1)}
                   className="grid h-14 place-items-center rounded-xl border bg-muted/50 disabled:opacity-35"
