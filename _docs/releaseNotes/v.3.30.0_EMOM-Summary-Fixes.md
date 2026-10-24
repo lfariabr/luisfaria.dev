@@ -26,9 +26,9 @@
 - Tapping DONE skips to the summary. Ending early skips DONE.
 - The stats row is a three-column grid of `min-w-0` cells, and VS GOAL is `whitespace-nowrap`.
 - Frontend: 354 passed. Typecheck and lint pass.
-- **Needs an iPhone check after deploy:**
-  - [ ] Stats row on one line with nothing touching
-  - [ ] FINISH in the last 3s, DONE holds, and the summary opens at the top
+- **iPhone check after deploy (2026-10-25):**
+  - [x] Stats row on one line with nothing touching
+  - [x] FINISH in the last 3s, DONE holds, and the summary opens at the top
 
 ## Before / After
 
