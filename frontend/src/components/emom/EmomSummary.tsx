@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -21,11 +21,14 @@ interface EmomSummaryProps {
 
 export function EmomSummary({ session, note, onNoteChange, onBack }: EmomSummaryProps) {
   const [copied, setCopied] = useState<'idle' | 'copied' | 'failed'>('idle');
+  const heading = useRef<HTMLHeadingElement>(null);
   const { cfg, phases, adj, paces, secs, done, complete, startedAt } = session;
   const blocks = blockSummaries(cfg, phases, adj, paces, secs);
   const logLine = warRoomLogLine(cfg, blocks, done, secs, startedAt);
   const vsGoal = done - sessionGoal(cfg);
   const signal = SIGNAL[cfg.color];
+
+  useEffect(() => heading.current?.focus({ preventScroll: true }), []);
 
   const copy = () => {
     navigator.clipboard
@@ -40,7 +43,7 @@ export function EmomSummary({ session, note, onNoteChange, onBack }: EmomSummary
         {startedAt.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' })} ·{' '}
         {complete ? 'session complete' : 'ended early'}
       </p>
-      <h1 className="text-balance text-5xl font-extrabold uppercase leading-[0.95] md:text-7xl">
+      <h1 ref={heading} tabIndex={-1} className="text-balance text-5xl font-extrabold uppercase leading-[0.95] outline-none md:text-7xl">
         <span className={signal.text}>{formatReps(done)}</span> pull-ups
       </h1>
 

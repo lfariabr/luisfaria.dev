@@ -13,6 +13,7 @@ describe('EmomTracker', () => {
     window.localStorage.clear();
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2026-10-11T07:00:00'));
+    window.scrollTo = jest.fn();
   });
 
   afterEach(() => {
@@ -114,6 +115,58 @@ describe('EmomTracker', () => {
       { block: 0, minute: 0, rate: 3 },
       { block: 1, minute: 0, rate: 4 },
     ]);
+  });
+
+  it('says FINISH in the last minute, holds a DONE card, then opens the summary at the top', () => {
+    const cfg = { ...DEFAULT_CONFIG, rates: [5], workMin: 2, breakMin: 0, sound: false };
+    window.localStorage.setItem('emom:config', JSON.stringify(cfg));
+    render(<EmomTracker />);
+    fireEvent.click(screen.getByRole('button', { name: 'Start session' }));
+
+    advance(10_000 + 57_500);
+    expect(screen.getByText('Next minute')).toBeInTheDocument();
+
+    advance(60_000);
+    expect(screen.getByText('Finish')).toBeInTheDocument();
+    expect(screen.queryByText('Next minute')).not.toBeInTheDocument();
+    expect(screen.getByText(/^Last minute · 0:0\d left$/)).toBeInTheDocument();
+
+    advance(3_000);
+    expect(screen.getByTestId('emom-done')).toHaveTextContent('10 reps · 2:10');
+    expect(screen.queryByRole('button', { name: 'End' })).not.toBeInTheDocument();
+    expect(window.scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
+
+    advance(1_500);
+    const heading = screen.getByRole('heading', { level: 1 });
+    expect(heading).toHaveTextContent('10 pull-ups');
+    expect(heading).toHaveFocus();
+    expect(window.scrollTo).toHaveBeenCalledTimes(2);
+  });
+
+  it('skips the DONE card on tap', () => {
+    const cfg = { ...DEFAULT_CONFIG, rates: [5], workMin: 1, breakMin: 0, sound: false };
+    window.localStorage.setItem('emom:config', JSON.stringify(cfg));
+    render(<EmomTracker />);
+    fireEvent.click(screen.getByRole('button', { name: 'Start session' }));
+    advance(10_000 + 60_500);
+
+    fireEvent.click(screen.getByTestId('emom-done'));
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('5 pull-ups');
+  });
+
+  it('lays the summary stats out in three shrinkable cells', () => {
+    render(<EmomTracker />);
+    fireEvent.click(screen.getByRole('button', { name: 'Start session' }));
+    advance(10_000 + 60_000 + 20_000);
+    fireEvent.click(screen.getByRole('button', { name: 'End' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Tap again to end' }));
+
+    expect(screen.queryByTestId('emom-done')).not.toBeInTheDocument();
+    const stats = screen.getByText('Time', { selector: 'dt' }).closest('dl')!;
+    expect(stats).toHaveClass('grid', 'grid-cols-3');
+    expect(Array.from(stats.children).every((cell) => cell.classList.contains('min-w-0'))).toBe(true);
+    expect(screen.getByText('Vs goal').nextElementSibling).toHaveClass('whitespace-nowrap');
+    expect(screen.getByText('Vs goal').nextElementSibling).toHaveTextContent('−990');
   });
 
   it('offers to resume an unfinished session, paused', () => {
