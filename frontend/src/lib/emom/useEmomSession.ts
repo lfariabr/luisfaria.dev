@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Adjustments,
   EmomConfig,
@@ -94,22 +94,32 @@ function useBeeper() {
   }, []);
 }
 
+/** Holds the screen awake. `held` tracks the real lock, which the browser drops when the page hides. */
 function useWakeLock() {
   const sentinel = useRef<WakeLockSentinel | null>(null);
+  const [held, setHeld] = useState(false);
   const request = useCallback(() => {
     if (!('wakeLock' in navigator)) return;
     navigator.wakeLock
       .request('screen')
       .then((lock) => {
         sentinel.current = lock;
+        setHeld(true);
+        lock.addEventListener('release', () => {
+          if (sentinel.current !== lock) return;
+          sentinel.current = null;
+          setHeld(false);
+        });
       })
       .catch(() => {});
   }, []);
   const release = useCallback(() => {
-    sentinel.current?.release().catch(() => {});
+    const lock = sentinel.current;
     sentinel.current = null;
+    setHeld(false);
+    lock?.release().catch(() => {});
   }, []);
-  return { request, release };
+  return useMemo(() => ({ request, release, held }), [request, release, held]);
 }
 
 const toSnapshot = (e: Engine): LiveSnapshot => ({
@@ -334,5 +344,5 @@ export function useEmomSession(onFinish: (session: FinishedSession) => void) {
 
   const end = useCallback(() => finish(), [finish]);
 
-  return { view, start, resume, togglePause, adjust, skip, end };
+  return { view, awake: wake.held, start, resume, togglePause, adjust, skip, end };
 }

@@ -51,7 +51,7 @@ describe('EmomTracker', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Start session' }));
     advance(10_000 + 60_000 + 20_000);
 
-    fireEvent.click(screen.getByRole('button', { name: /Pace down/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Decrease pace' }));
     expect(screen.getByTestId('emom-pace')).toHaveTextContent('4');
     expect(screen.getByText('-1 vs plan')).toBeInTheDocument();
 
@@ -74,7 +74,7 @@ describe('EmomTracker', () => {
 
     fireEvent.keyDown(document.body, { key: 'n' });
     expect(screen.getByText('Service stop', { selector: 'p' })).toBeInTheDocument();
-    expect(screen.getByText('995 to go')).toBeInTheDocument();
+    expect(screen.getByText(/^995 to go · ends ~/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'End' }));
     fireEvent.click(screen.getByRole('button', { name: 'Tap again to end' }));
@@ -88,8 +88,8 @@ describe('EmomTracker', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Start session' }));
     advance(10_000 + 20_000);
 
-    fireEvent.click(screen.getByRole('button', { name: /Pace down/ }));
-    fireEvent.click(screen.getByRole('button', { name: /Pace down/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Decrease pace' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Decrease pace' }));
     expect(screen.getByTestId('emom-pace')).toHaveTextContent('3');
     expect(screen.getByText('plan 5 · -2')).toBeInTheDocument();
 
@@ -103,7 +103,7 @@ describe('EmomTracker', () => {
     expect(screen.getByText('Service stop', { selector: 'p' })).toBeInTheDocument();
     expect(screen.getByText(/Next: block 2 · 3\/min · 6 reps/)).toBeInTheDocument();
     expect(document.querySelectorAll('[data-state="paced"]')).toHaveLength(2);
-    fireEvent.click(screen.getByRole('button', { name: /Pace up/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Increase pace' }));
     expect(screen.getByText('Pace · next block')).toBeInTheDocument();
     expect(screen.getByTestId('emom-pace')).toHaveTextContent('4');
 
@@ -167,6 +167,62 @@ describe('EmomTracker', () => {
     expect(Array.from(stats.children).every((cell) => cell.classList.contains('min-w-0'))).toBe(true);
     expect(screen.getByText('Vs goal').nextElementSibling).toHaveClass('whitespace-nowrap');
     expect(screen.getByText('Vs goal').nextElementSibling).toHaveTextContent('−990');
+  });
+
+  it('keeps the session state and controls in a compact bar', () => {
+    render(<EmomTracker />);
+    fireEvent.click(screen.getByRole('button', { name: 'Start session' }));
+    advance(10_000 + 80_000);
+
+    expect(screen.getByText(/^B1\/4 · M2\/50 · 0:01:[23]\d$/)).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Saved in browser' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Fullscreen' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Pause' }));
+    expect(screen.getByRole('button', { name: 'Resume' })).toBeInTheDocument();
+  });
+
+  it('offers Fullscreen only where the browser supports it', () => {
+    Object.defineProperty(document, 'fullscreenEnabled', { value: true, configurable: true });
+    render(<EmomTracker />);
+    fireEvent.click(screen.getByRole('button', { name: 'Start session' }));
+
+    expect(screen.getByRole('button', { name: 'Fullscreen' })).toBeInTheDocument();
+    delete (document as { fullscreenEnabled?: boolean }).fullscreenEnabled;
+  });
+
+  it('shows the screen stays on while the wake lock is held', async () => {
+    const lock = { addEventListener: jest.fn(), release: jest.fn().mockResolvedValue(undefined) };
+    Object.defineProperty(navigator, 'wakeLock', { value: { request: jest.fn().mockResolvedValue(lock) }, configurable: true });
+    render(<EmomTracker />);
+    fireEvent.click(screen.getByRole('button', { name: 'Start session' }));
+
+    expect(await screen.findByRole('img', { name: 'Screen stays on' })).toBeInTheDocument();
+    delete (navigator as { wakeLock?: unknown }).wakeLock;
+  });
+
+  it('says what comes next, announces phase changes only, and wraps minutes in rows of ten', () => {
+    const cfg = { ...DEFAULT_CONFIG, rates: [5, 4], workMin: 12, breakMin: 1 };
+    window.localStorage.setItem('emom:config', JSON.stringify(cfg));
+    render(<EmomTracker />);
+    fireEvent.click(screen.getByRole('button', { name: 'Start session' }));
+    const live = document.querySelector('[aria-live="assertive"]')!;
+    expect(live).toHaveTextContent('');
+
+    advance(10_000 + 20_000);
+    expect(screen.getByText(/^Next: 5 reps · Service stop in 11:[34]\d$/)).toBeInTheDocument();
+    expect(live).toHaveTextContent('Block 1');
+    expect(screen.getByTitle('Minute 1').parentElement).toHaveStyle({ gridTemplateColumns: 'repeat(10, minmax(0, 1fr))' });
+
+    advance(11 * 60_000);
+    expect(screen.getByText(/^Service stop in 0:[34]\d$/)).toBeInTheDocument();
+
+    advance(60_000);
+    expect(live).toHaveTextContent('Service stop');
+
+    advance(60_000 + 11 * 60_000);
+    expect(screen.getByText(/^Last minute/)).toBeInTheDocument();
+    expect(live).toHaveTextContent('Block 2');
   });
 
   it('offers to resume an unfinished session, paused', () => {

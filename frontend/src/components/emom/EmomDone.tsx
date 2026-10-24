@@ -21,7 +21,7 @@ export function EmomDone({ session, onSkip }: { session: FinishedSession; onSkip
         signal.ink,
       )}
     >
-      <span role="status" className="flex items-center gap-3 text-[min(22vw,8rem)] font-extrabold uppercase leading-none">
+      <span role="alert" className="flex items-center gap-3 text-[min(22vw,8rem)] font-extrabold uppercase leading-none">
         Done <Check aria-hidden className="h-[0.7em] w-[0.7em]" strokeWidth={3} />
       </span>
       <span className="font-mono text-2xl tabular-nums">

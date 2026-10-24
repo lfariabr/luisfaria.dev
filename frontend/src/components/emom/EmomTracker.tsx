@@ -119,6 +119,7 @@ export function EmomTracker() {
     return (
       <EmomRun
         view={session.view}
+        awake={session.awake}
         onTogglePause={session.togglePause}
         onAdjust={session.adjust}
         onSkip={session.skip}
