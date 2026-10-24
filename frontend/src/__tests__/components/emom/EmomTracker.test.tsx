@@ -79,6 +79,7 @@ describe('EmomTracker', () => {
     fireEvent.click(screen.getByRole('button', { name: 'End' }));
     fireEvent.click(screen.getByRole('button', { name: 'Tap again to end' }));
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('5 pull-ups');
+    expect(screen.getByRole('columnheader', { name: 'Skipped' })).toBeInTheDocument();
   });
 
   it('keeps a lowered pace for the following minutes and blocks', () => {
@@ -223,6 +224,39 @@ describe('EmomTracker', () => {
     advance(60_000 + 11 * 60_000);
     expect(screen.getByText(/^Last minute/)).toBeInTheDocument();
     expect(live).toHaveTextContent('Block 2');
+  });
+
+  it('polishes the summary: note save state, numbered log line, copy feedback, CTA order', async () => {
+    const writeText = jest.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    render(<EmomTracker />);
+    fireEvent.click(screen.getByRole('button', { name: 'Start session' }));
+    advance(10_000 + 60_000 + 20_000);
+    fireEvent.click(screen.getByRole('button', { name: 'End' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Tap again to end' }));
+
+    expect(screen.queryByRole('columnheader', { name: 'Skipped' })).not.toBeInTheDocument();
+
+    const notes = screen.getByLabelText(/Notes/);
+    expect(notes).toHaveAttribute('placeholder', 'e.g. skin, elbows, fuel…');
+    expect(screen.queryByText('Saved ✓')).not.toBeInTheDocument();
+    fireEvent.change(notes, { target: { value: 'elbows fine' } });
+    fireEvent.blur(notes);
+    expect(screen.getByText('Saved ✓')).toBeInTheDocument();
+    fireEvent.change(notes, { target: { value: 'elbows fine, skin ok' } });
+    expect(screen.queryByText('Saved ✓')).not.toBeInTheDocument();
+
+    expect(screen.getByText(/^\| 1 \| \*\*Sun, 11 Oct\*\*/)).toHaveTextContent('EMOM `5/min`');
+
+    const buttons = screen.getAllByRole('button').map((b) => b.textContent);
+    expect(buttons.slice(-2)).toEqual(['Copy log line', 'Back to setup']);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy log line' }));
+    expect(await screen.findByRole('button', { name: 'Copied ✓' })).toBeInTheDocument();
+    expect(writeText).toHaveBeenCalledWith(expect.stringMatching(/^\| 1 \|/));
+    advance(2_000);
+    expect(screen.getByRole('button', { name: 'Copy log line' })).toBeInTheDocument();
+    delete (navigator as { clipboard?: unknown }).clipboard;
   });
 
   it('offers to resume an unfinished session, paused', () => {
