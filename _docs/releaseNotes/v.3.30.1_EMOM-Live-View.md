@@ -29,10 +29,11 @@
 - "Screen stays on" appears once the wake lock resolves.
 - The subtitle reads `Next: 5 reps · Service stop in …` mid-block, drops "Next" in a block's last minute, and reads `Last minute` at the end. The announcer goes from empty → Block 1 → Service stop → Block 2. The grid uses 10 columns.
 - Frontend: 358 passed. Typecheck and lint pass.
-- **Needs an iPhone check after deploy:**
-  - [ ] The bar stays pinned under the admin header while scrolling
-  - [ ] Timer, reps and pace visible without scrolling during a work block
-  - [ ] Screen-on dot shows, and no Fullscreen button
+- **iPhone check after deploy (2026-10-25):**
+  - [x] The bar stays pinned under the admin header while scrolling
+  - [x] Timer, reps and pace visible without scrolling during a work block
+  - [x] Screen-on dot shows, and no Fullscreen button
+  - [x] Admin Payments / Articles / Users tables still scroll sideways
 
 ## Before / After
 
