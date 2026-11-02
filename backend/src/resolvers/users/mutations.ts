@@ -4,6 +4,7 @@ import { Errors } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 import { enforceRateLimit, Subject } from '../../rateLimiting';
 import { verifyTurnstileToken } from '../../services/turnstile';
+import { notifyDiscord } from '../../services/discord';
 import type { LoginInput, RegisterInput } from '../../validation/schemas/user.schema';
 
 type ResolverContext = {
@@ -103,7 +104,13 @@ export const userMutations = {
     // Update last login
     user.lastLogin = new Date();
     await user.save();
-    
+
+    // Successful logins only: login has no Rate limit, so notifying failures could flood Discord.
+    // Fire-and-forget so Discord latency or outages never affect the login.
+    notifyDiscord(`🔐 Login: ${normalizedEmail}`).catch((error: unknown) => {
+      logger.error('Login Discord notification failed', { error: String(error) });
+    });
+
     return {
       token,
       user,
