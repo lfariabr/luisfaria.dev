@@ -6,6 +6,11 @@ import config from '../../config/config';
 import bcrypt from 'bcryptjs';
 import { connectRedis, disconnectRedis, getRedisClient } from '../../services/redis';
 
+const mockNotifyDiscord = jest.fn().mockResolvedValue(undefined);
+jest.mock('../../services/discord', () => ({
+  notifyDiscord: (...args: unknown[]) => mockNotifyDiscord(...args),
+}));
+
 // Define test queries and mutations
 const REGISTER_MUTATION = `
   mutation Register($input: RegisterInput!) {
@@ -247,6 +252,63 @@ describe('Auth Resolvers', () => {
         const errorMessage = response.body.singleResult.errors?.[0].message;
         expect(errorMessage).toContain('Invalid email or password');
       }
+    });
+  });
+
+  describe('Login Discord notification', () => {
+    beforeEach(async () => {
+      mockNotifyDiscord.mockReset().mockResolvedValue(undefined);
+      // Plaintext here: the User pre-save hook hashes it exactly once.
+      await User.create({
+        name: 'Notify User',
+        email: 'notify@example.com',
+        password: 'Test1234!',
+        role: UserRole.USER,
+      });
+    });
+
+    it('notifies Discord on a successful login', async () => {
+      const response = await executeOperation(LOGIN_MUTATION, {
+        input: { email: 'Notify@Example.com', password: 'Test1234!' },
+      });
+
+      expect(response.body.kind).toBe('single');
+      if (response.body.kind !== 'single') return;
+      expect(response.body.singleResult.errors).toBeUndefined();
+      expect(mockNotifyDiscord).toHaveBeenCalledTimes(1);
+      expect(mockNotifyDiscord).toHaveBeenCalledWith('🔐 Login: notify@example.com');
+    });
+
+    it('does not notify Discord when the password is wrong', async () => {
+      const response = await executeOperation(LOGIN_MUTATION, {
+        input: { email: 'notify@example.com', password: 'WrongPassword123!' },
+      });
+
+      expect(response.body.kind).toBe('single');
+      if (response.body.kind !== 'single') return;
+      expect(response.body.singleResult.errors).toBeTruthy();
+      expect(mockNotifyDiscord).not.toHaveBeenCalled();
+    });
+
+    it('does not notify Discord for an unknown email', async () => {
+      await executeOperation(LOGIN_MUTATION, {
+        input: { email: 'nobody@example.com', password: 'Test1234!' },
+      });
+
+      expect(mockNotifyDiscord).not.toHaveBeenCalled();
+    });
+
+    it('still logs in when the Discord notification rejects', async () => {
+      mockNotifyDiscord.mockRejectedValue(new Error('discord down'));
+
+      const response = await executeOperation(LOGIN_MUTATION, {
+        input: { email: 'notify@example.com', password: 'Test1234!' },
+      });
+
+      expect(response.body.kind).toBe('single');
+      if (response.body.kind !== 'single') return;
+      expect(response.body.singleResult.errors).toBeUndefined();
+      expect(response.body.singleResult.data?.login).toBeTruthy();
     });
   });
 });
