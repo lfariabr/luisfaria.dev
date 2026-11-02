@@ -15,11 +15,11 @@ import { useIsClient } from '@/lib/hooks/useIsClient';
 
 // Schema for project form validation
 const projectSchema = z.object({
-  title: z.string().min(3, { message: 'Title must be at least 3 characters' }).max(100),
-  description: z.string().min(10, { message: 'Description must be at least 10 characters' }),
-  imageUrl: z.string().url({ message: 'Please enter a valid URL for the image' }),
-  githubUrl: z.string().url({ message: 'Please enter a valid GitHub URL' }).optional().or(z.literal('')),
-  technologies: z.array(z.string()).min(1, { message: 'Add at least one technology' })
+  title: z.string().min(3, { error: 'Title must be at least 3 characters' }).max(100),
+  description: z.string().min(10, { error: 'Description must be at least 10 characters' }),
+  imageUrl: z.url({ error: 'Please enter a valid URL for the image' }),
+  githubUrl: z.url({ error: 'Please enter a valid GitHub URL' }).optional().or(z.literal('')),
+  technologies: z.array(z.string()).min(1, { error: 'Add at least one technology' })
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;

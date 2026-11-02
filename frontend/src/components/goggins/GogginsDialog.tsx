@@ -25,7 +25,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { sendDiscordWebhook } from '@/utils/discord';
 
 const schema = z.object({
-  userEmail: z.string().email('Invalid email address'),
+  userEmail: z.email({ error: 'Invalid email address' }),
   explicitMode: z.boolean().default(false),
 });
 
