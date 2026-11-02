@@ -16,14 +16,14 @@ import { Switch } from "@/components/ui/switch";
 
 // Form validation schema
 const articleFormSchema = z.object({
-  title: z.string().min(1, { message: "Title is required" }),
-  slug: z.string().min(1, { message: "Slug is required" })
+  title: z.string().min(1, { error: "Title is required" }),
+  slug: z.string().min(1, { error: "Slug is required" })
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, { 
-      message: "Slug must contain only lowercase letters, numbers, and hyphens" 
+      error: "Slug must contain only lowercase letters, numbers, and hyphens" 
     }),
-  content: z.string().min(10, { message: "Content must be at least 10 characters" }),
-  imageUrl: z.string().url({ message: "Must be a valid URL" }),
-  excerpt: z.string().max(150, { message: "Excerpt must be 150 characters or less" }).optional(),
+  content: z.string().min(10, { error: "Content must be at least 10 characters" }),
+  imageUrl: z.url({ error: "Must be a valid URL" }),
+  excerpt: z.string().max(150, { error: "Excerpt must be 150 characters or less" }).optional(),
   tags: z.array(z.string()).optional(),
 });
 
