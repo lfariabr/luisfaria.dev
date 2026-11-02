@@ -77,6 +77,10 @@ export const userMutations = {
   login: async (_: unknown, { input }: LoginArgs, context: ResolverContext) => {
     const { email, password } = input;
     const normalizedEmail = email.trim().toLowerCase();
+
+    // Both limits run before the user lookup so a blocked attempt reveals nothing about the account.
+    await enforceRateLimit('loginByIp', Subject.ip(context?.clientIp));
+    await enforceRateLimit('loginByEmail', Subject.email(normalizedEmail));
     
     // Find the user
     const user = await User.findOne({ email: normalizedEmail }).select('+password');
