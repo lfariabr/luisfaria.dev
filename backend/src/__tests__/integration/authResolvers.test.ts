@@ -311,4 +311,60 @@ describe('Auth Resolvers', () => {
       expect(response.body.singleResult.data?.login).toBeTruthy();
     });
   });
+
+  describe('Login Rate limits', () => {
+    const LOGIN_LIMIT_MESSAGE = 'Too many login attempts';
+
+    const loginErrorMessage = async (email: string, password: string, clientIp: string) => {
+      const response = await executeOperation(LOGIN_MUTATION, { input: { email, password } }, { clientIp });
+      if (response.body.kind !== 'single') throw new Error('expected a single result');
+      return response.body.singleResult.errors?.[0].message;
+    };
+
+    beforeEach(async () => {
+      // Plaintext here: the User pre-save hook hashes it exactly once.
+      await User.create({
+        name: 'Limit User',
+        email: 'limit@example.com',
+        password: 'Test1234!',
+        role: UserRole.USER,
+      });
+    });
+
+    it('blocks an email after 10 attempts, even with the right password and a fresh IP', async () => {
+      for (let i = 0; i < 10; i++) {
+        await loginErrorMessage('limit@example.com', 'WrongPassword123!', `203.0.113.${10 + i}`);
+      }
+
+      const message = await loginErrorMessage('Limit@Example.com', 'Test1234!', '203.0.113.99');
+      expect(message).toContain(LOGIN_LIMIT_MESSAGE);
+    });
+
+    it('blocks an IP after 20 attempts across different emails', async () => {
+      for (let i = 0; i < 20; i++) {
+        await loginErrorMessage(`spray-${i}@example.com`, 'WrongPassword123!', '198.51.100.7');
+      }
+
+      const message = await loginErrorMessage('limit@example.com', 'Test1234!', '198.51.100.7');
+      expect(message).toContain(LOGIN_LIMIT_MESSAGE);
+    });
+
+    it('does not block other IPs or emails', async () => {
+      for (let i = 0; i < 20; i++) {
+        await loginErrorMessage(`spray-${i}@example.com`, 'WrongPassword123!', '198.51.100.7');
+      }
+
+      const message = await loginErrorMessage('limit@example.com', 'Test1234!', '198.51.100.8');
+      expect(message).toBeUndefined();
+    });
+
+    it('blocks unknown emails too, so the limit reveals nothing about which accounts exist', async () => {
+      for (let i = 0; i < 10; i++) {
+        await loginErrorMessage('nobody@example.com', 'WrongPassword123!', `203.0.113.${10 + i}`);
+      }
+
+      const unknownEmail = await loginErrorMessage('nobody@example.com', 'WrongPassword123!', '203.0.113.99');
+      expect(unknownEmail).toContain(LOGIN_LIMIT_MESSAGE);
+    });
+  });
 });
