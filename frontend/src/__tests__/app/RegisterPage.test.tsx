@@ -18,10 +18,6 @@ jest.mock('@/lib/auth/AuthContext', () => ({
   }),
 }));
 
-jest.mock('@/utils/discord', () => ({
-  sendDiscordWebhook: jest.fn().mockResolvedValue(undefined),
-}));
-
 describe('RegisterPage captcha guardrails', () => {
   beforeEach(() => {
     jest.clearAllMocks();

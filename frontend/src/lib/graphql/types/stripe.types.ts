@@ -1,4 +1,6 @@
-export type StripeProductKey = 'coffee' | 'meeting';
+// Mirrors PAYMENT_PRODUCT_KEYS in backend/src/models/Payment.ts; keep the two lists in sync.
+export const STRIPE_PRODUCT_KEYS = ['coffee', 'meeting'] as const;
+export type StripeProductKey = (typeof STRIPE_PRODUCT_KEYS)[number];
 
 export interface StripeCheckoutSession {
   sessionId: string;

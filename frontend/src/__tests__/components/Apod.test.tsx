@@ -13,8 +13,9 @@ jest.mock("@/utils/analytics", () => ({
   trackClientEvent: (...args: unknown[]) => mockTrackClientEvent(...args),
 }));
 
+const mockSendDiscordEvent = jest.fn().mockResolvedValue(undefined);
 jest.mock("@/utils/discord", () => ({
-  sendDiscordWebhook: jest.fn().mockResolvedValue(undefined),
+  sendDiscordEvent: (...args: unknown[]) => mockSendDiscordEvent(...args),
 }));
 
 const mockUseAuth = jest.fn();
@@ -119,6 +120,8 @@ describe("ApodFab", () => {
     
     // Dialog content should include NASA branding
     expect(screen.getByText(/powered by nasa/i)).toBeInTheDocument();
+
+    expect(mockSendDiscordEvent).toHaveBeenCalledWith({ event: "apod_fab_opened" });
 
     expect(mockTrackClientEvent).toHaveBeenCalledWith(
       "apod_opened",

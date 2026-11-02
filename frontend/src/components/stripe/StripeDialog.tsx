@@ -15,7 +15,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useStripeCheckout } from "@/lib/hooks/useStripeCheckout";
 import type { StripeProductKey } from "@/lib/graphql/types/stripe.types";
 import { trackClientEvent } from "@/utils/analytics";
-import { sendDiscordWebhook } from "@/utils/discord";
+import { sendDiscordEvent } from "@/utils/discord";
 import { toast } from "sonner";
 import { AlertCircle } from "lucide-react";
 
@@ -67,7 +67,7 @@ export function StripeDialog({ open, onOpenChange }: StripeDialogProps) {
     setSelected(productKey);
     setErrorMessage(null);
     trackClientEvent("stripe_item_selected", { productKey });
-    void sendDiscordWebhook(`💳 Stripe option selected: ${productKey}`);
+    void sendDiscordEvent({ event: "stripe_option_selected", productKey });
   };
 
   const handleContinue = async () => {

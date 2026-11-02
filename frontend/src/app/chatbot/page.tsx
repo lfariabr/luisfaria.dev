@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { MainLayout } from "@/components/layouts/MainLayout";
 import { useAuth } from '@/lib/auth/AuthContext';
 import { gql, useMutation } from '@apollo/client';
-import { sendDiscordWebhook } from '@/utils/discord';
+import { sendDiscordEvent } from '@/utils/discord';
 import { logger } from '@/lib/logger';
 import { InfoRail } from '@/components/chat/InfoRail';
 import { ChatTranscript } from '@/components/chat/ChatTranscript';
@@ -227,8 +227,8 @@ export default function ChatbotPage() {
     setIsLoading(true);
     pushUsageEvent('Message sent');
 
-    void sendDiscordWebhook('Chatbot message submitted').catch((err) => {
-      logger.error('sendDiscordWebhook failed', { error: String(err) });
+    void sendDiscordEvent({ event: 'chatbot_message' }).catch((err) => {
+      logger.error('sendDiscordEvent failed', { error: String(err) });
     });
     
     if (isAuthenticated) {

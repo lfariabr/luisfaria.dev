@@ -3,6 +3,8 @@ import { Errors } from '../../utils/errors';
 import { enforceRateLimit, Subject } from '../../rateLimiting';
 import { chatWithGogginsMode } from '../../services/openai';
 import { sendGogginsEmail } from '../../services/resendMailer';
+import { notifyDiscord } from '../../services/discord';
+import { logger } from '../../utils/logger';
 
 // Simple email normalization/validation (replace later with zod schema)
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
@@ -45,6 +47,13 @@ export const activateGogginsMode = async (_: any, { input }: any) => {
     isSubscriber,
     subscriptionType,
   });
+
+  // Fire-and-forget so Discord latency or outages never affect the scream.
+  notifyDiscord(`💪 Goggins mode: ${userEmail} (tone: ${explicitMode ? 'explicit' : 'filtered'})`).catch(
+    (error: unknown) => {
+      logger.error('Goggins Discord notification failed', { error: String(error) });
+    },
+  );
 
   if (process.env.NODE_ENV !== 'test') {
     // Fire-and-forget email notification (non-blocking, non-fatal)

@@ -2,30 +2,33 @@
 import '@testing-library/jest-dom';
 require('@testing-library/jest-dom');
 
-// Mock window.matchMedia - required for next-themes
-Object.defineProperty(window, 'matchMedia', {
-  writable: true,
-  value: jest.fn().mockImplementation(query => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: jest.fn(), // deprecated
-    removeListener: jest.fn(), // deprecated
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
-  })),
-});
+// Browser-only polyfills; skipped by suites that opt into `@jest-environment node` (API routes).
+if (typeof window !== 'undefined') {
+  // Mock window.matchMedia - required for next-themes
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: jest.fn().mockImplementation(query => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: jest.fn(), // deprecated
+      removeListener: jest.fn(), // deprecated
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    })),
+  });
 
-// Polyfill ResizeObserver used by Radix UI
-class ResizeObserverMock {
-  observe() {}
-  unobserve() {}
-  disconnect() {}
-}
-if (typeof window.ResizeObserver === 'undefined') {
-  window.ResizeObserver = ResizeObserverMock;
-  global.ResizeObserver = ResizeObserverMock;
+  // Polyfill ResizeObserver used by Radix UI
+  class ResizeObserverMock {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+  if (typeof window.ResizeObserver === 'undefined') {
+    window.ResizeObserver = ResizeObserverMock;
+    global.ResizeObserver = ResizeObserverMock;
+  }
 }
 
 // Mock Next.js router

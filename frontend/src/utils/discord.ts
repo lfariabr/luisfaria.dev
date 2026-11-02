@@ -1,17 +1,13 @@
 import { logger } from '@/lib/logger';
+import type { DiscordEvent } from '@/lib/discord/events';
 
-export async function sendDiscordWebhook(message: string): Promise<void> {
+export async function sendDiscordEvent(event: DiscordEvent): Promise<void> {
   try {
-    const payload = { message };
-    logger.debug('Sending Discord webhook', { message });
-
     const response = await fetch('/api/discord', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(event)
     });
-
-    logger.debug('Discord webhook response', { status: response.status });
 
     if (!response.ok) {
       const error = await response.text().catch(() => 'Failed to read error');

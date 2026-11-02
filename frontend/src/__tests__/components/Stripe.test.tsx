@@ -2,10 +2,10 @@ import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { StripeFab } from "@/components/stripe/StripeFab";
-import { sendDiscordWebhook } from "@/utils/discord";
+import { sendDiscordEvent } from "@/utils/discord";
 
 jest.mock("@/utils/discord", () => ({
-  sendDiscordWebhook: jest.fn().mockResolvedValue(undefined),
+  sendDiscordEvent: jest.fn().mockResolvedValue(undefined),
 }));
 
 const mockStartCheckout = jest.fn();
@@ -141,8 +141,11 @@ describe("StripeFab", () => {
     await user.click(screen.getByRole("button", { name: /buy me a coffee/i }));
     await user.click(screen.getByRole("button", { name: /continue to secure checkout/i }));
 
-    const messages = (sendDiscordWebhook as jest.Mock).mock.calls.map(([message]) => message);
-    expect(messages.some((m: string) => /checkout initiated/i.test(m))).toBe(false);
+    // Only allowlisted UI events go to /api/discord; checkout start is not one of them.
+    expect((sendDiscordEvent as jest.Mock).mock.calls).toEqual([
+      [{ event: "stripe_fab_opened" }],
+      [{ event: "stripe_option_selected", productKey: "coffee" }],
+    ]);
   });
 
   it("rejects invalid email before starting checkout", async () => {
