@@ -10,7 +10,6 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { sendDiscordWebhook } from '@/utils/discord';
 
 declare global {
   interface Window {
@@ -68,8 +67,6 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
-    
-    void sendDiscordWebhook(`📝 New registration: ${email}`);
 
     // Form validation
     if (password !== confirmPassword) {

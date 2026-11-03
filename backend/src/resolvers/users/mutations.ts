@@ -66,7 +66,12 @@ export const userMutations = {
     // Update last login
     user.lastLogin = new Date();
     await user.save();
-    
+
+    // Fire-and-forget so Discord latency or outages never affect the registration.
+    notifyDiscord(`📝 New registration: ${normalizedEmail}`).catch((error: unknown) => {
+      logger.error('Register Discord notification failed', { error: String(error) });
+    });
+
     return {
       token,
       user,

@@ -12,7 +12,7 @@ import {
 import { Coffee } from "lucide-react";
 import { StripeDialog } from "./StripeDialog";
 import { trackClientEvent } from "@/utils/analytics";
-import { sendDiscordWebhook } from "@/utils/discord";
+import { sendDiscordEvent } from "@/utils/discord";
 
 // Private pages where a support prompt has no audience and only covers the content.
 const HIDDEN_ON = ['/notes', '/places', '/emom', '/admin/emom'];
@@ -29,7 +29,7 @@ export function StripeFab() {
   const handleOpen = () => {
     setOpen(true);
     trackClientEvent("stripe_fab_opened");
-    void sendDiscordWebhook('☕ Stripe FAB opened');
+    void sendDiscordEvent({ event: 'stripe_fab_opened' });
   };
 
   return (

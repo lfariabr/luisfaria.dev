@@ -5,10 +5,6 @@ import { GraphQLError } from 'graphql';
 import { GogginsDialog } from '@/components/goggins/GogginsDialog';
 import { ACTIVATE_GOGGINS_MODE } from '@/lib/graphql/mutations/scream.mutations';
 
-jest.mock('@/utils/discord', () => ({
-  sendDiscordWebhook: jest.fn().mockResolvedValue(undefined),
-}));
-
 const email = 'rl@test.com';
 const NOW = new Date('2026-10-12T10:00:00.000Z').getTime();
 const inSeconds = (s: number) => new Date(NOW + s * 1000).toISOString();

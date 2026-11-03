@@ -14,7 +14,8 @@ export async function notifyDiscord(content: string): Promise<void> {
     const response = await fetch(config.discordWebhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content }),
+      // allowed_mentions: content can carry user-supplied text (emails), so it must never ping anyone.
+      body: JSON.stringify({ content, allowed_mentions: { parse: [] } }),
       signal: AbortSignal.timeout(DISCORD_TIMEOUT_MS),
     });
     if (!response.ok) {

@@ -1,39 +1,38 @@
 import { NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
+import { discordMessageFor } from '@/lib/discord/events';
 
-const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
-
+// Accepts only a known event key (see lib/discord/events.ts) and sends its fixed message,
+// so callers can never put their own text into the channel.
 export async function POST(request: Request) {
-  
-  if (!DISCORD_WEBHOOK_URL) {
+  const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+  if (!webhookUrl) {
     return NextResponse.json(
       { error: 'Server configuration error' },
       { status: 500 }
     );
   }
 
+  let body: unknown;
   try {
-    const body = await request.text();
-    logger.debug('Discord route received request', { bodyLength: body.length });
+    body = await request.json();
+  } catch {
+    return NextResponse.json(
+      { error: 'Invalid JSON in request body' },
+      { status: 400 }
+    );
+  }
 
-    let parsed;
-    try {
-      parsed = JSON.parse(body);
-    } catch (parseError) {
-      logger.error('JSON parse error', { error: String(parseError), bodyPresent: !!body });
-      return NextResponse.json(
-        { error: 'Invalid JSON in request body' },
-        { status: 400 }
-      );
-    }
-    
-    const { message } = parsed;
-    logger.debug('Discord message received', { message });
-    
-    const response = await fetch(DISCORD_WEBHOOK_URL, {
+  const content = discordMessageFor(body);
+  if (!content) {
+    return NextResponse.json({ error: 'Unknown event' }, { status: 400 });
+  }
+
+  try {
+    const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content: message })
+      body: JSON.stringify({ content, allowed_mentions: { parse: [] } }),
     });
 
     if (!response.ok) {
@@ -41,7 +40,6 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ success: true });
-    
   } catch (error) {
     logger.error('Discord webhook error', { error: String(error) });
     return NextResponse.json(
