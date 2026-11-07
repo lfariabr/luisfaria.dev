@@ -78,11 +78,11 @@ run_monitor
 check "third miss: suppressed by the cooldown" not_posted "Container(s) Down"
 
 docker_says "$ALL"; run_monitor
-check "recovery: sends the recovery message" posted "Containers Running Again"
+check "recovery: sends the recovery message" posted "Container Check Passing Again"
 check "recovery: resets the failure count" logged "Containers: 5 running"
 
 run_monitor
-check "after recovery: no repeat recovery message" not_posted "Containers Running Again"
+check "after recovery: no repeat recovery message" not_posted "Container Check Passing Again"
 
 docker_says "$NO_REDIS"; run_monitor
 docker_says "$ALL"; run_monitor
@@ -91,8 +91,21 @@ check "single blip: no alert and no recovery message" not_posted "Container"
 docker_says "Cannot connect to the Docker daemon" 1; run_monitor
 check "docker ps fails: logged as such" logged "docker ps failed (consecutive failures: 1)"
 run_monitor
-check "docker ps fails twice: alerts that status is unknown" posted "status is unknown"
-check "docker ps fails twice: does not claim containers are down" not_posted "redis_cache"
+check "docker ps fails twice: alerts that status is unknown" posted "Container Status Unknown"
+check "docker ps fails twice: does not claim containers are down" not_posted "Container(s) Down"
+check "docker ps fails twice: does not name a container" not_posted "redis_cache"
+
+docker_says "$ALL"; run_monitor
+docker_says "$NO_REDIS"; run_monitor
+docker_says "Cannot connect to the Docker daemon" 1; run_monitor
+check "miss then docker ps failure: alert describes this run (unknown)" posted "Container Status Unknown"
+check "miss then docker ps failure: alert gives the shared streak" posted "failed 2 times in a row"
+
+docker_says "$ALL"; echo "x; rm -rf /" > "$WORK/state/containers.failures"; run_monitor
+check "corrupt counter: run still completes" logged "=== Done ==="
+check "corrupt counter: treated as 0" logged "Containers: 5 running"
+echo "1oops" > "$WORK/state/ready.failures"; run_monitor
+check "corrupt ready counter: run still completes" logged "Ready: 200"
 
 echo
 echo "$PASS passed, $FAIL failed"

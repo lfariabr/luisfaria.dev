@@ -7,7 +7,7 @@
 # Setup (run as root on the production server):
 #
 #   # 1. Create dedicated monitor user (no login shell, no home)
-#   useradd --system --no-create-home --shell /usr/sbin/nologin monitor
+#   useradd --system --user-group --no-create-home --shell /usr/sbin/nologin monitor
 #   usermod -aG docker monitor   # needed for `docker ps`; NOTE: docker group is root-equivalent
 #
 #   # 2. Deploy script
@@ -121,6 +121,13 @@ should_alert() {
   return 0
 }
 
+# Reads a consecutive-failure counter; anything but a plain number counts as 0.
+read_counter() {
+  local value
+  value=$(cat "$1" 2>/dev/null || true)
+  if [[ "$value" =~ ^(0|[1-9][0-9]*)$ ]]; then echo "$value"; else echo 0; fi
+}
+
 send_alert() {
   local check_name="$1"
   local title="$2"
@@ -231,14 +238,14 @@ check_containers() {
     done
   fi
 
-  local failures=0
-  [ -f "$failures_file" ] && failures=$(cat "$failures_file" 2>/dev/null || echo 0)
+  local failures
+  failures=$(read_counter "$failures_file")
 
   if [ "$ps_ok" = 1 ] && [ -z "$missing" ]; then
     if [ "$failures" -ge "$CONTAINERS_FAILURES_TO_ALERT" ]; then
       # We alerted for this outage, so say it is over (bypasses the cooldown).
-      if post_discord "✅ Containers Running Again" \
-        "All expected containers are running again after ${failures} failed checks (~$(( failures * 5 )) min)." \
+      if post_discord "✅ Container Check Passing Again" \
+        "All expected containers are running. The check had failed ${failures} times in a row (~$(( failures * 5 )) min)." \
         3066993; then
         echo "[$TIMESTAMP] Containers: recovery sent"
       else
@@ -264,13 +271,15 @@ check_containers() {
   echo "[$TIMESTAMP] Containers: ${problem} (consecutive failures: ${failures}); docker ps output: [$(tr '\n' ' ' <<< "$running")]"
 
   if [ "$failures" -ge "$CONTAINERS_FAILURES_TO_ALERT" ]; then
-    local detail
+    # The counter covers both failure kinds; the title and text describe this run only.
+    local streak="The container check has failed ${failures} times in a row."
     if [ "$ps_ok" = 1 ]; then
-      detail="The following containers are not running:\n$(for c in $missing; do printf '• %s\\n' "$c"; done)"
+      send_alert "containers" "🔴 Container(s) Down" \
+        "These containers are not running:\n$(for c in $missing; do printf '• %s\\n' "$c"; done)${streak}"
     else
-      detail="\`docker ps\` failed on ${failures} consecutive checks, so container status is unknown."
+      send_alert "containers" "⚠️ Container Status Unknown" \
+        "\`docker ps\` failed, so container status is unknown. ${streak}"
     fi
-    send_alert "containers" "🔴 Container(s) Down" "${detail}"
   fi
 }
 
@@ -283,8 +292,8 @@ check_ready() {
   status=$(curl -s -o /dev/null -w "%{http_code}" -m 10 "$READY_URL" 2>/dev/null || true)
   [ -n "$status" ] || status="000"
 
-  local failures=0
-  [ -f "$failures_file" ] && failures=$(cat "$failures_file" 2>/dev/null || echo 0)
+  local failures
+  failures=$(read_counter "$failures_file")
 
   if [ "$status" = "200" ]; then
     if [ "$failures" -ge "$READY_FAILURES_TO_ALERT" ]; then
