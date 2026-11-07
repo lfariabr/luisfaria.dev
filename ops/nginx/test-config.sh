@@ -46,7 +46,7 @@ stub_conf() { # stub_conf <name> <port> <big-path> [self-gzip]
   # Echoes who answered; <big-path> returns ~2 KB of JSON, gzipped by the stub itself when self-gzip is set
   local selfgz=""; [ -n "${4:-}" ] && selfgz="gzip on; gzip_types application/json; gzip_min_length 1;"
   # shellcheck disable=SC2016 # $request_uri is for nginx, not the shell
-  printf 'server { listen %s; %s location / { default_type text/plain; return 200 "%s $request_uri\\n"; } location = %s { default_type application/json; return 200 '"'"'{"pad":"%s"}'"'"'; } }\n' \
+  printf 'server { listen %s; add_header X-Powered-By "stub"; %s location / { default_type text/plain; return 200 "%s $request_uri\\n"; } location = %s { default_type application/json; return 200 '"'"'{"pad":"%s"}'"'"'; } }\n' \
     "$2" "$selfgz" "$1" "$3" "$PAD"
 }
 mkdir -p "$WORK/fe" "$WORK/be"
@@ -102,7 +102,8 @@ curl_exit() { # curl_exit <url> [extra curl args...] -> curl's exit code (52 = e
 }
 header() { # header <name> <host> <path>
   curl -sk -m 5 -D - -o /dev/null --resolve "$2:$PORT_HTTPS:127.0.0.1" "https://$2:$PORT_HTTPS$3" \
-    | tr -d '\r' | awk -v h="$(tr '[:upper:]' '[:lower:]' <<< "$1")" -F': ' 'tolower($1)==h {print $2}'
+    | tr -d '\r' | awk -v h="$(tr '[:upper:]' '[:lower:]' <<< "$1")" \
+      'i = index($0, ": ") { if (tolower(substr($0, 1, i - 1)) == h) print substr($0, i + 2) }'   # split on the first ": " only (CSP has "data: https:")
 }
 
 echo "== routing"
@@ -125,6 +126,16 @@ echo "== headers"
 expect "HSTS on the frontend"                   "max-age=31536000; includeSubDomains" "$(header Strict-Transport-Security luisfaria.dev /)"
 expect "CSP on the backend routes too"          "1"                               "$(header Content-Security-Policy luisfaria.dev /health | grep -c "default-src 'self'")"
 
+expect "Referrer-Policy keeps the origin cross-site" "strict-origin-when-cross-origin" "$(header Referrer-Policy luisfaria.dev /)"
+expect "X-XSS-Protection is off (CSP replaces it)" "0" "$(header X-XSS-Protection luisfaria.dev /)"
+expect "Permissions-Policy denies unused features" "camera=(), microphone=(), geolocation=(), payment=(), usb=()" \
+  "$(header Permissions-Policy luisfaria.dev /)"
+csp="$(header Content-Security-Policy luisfaria.dev /)"
+for d in "object-src 'none'" "base-uri 'self'" "form-action 'self'" "frame-ancestors 'none'" "https://o4510868467417088.ingest.us.sentry.io"; do
+  expect "CSP has $d" "1" "$(grep -cF -- "$d" <<< "$csp")"
+done
+expect "X-Powered-By from upstreams is hidden"   "" "$(header X-Powered-By luisfaria.dev /)$(header X-Powered-By luisfaria.dev /health)"
+expect "Server header has no nginx version"      "nginx" "$(header Server luisfaria.dev /)"
 expect "no CORS headers from nginx on pages"     "0" \
   "$(curl -sk -m 5 -D - -o /dev/null --resolve "luisfaria.dev:$PORT_HTTPS:127.0.0.1" "https://luisfaria.dev:$PORT_HTTPS/" | grep -ci '^access-control-')"
 expect "no CORS headers from nginx on /graphql"  "0" \
