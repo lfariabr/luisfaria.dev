@@ -41,13 +41,17 @@ echo "$out"
 if grep -q "\[warn\]\|\[emerg\]" <<< "$out"; then echo "FAIL: nginx -t printed warnings"; exit 1; fi
 
 # 2. Routing against stub upstreams that echo who answered
-stub_conf() { # stub_conf <name> <port>
+PAD="$(printf 'x%.0s' $(seq 1 2000))"   # ~2 KB body, over gzip_min_length
+stub_conf() { # stub_conf <name> <port> <big-path> [self-gzip]
+  # Echoes who answered; <big-path> returns ~2 KB of JSON, gzipped by the stub itself when self-gzip is set
+  local selfgz=""; [ -n "${4:-}" ] && selfgz="gzip on; gzip_types application/json; gzip_min_length 1;"
   # shellcheck disable=SC2016 # $request_uri is for nginx, not the shell
-  printf 'server { listen %s; location / { default_type text/plain; return 200 "%s $request_uri\\n"; } }\n' "$2" "$1"
+  printf 'server { listen %s; %s location / { default_type text/plain; return 200 "%s $request_uri\\n"; } location = %s { default_type application/json; return 200 '"'"'{"pad":"%s"}'"'"'; } }\n' \
+    "$2" "$selfgz" "$1" "$3" "$PAD"
 }
 mkdir -p "$WORK/fe" "$WORK/be"
-stub_conf frontend 3000 > "$WORK/fe/default.conf"
-stub_conf backend 4000 > "$WORK/be/default.conf"
+stub_conf frontend 3000 /big gzip > "$WORK/fe/default.conf"   # like Next: compresses its own responses
+stub_conf backend 4000 /health/big > "$WORK/be/default.conf"    # like Express /graphql: uncompressed JSON
 chmod -R a+rX "$WORK"
 
 docker network create "$NET" >/dev/null
@@ -125,6 +129,23 @@ expect "no CORS headers from nginx on pages"     "0" \
   "$(curl -sk -m 5 -D - -o /dev/null --resolve "luisfaria.dev:$PORT_HTTPS:127.0.0.1" "https://luisfaria.dev:$PORT_HTTPS/" | grep -ci '^access-control-')"
 expect "no CORS headers from nginx on /graphql"  "0" \
   "$(curl -sk -m 5 -D - -o /dev/null -X POST -d '{}' --resolve "luisfaria.dev:$PORT_HTTPS:127.0.0.1" "https://luisfaria.dev:$PORT_HTTPS/graphql" | grep -ci '^access-control-')"
+
+echo "== http2 and gzip"
+expect "HTTP/2 is negotiated"                    "2" \
+  "$(curl -sk -m 5 --http2 -o /dev/null -w '%{http_version}' --resolve "luisfaria.dev:$PORT_HTTPS:127.0.0.1" "https://luisfaria.dev:$PORT_HTTPS/")"
+gz() { # gz <path> [Accept-Encoding] -> "<Content-Encoding count> <encoding> <decoded body bytes>"
+  curl -sk -m 5 --resolve "luisfaria.dev:$PORT_HTTPS:127.0.0.1" -H "Accept-Encoding: ${2:-gzip}" \
+    -D "$WORK/gzh" -o "$WORK/gzb" "https://luisfaria.dev:$PORT_HTTPS$1" || true
+  local n enc size
+  n=$(tr -d '\r' < "$WORK/gzh" | grep -ci '^content-encoding:' || true)
+  enc=$(tr -d '\r' < "$WORK/gzh" | awk -F': ' 'tolower($1)=="content-encoding" {print $2}' | head -1)
+  if [ "$enc" = "gzip" ]; then size=$(gzip -dc < "$WORK/gzb" | wc -c); else size=$(wc -c < "$WORK/gzb"); fi
+  echo "$n ${enc:-none} $(tr -d ' ' <<< "$size")"
+}
+expect "big backend JSON is gzipped"             "1 gzip 2010" "$(gz /health/big)"
+expect "no gzip when the client doesn't ask"     "0 none 2010" "$(gz /health/big identity)"
+expect "small responses are not gzipped"         "0 none 16"   "$(gz /health)"
+expect "already-gzipped upstream is not gzipped twice" "1 gzip 2010" "$(gz /big)"
 
 echo "== redirects and catch-alls"
 expect "http apex redirects to https"           "301"  "$(status "http://luisfaria.dev:$PORT_HTTP/x" --resolve "luisfaria.dev:$PORT_HTTP:127.0.0.1")"
