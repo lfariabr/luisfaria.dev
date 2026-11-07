@@ -117,3 +117,6 @@ backend/scripts/query-nana-notes.ts
 backend/scripts/insert-nana-april-checkpoint.ts
 # macOS
 .DS_Store
+
+# Claude Code agent worktrees (may hold a copied backend/.env)
+.claude/worktrees/
