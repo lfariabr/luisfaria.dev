@@ -152,6 +152,23 @@ jobs:
           retention-days: 7
 
   # ============================================
+  # Server Monitor Tests (ops/monitor, installed by hand on the VPS)
+  # ============================================
+  monitor-test:
+    name: Monitor Script Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Shellcheck
+        run: shellcheck ops/monitor/monitor-resources.sh ops/monitor/test-monitor.sh
+
+      - name: Run tests
+        run: bash ops/monitor/test-monitor.sh
+
+  # ============================================
   # Build Verification
   # ============================================
   build-check:
