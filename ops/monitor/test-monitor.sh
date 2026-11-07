@@ -101,6 +101,14 @@ docker_says "Cannot connect to the Docker daemon" 1; run_monitor
 check "miss then docker ps failure: alert describes this run (unknown)" posted "Container Status Unknown"
 check "miss then docker ps failure: alert gives the shared streak" posted "failed 2 times in a row"
 
+docker_says "$NO_REDIS"; run_monitor
+check "unknown then confirmed down: the down alert is not muted by the unknown one" posted "Container(s) Down"
+docker_says "$ALL"; run_monitor
+check "recovery after both kinds: recovery sent" posted "Container Check Passing Again"
+docker_says "$NO_REDIS"; run_monitor; run_monitor
+check "recovery cleared both cooldowns: next outage alerts again" posted "Container(s) Down"
+docker_says "$ALL"; run_monitor
+
 docker_says "$ALL"; echo "x; rm -rf /" > "$WORK/state/containers.failures"; run_monitor
 check "corrupt counter: run still completes" logged "=== Done ==="
 check "corrupt counter: treated as 0" logged "Containers: 5 running"

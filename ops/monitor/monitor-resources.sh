@@ -251,7 +251,7 @@ check_containers() {
       else
         echo "[$TIMESTAMP] [ERROR] Discord webhook failed for 'containers' recovery"
       fi
-      rm -f "${STATE_DIR}/containers.last_alert"
+      rm -f "${STATE_DIR}/containers_down.last_alert" "${STATE_DIR}/containers_unknown.last_alert"
     fi
     echo 0 > "$failures_file" 2>/dev/null || true
     echo "[$TIMESTAMP] Containers: $(grep -c . <<< "$running") running"
@@ -272,12 +272,13 @@ check_containers() {
 
   if [ "$failures" -ge "$CONTAINERS_FAILURES_TO_ALERT" ]; then
     # The counter covers both failure kinds; the title and text describe this run only.
+    # Separate cooldown keys, so an "unknown" alert never mutes a confirmed "down".
     local streak="The container check has failed ${failures} times in a row."
     if [ "$ps_ok" = 1 ]; then
-      send_alert "containers" "🔴 Container(s) Down" \
+      send_alert "containers_down" "🔴 Container(s) Down" \
         "These containers are not running:\n$(for c in $missing; do printf '• %s\\n' "$c"; done)${streak}"
     else
-      send_alert "containers" "⚠️ Container Status Unknown" \
+      send_alert "containers_unknown" "⚠️ Container Status Unknown" \
         "\`docker ps\` failed, so container status is unknown. ${streak}"
     fi
   fi
