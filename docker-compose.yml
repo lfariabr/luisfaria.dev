@@ -73,8 +73,8 @@ services:
       - RELATIONSHIP_HOME_LAT=${RELATIONSHIP_HOME_LAT}
       - RELATIONSHIP_HOME_LNG=${RELATIONSHIP_HOME_LNG}
       - RELATIONSHIP_HOME_LABEL=${RELATIONSHIP_HOME_LABEL:-Home base}
-    ports:
-      - "4000:4000"
+    # No published port: nginx reaches backend_api:4000 over the compose network.
+    # Publishing it bypassed nginx and ufw (Docker ports skip ufw), see #453.
     depends_on:
       - db
       - cache
