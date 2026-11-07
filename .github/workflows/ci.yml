@@ -169,6 +169,23 @@ jobs:
         run: bash ops/monitor/test-monitor.sh
 
   # ============================================
+  # nginx Config Tests (nginx/conf, deployed by the deploy job)
+  # ============================================
+  nginx-test:
+    name: nginx Config Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Shellcheck
+        run: shellcheck ops/nginx/test-config.sh
+
+      - name: nginx -t and routing tests
+        run: bash ops/nginx/test-config.sh
+
+  # ============================================
   # Build Verification
   # ============================================
   build-check:
@@ -243,7 +260,7 @@ jobs:
   docker-build:
     name: Build & Push Docker Images
     runs-on: ubuntu-latest
-    needs: [backend-test, frontend-test]
+    needs: [backend-test, frontend-test, nginx-test]
     # Only build images on pushes to main/master (not PRs)
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     environment: prod
@@ -387,6 +404,15 @@ jobs:
             # Pull pre-built images (FAST! No building!)
             echo "📦 Pulling latest images from GHCR..."
             docker compose pull
+
+            # Stop before recreating if the nginx config is invalid, so the running
+            # gateway keeps serving. Uses the real certs; upstream names resolve locally.
+            echo "🧪 Validating nginx config..."
+            docker run --rm \
+              --add-host frontend_app:127.0.0.1 --add-host backend_api:127.0.0.1 \
+              -v "$PWD/nginx/conf:/etc/nginx/conf.d:ro" \
+              -v "$PWD/certbot/conf:/etc/letsencrypt:ro" \
+              nginx:alpine nginx -t
             
             # Restart with new images
             echo "🔄 Restarting containers..."
