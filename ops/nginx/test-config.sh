@@ -62,10 +62,16 @@ docker run -d --name "$NET-gw" --network "$NET" \
   -v "$WORK/certbot-www:/var/www/certbot:ro" \
   "$IMAGE" >/dev/null
 
+ready=0
 for _ in $(seq 1 30); do
-  curl -sk -o /dev/null --resolve "luisfaria.dev:$PORT_HTTPS:127.0.0.1" "https://luisfaria.dev:$PORT_HTTPS/" && break
+  if curl -sk -m 5 -o /dev/null --resolve "luisfaria.dev:$PORT_HTTPS:127.0.0.1" "https://luisfaria.dev:$PORT_HTTPS/"; then
+    ready=1; break
+  fi
   sleep 1
 done
+if [ "$ready" -ne 1 ]; then
+  echo "FAIL: gateway did not answer within 30s"; docker logs "$NET-gw" 2>&1 | tail -20; exit 1
+fi
 
 PASS=0
 FAIL=0
@@ -83,6 +89,12 @@ https() { # https <host> <path> [extra curl args...] -> "<status> <first body li
 status() { # status <url> [extra curl args...]
   local url="$1"; shift
   curl -sk -m 5 -o /dev/null -w '%{http_code}' "$@" "$url" || true
+}
+curl_exit() { # curl_exit <url> [extra curl args...] -> curl's exit code (52 = empty reply, 35 = TLS handshake failed)
+  local url="$1"; shift
+  local rc=0
+  curl -sk -m 5 -o /dev/null "$@" "$url" || rc=$?
+  echo "$rc"
 }
 header() { # header <name> <host> <path>
   curl -sk -m 5 -D - -o /dev/null --resolve "$2:$PORT_HTTPS:127.0.0.1" "https://$2:$PORT_HTTPS$3" \
@@ -115,8 +127,11 @@ expect "https www redirects to apex"            "https://luisfaria.dev/x" \
   "$(curl -sk -m 5 -o /dev/null -w '%{redirect_url}' --resolve "www.luisfaria.dev:$PORT_HTTPS:127.0.0.1" "https://www.luisfaria.dev:$PORT_HTTPS/x")"
 expect "ACME challenge is served over http"     "acme-token" \
   "$(curl -s -m 5 --resolve "luisfaria.dev:$PORT_HTTP:127.0.0.1" "http://luisfaria.dev:$PORT_HTTP/.well-known/acme-challenge/t1")"
-expect "bare-IP http gets no response (444)"    "000"  "$(status "http://127.0.0.1:$PORT_HTTP/")"
-expect "unknown SNI is refused at TLS"          "000"  "$(status "https://other.example:$PORT_HTTPS/" --resolve "other.example:$PORT_HTTPS:127.0.0.1")"
+# Exit codes, not "000": they prove the gateway answered and rejected, not that it was unreachable.
+expect "bare-IP http: connection closed with no reply (444, curl 52)" "52" "$(curl_exit "http://127.0.0.1:$PORT_HTTP/")"
+expect "unknown SNI: TLS handshake refused (curl 35)" "35" \
+  "$(curl_exit "https://other.example:$PORT_HTTPS/" --resolve "other.example:$PORT_HTTPS:127.0.0.1")"
+expect "gateway still up after the rejections"  "200 frontend /" "$(https luisfaria.dev /)"
 
 echo
 echo "$PASS passed, $FAIL failed"
