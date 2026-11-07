@@ -1,9 +1,18 @@
 version: '3.8'
 
+# Cap each container's json-file log: 10 MB x 3 files (30 MB max). Without this,
+# logs grow unbounded until the next deploy recreates the container. See #460.
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   reverse-proxy:
     image: nginx:alpine
     container_name: nginx_gateway
+    logging: *default-logging
     ports:
       - "80:80"
       - "443:443"
@@ -29,6 +38,7 @@ services:
   webapp:
     image: ghcr.io/lfariabr/luisfaria.dev/frontend:latest # ← CHANGED FROM `build:`
     container_name: frontend_app
+    logging: *default-logging
     environment:
       - NEXT_PUBLIC_GRAPHQL_URL=https://luisfaria.dev/graphql
       - NEXT_PUBLIC_SENTRY_DSN=${NEXT_PUBLIC_SENTRY_DSN}
@@ -51,6 +61,7 @@ services:
   api:
     image: ghcr.io/lfariabr/luisfaria.dev/backend:latest # ← CHANGED FROM `build:`
     container_name: backend_api
+    logging: *default-logging
     environment:
       - NODE_ENV=production
       - PORT=4000
@@ -93,6 +104,7 @@ services:
   db:
     image: mongo:4.4
     container_name: mongodb_db
+    logging: *default-logging
     volumes:
       - mongodb-data:/data/db
     networks:
@@ -110,6 +122,7 @@ services:
   cache:
     image: redis:alpine
     container_name: redis_cache
+    logging: *default-logging
     volumes:
       - redis-data:/data
     networks:
