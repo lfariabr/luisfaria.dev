@@ -110,7 +110,7 @@ expect "/health/ready goes to the backend"      "200 backend /health/ready"     
 expect "/healthz is not the backend"            "200 frontend /healthz"           "$(https luisfaria.dev /healthz)"
 expect "/graphql goes to the backend"           "200 backend /graphql"            "$(https luisfaria.dev /graphql -X POST -d '{}')"
 expect "/webhooks/ goes to the backend"         "200 backend /webhooks/stripe"    "$(https luisfaria.dev /webhooks/stripe -X POST -d '{}')"
-expect "OPTIONS /graphql is a 204 preflight"    "204"                             "$(https luisfaria.dev /graphql -X OPTIONS | cut -d' ' -f1)"
+expect "OPTIONS /graphql reaches the backend"    "200 backend /graphql"            "$(https luisfaria.dev /graphql -X OPTIONS)"
 expect "/.env is 404"                           "404"                             "$(https luisfaria.dev /.env | cut -d' ' -f1)"
 expect "/.git/config is 404"                    "404"                             "$(https luisfaria.dev /.git/config | cut -d' ' -f1)"
 expect "/index.php is 404"                      "404"                             "$(https luisfaria.dev /index.php | cut -d' ' -f1)"
@@ -120,6 +120,11 @@ expect "/wp-admin/ is 404"                      "404"                           
 echo "== headers"
 expect "HSTS on the frontend"                   "max-age=31536000; includeSubDomains" "$(header Strict-Transport-Security luisfaria.dev /)"
 expect "CSP on the backend routes too"          "1"                               "$(header Content-Security-Policy luisfaria.dev /health | grep -c "default-src 'self'")"
+
+expect "no CORS headers from nginx on pages"     "0" \
+  "$(curl -sk -m 5 -D - -o /dev/null --resolve "luisfaria.dev:$PORT_HTTPS:127.0.0.1" "https://luisfaria.dev:$PORT_HTTPS/" | grep -ci '^access-control-')"
+expect "no CORS headers from nginx on /graphql"  "0" \
+  "$(curl -sk -m 5 -D - -o /dev/null -X POST -d '{}' --resolve "luisfaria.dev:$PORT_HTTPS:127.0.0.1" "https://luisfaria.dev:$PORT_HTTPS/graphql" | grep -ci '^access-control-')"
 
 echo "== redirects and catch-alls"
 expect "http apex redirects to https"           "301"  "$(status "http://luisfaria.dev:$PORT_HTTP/x" --resolve "luisfaria.dev:$PORT_HTTP:127.0.0.1")"
