@@ -183,6 +183,10 @@ expect "no User-Agent on http: connection closed (curl 52)" "52" \
   "$(curl_exit "http://luisfaria.dev:$PORT_HTTP/robots.txt" -A "" --resolve "luisfaria.dev:$PORT_HTTP:127.0.0.1")"
 expect "with a User-Agent, http still redirects" "301" \
   "$(status "http://luisfaria.dev:$PORT_HTTP/robots.txt" -A "test" --resolve "luisfaria.dev:$PORT_HTTP:127.0.0.1")"
+curl_exit "http://luisfaria.dev:$PORT_HTTP/no-ua-probe" -A "" --resolve "luisfaria.dev:$PORT_HTTP:127.0.0.1" >/dev/null
+status "http://luisfaria.dev:$PORT_HTTP/ua-probe" -A "test" --resolve "luisfaria.dev:$PORT_HTTP:127.0.0.1" >/dev/null
+expect "no-User-Agent requests are not logged"   "0" "$(docker logs "$NET-gw" 2>&1 | grep -c 'no-ua-probe' || true)"
+expect "requests with a User-Agent are logged"   "1" "$(docker logs "$NET-gw" 2>&1 | grep -c ' /ua-probe' || true)"
 
 echo "== redirects and catch-alls"
 expect "http apex redirects to https"           "301"  "$(status "http://luisfaria.dev:$PORT_HTTP/x" --resolve "luisfaria.dev:$PORT_HTTP:127.0.0.1")"
