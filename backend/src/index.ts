@@ -37,6 +37,7 @@ import stripeWebhookRoutes from './routes/stripeWebhook';
 
 // Utils
 import { logger, requestLogger } from './utils/logger';
+import { isClientGraphQLError } from './utils/sentryFilter';
 
 // Models
 import { UserRole } from './models/User';
@@ -91,10 +92,8 @@ async function startServer() {
                     path: error.path,
                     extensions: error.extensions,
                   });
-                  // Report non-user errors to Sentry
-                  if (error.extensions?.code !== 'UNAUTHENTICATED' &&
-                      error.extensions?.code !== 'FORBIDDEN' &&
-                      error.extensions?.code !== 'BAD_USER_INPUT') {
+                  // Report only errors caused by our code, not by the client
+                  if (!isClientGraphQLError(error)) {
                     Sentry.captureException(error);
                   }
                 });
