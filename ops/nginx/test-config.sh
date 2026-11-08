@@ -16,7 +16,7 @@ PORT_HTTPS="${PORT_HTTPS:-18443}"
 
 cleanup() {
   docker rm -f "$NET-gw" "$NET-fe" "$NET-be" >/dev/null 2>&1 || true
-  docker network rm "$NET" >/dev/null 2>&1 || true
+  docker network rm "$NET" "$NET-priv" >/dev/null 2>&1 || true
   rm -rf "$WORK"
 }
 trap cleanup EXIT
@@ -54,17 +54,21 @@ stub_conf frontend 3000 /big gzip > "$WORK/fe/default.conf"   # like Next: compr
 stub_conf backend 4000 /health/big > "$WORK/be/default.conf"    # like Express /graphql: uncompressed JSON
 chmod -R a+rX "$WORK"
 
-docker network create "$NET" >/dev/null
+# Public-looking subnet (CGNAT range), so clients on it are rate limited like real
+# visitors. The gateway also joins a private network, standing in for SSR traffic.
+docker network create --subnet 100.64.250.0/24 "$NET" >/dev/null
+docker network create --subnet 172.31.250.0/24 "$NET-priv" >/dev/null
 docker run -d --name "$NET-fe" --network "$NET" --network-alias frontend_app \
   -v "$WORK/fe:/etc/nginx/conf.d:ro" "$IMAGE" >/dev/null
 docker run -d --name "$NET-be" --network "$NET" --network-alias backend_api \
   -v "$WORK/be:/etc/nginx/conf.d:ro" "$IMAGE" >/dev/null
-docker run -d --name "$NET-gw" --network "$NET" \
+docker run -d --name "$NET-gw" --network "$NET" --network-alias gw \
   -p "127.0.0.1:$PORT_HTTP:80" -p "127.0.0.1:$PORT_HTTPS:443" \
   -v "$ROOT/nginx/conf:/etc/nginx/conf.d:ro" \
   -v "$WORK/le:/etc/letsencrypt:ro" \
   -v "$WORK/certbot-www:/var/www/certbot:ro" \
   "$IMAGE" >/dev/null
+docker network connect --alias gw "$NET-priv" "$NET-gw"
 
 ready=0
 for _ in $(seq 1 30); do
@@ -157,6 +161,32 @@ expect "big backend JSON is gzipped"             "1 gzip 2010" "$(gz /health/big
 expect "no gzip when the client doesn't ask"     "0 none 2010" "$(gz /health/big identity)"
 expect "small responses are not gzipped"         "0 none 16"   "$(gz /health)"
 expect "already-gzipped upstream is not gzipped twice" "1 gzip 2010" "$(gz /big)"
+
+echo "== rate limits"
+burst() { # burst <network> <count> <curl args...> -> one status code per request, from a fresh client container
+  local net="$1" n="$2"; shift 2
+  docker run --rm --network "$net" "$IMAGE" sh -c \
+    'n=$1; shift; i=0; while [ $i -lt $n ]; do curl -sk -m 5 -o /dev/null -w "%{http_code} " --connect-to luisfaria.dev:443:gw:443 "$@"; i=$((i+1)); done' \
+    sh "$n" "$@"
+}
+# One client for all /api/discord checks, so they share one quota deterministically
+discord=$(docker run --rm --network "$NET" "$IMAGE" sh -c '
+  c() { curl -sk -m 5 -o /dev/null -w "%{http_code} " --connect-to luisfaria.dev:443:gw:443 "$@" https://luisfaria.dev/api/discord; }
+  c; for i in 1 2 3 4 5 6; do c -X POST -d "{}"; done' | sed 's/ $//')
+expect "/api/discord: GET is refused"            "403" "$(cut -d' ' -f1 <<< "$discord")"
+expect "/api/discord: 5 requests per IP (the GET counts), the 6th gets 429" "200 200 200 200 429 429" "$(cut -d' ' -f2- <<< "$discord")"
+expect "/graphql: a 150-request flood gets 429s" "yes" \
+  "$(burst "$NET" 150 -X POST -d '{}' https://luisfaria.dev/graphql | grep -q 429 && echo yes || echo no)"
+expect "/graphql: SSR (private IP) is never limited" "no" \
+  "$(burst "$NET-priv" 150 -X POST -d '{}' https://luisfaria.dev/graphql | grep -q 429 && echo yes || echo no)"
+expect "no User-Agent on http: connection closed (curl 52)" "52" \
+  "$(curl_exit "http://luisfaria.dev:$PORT_HTTP/robots.txt" -A "" --resolve "luisfaria.dev:$PORT_HTTP:127.0.0.1")"
+expect "with a User-Agent, http still redirects" "301" \
+  "$(status "http://luisfaria.dev:$PORT_HTTP/robots.txt" -A "test" --resolve "luisfaria.dev:$PORT_HTTP:127.0.0.1")"
+curl_exit "http://luisfaria.dev:$PORT_HTTP/no-ua-probe" -A "" --resolve "luisfaria.dev:$PORT_HTTP:127.0.0.1" >/dev/null
+status "http://luisfaria.dev:$PORT_HTTP/ua-probe" -A "test" --resolve "luisfaria.dev:$PORT_HTTP:127.0.0.1" >/dev/null
+expect "no-User-Agent requests are not logged"   "0" "$(docker logs "$NET-gw" 2>&1 | grep -c 'no-ua-probe' || true)"
+expect "requests with a User-Agent are logged"   "1" "$(docker logs "$NET-gw" 2>&1 | grep -c ' /ua-probe' || true)"
 
 echo "== redirects and catch-alls"
 expect "http apex redirects to https"           "301"  "$(status "http://luisfaria.dev:$PORT_HTTP/x" --resolve "luisfaria.dev:$PORT_HTTP:127.0.0.1")"
