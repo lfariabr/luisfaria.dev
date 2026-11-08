@@ -1,10 +1,7 @@
 import * as Sentry from '@sentry/node';
 import type { EventHint } from '@sentry/node';
-import { GraphQLError } from 'graphql';
 import config from './config/config';
-
-// GraphQL extension codes that represent auth flow, not bugs
-const AUTH_CODES = new Set(['UNAUTHENTICATED', 'FORBIDDEN', 'BAD_USER_INPUT']);
+import { isClientGraphQLError } from './utils/sentryFilter';
 
 // Initialize Sentry only if DSN is provided
 const sentryDsn = process.env.SENTRY_DSN || '';
@@ -26,13 +23,11 @@ if (sentryDsn) {
         return null;
       }
 
-      // Skip GraphQL auth/validation errors by inspecting the original thrown error
-      const original = hint.originalException;
-      if (original instanceof GraphQLError) {
-        const code = original.extensions?.code;
-        if (typeof code === 'string' && AUTH_CODES.has(code)) {
-          return null;
-        }
+      // Skip client-caused GraphQL errors (auth, bad input, malformed requests).
+      // Checked by code, not instanceof: Apollo's errors may come from another
+      // copy of the graphql package.
+      if (isClientGraphQLError(hint.originalException)) {
+        return null;
       }
 
       return event;
