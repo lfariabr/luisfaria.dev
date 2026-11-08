@@ -10,11 +10,10 @@
 #   useradd --system --user-group --no-create-home --shell /usr/sbin/nologin monitor
 #   usermod -aG docker monitor   # needed for `docker ps`; NOTE: docker group is root-equivalent
 #
-#   # 2. Deploy script
-#   mkdir -p /opt/monitor
-#   cp ops/monitor/monitor-resources.sh /opt/monitor/   # from a checkout of this repo
-#   chown -R monitor:monitor /opt/monitor
-#   chmod 750 /opt/monitor/monitor-resources.sh
+#   # 2. Nothing to copy: cron runs this file from the deploy's git checkout
+#   #    (/var/www/portfolio), so every deploy updates it. The monitor user only
+#   #    needs to read it.
+#   sudo -u monitor test -r /var/www/portfolio/ops/monitor/monitor-resources.sh && echo ok
 #
 #   # 3. Restricted secrets file
 #   mkdir -p /etc/monitor
@@ -32,7 +31,7 @@
 #
 #   # 5. Cron (every 5 minutes, runs as monitor user)
 #   cat > /etc/cron.d/monitor-resources <<'EOF'
-#   */5 * * * * monitor /opt/monitor/monitor-resources.sh >> /var/log/monitor-resources.log 2>&1
+#   */5 * * * * monitor /bin/bash /var/www/portfolio/ops/monitor/monitor-resources.sh >> /var/log/monitor-resources.log 2>&1
 #   EOF
 #
 #   # 6. Logrotate (the config needs `su root syslog`: Ubuntu's /var/log is group-writable)
@@ -40,10 +39,11 @@
 #   logrotate -d /etc/logrotate.d/monitor-resources   # must show no error
 #
 #   # 7. Test
-#   sudo -u monitor /opt/monitor/monitor-resources.sh
+#   sudo -u monitor /bin/bash /var/www/portfolio/ops/monitor/monitor-resources.sh
 #
-# Updating: the deploy does NOT install this file. After a change merges, on the server:
-#   install -o monitor -g monitor -m 750 /var/www/portfolio/ops/monitor/monitor-resources.sh /opt/monitor/
+# Updating: nothing to do. The deploy's `git reset --hard` updates this file and
+# the next cron run uses it. A run already in progress keeps reading the old
+# file (git replaces it rather than editing it in place).
 #
 # Tests (Linux): bash ops/monitor/test-monitor.sh  (also runs in CI)
 # =============================================================================
