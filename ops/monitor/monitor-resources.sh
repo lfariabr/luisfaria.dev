@@ -76,7 +76,7 @@ DISK_THRESHOLD=85
 # Container health: list of expected containers. Alert after
 # CONTAINERS_FAILURES_TO_ALERT consecutive failed checks (2 x 5 min), so a
 # deploy's force-recreate (< 1 min) does not page.
-EXPECTED_CONTAINERS="nginx_gateway frontend_app backend_api mongodb_db redis_cache"
+EXPECTED_CONTAINERS="nginx_gateway frontend_app backend_api redis_cache"
 CONTAINERS_FAILURES_TO_ALERT=2
 
 # Alert deduplication — suppress repeated alerts for the same check
