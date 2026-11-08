@@ -32,7 +32,7 @@ jobs:
 
     services:
       mongodb:
-        image: mongo:7
+        image: mongo:7   # mongo:8 refuses to start on kernel 6.19+ (SERVER-121912), which CI runners use
         ports:
           - 27017:27017
       redis:
@@ -441,7 +441,7 @@ jobs:
             docker compose ps
             
             # Check all required services
-            REQUIRED_SERVICES="nginx_gateway frontend_app backend_api mongodb_db redis_cache"
+            REQUIRED_SERVICES="nginx_gateway frontend_app backend_api redis_cache"
             FAILED=0
             
             for SERVICE in $REQUIRED_SERVICES; do

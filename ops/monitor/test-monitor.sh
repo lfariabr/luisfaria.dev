@@ -33,12 +33,10 @@ chmod +x "$WORK/bin/docker" "$WORK/bin/curl"
 ALL="nginx_gateway
 frontend_app
 backend_api
-mongodb_db
 redis_cache"
 NO_REDIS="nginx_gateway
 frontend_app
-backend_api
-mongodb_db"
+backend_api"
 
 run_monitor() {
   : > "$WORK/posts.log"
@@ -61,12 +59,12 @@ posted() { grep -qF -- "$1" "$WORK/posts.log"; }
 not_posted() { ! posted "$1"; }
 
 docker_says "$ALL"; run_monitor
-check "all running: logs the count" logged "Containers: 5 running"
+check "all running: logs the count" logged "Containers: 4 running"
 check "all running: no container alert" not_posted "Container(s) Down"
 
 docker_says "$NO_REDIS"; run_monitor
 check "first miss: logs the missing name" logged "not running: redis_cache (consecutive failures: 1)"
-check "first miss: logs the raw docker ps output" logged "docker ps output: [nginx_gateway frontend_app backend_api mongodb_db ]"
+check "first miss: logs the raw docker ps output" logged "docker ps output: [nginx_gateway frontend_app backend_api ]"
 check "first miss: does not alert" not_posted "Container(s) Down"
 
 run_monitor
@@ -79,7 +77,7 @@ check "third miss: suppressed by the cooldown" not_posted "Container(s) Down"
 
 docker_says "$ALL"; run_monitor
 check "recovery: sends the recovery message" posted "Container Check Passing Again"
-check "recovery: resets the failure count" logged "Containers: 5 running"
+check "recovery: resets the failure count" logged "Containers: 4 running"
 
 run_monitor
 check "after recovery: no repeat recovery message" not_posted "Container Check Passing Again"
@@ -111,7 +109,7 @@ docker_says "$ALL"; run_monitor
 
 docker_says "$ALL"; echo "x; rm -rf /" > "$WORK/state/containers.failures"; run_monitor
 check "corrupt counter: run still completes" logged "=== Done ==="
-check "corrupt counter: treated as 0" logged "Containers: 5 running"
+check "corrupt counter: treated as 0" logged "Containers: 4 running"
 echo "1oops" > "$WORK/state/ready.failures"; run_monitor
 check "corrupt ready counter: run still completes" logged "Ready: 200"
 

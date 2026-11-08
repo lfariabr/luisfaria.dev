@@ -86,8 +86,9 @@ services:
       - RELATIONSHIP_HOME_LABEL=${RELATIONSHIP_HOME_LABEL:-Home base}
     # No published port: nginx reaches backend_api:4000 over the compose network.
     # Publishing it bypassed nginx and ufw (Docker ports skip ufw), see #453.
+    # Data lives in MongoDB Atlas (MONGODB_URI). There is no local database: the
+    # unused mongo:4.4 container was removed in #444.
     depends_on:
-      - db
       - cache
     networks:
       - app-net
@@ -100,24 +101,6 @@ services:
         reservations:
           cpus: '0.1'
           memory: 192M
-
-  db:
-    image: mongo:4.4
-    container_name: mongodb_db
-    logging: *default-logging
-    volumes:
-      - mongodb-data:/data/db
-    networks:
-      - app-net
-    restart: always
-    deploy:
-      resources:
-        limits:
-          cpus: '0.4'
-          memory: 384M
-        reservations:
-          cpus: '0.1'
-          memory: 128M
 
   cache:
     image: redis:alpine
@@ -138,7 +121,6 @@ services:
           memory: 32M
 
 volumes:
-  mongodb-data:
   redis-data:
 
 networks:
