@@ -210,7 +210,8 @@ describe('Auth Resolvers', () => {
       const response = await executeOperation(LOGIN_MUTATION, variables, { res });
 
       expect(response.body.kind).toBe('single');
-      if (response.body.kind !== 'single') return;
+      expect(response.body.kind).toBe('single');
+      if (response.body.kind !== 'single') return; // narrows the type; the line above already failed otherwise
       expect(response.body.singleResult.errors).toBeUndefined();
 
       const login = response.body.singleResult.data?.login as {
