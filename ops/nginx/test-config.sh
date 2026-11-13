@@ -164,9 +164,11 @@ expect "already-gzipped upstream is not gzipped twice" "1 gzip 2010" "$(gz /big)
 
 echo "== rate limits"
 burst() { # burst <network> <count> <curl args...> -> one status code per request, from a fresh client container
+  # Concurrent, not sequential: one-at-a-time curls (each with a TLS handshake) can run
+  # slower than the limit on a slow runner and never trip it (#495).
   local net="$1" n="$2"; shift 2
   docker run --rm --network "$net" "$IMAGE" sh -c \
-    'n=$1; shift; i=0; while [ $i -lt $n ]; do curl -sk -m 5 -o /dev/null -w "%{http_code} " --connect-to luisfaria.dev:443:gw:443 "$@"; i=$((i+1)); done' \
+    'n=$1; shift; i=0; while [ $i -lt $n ]; do curl -sk -m 10 -o /dev/null -w "%{http_code} " --connect-to luisfaria.dev:443:gw:443 "$@" & i=$((i+1)); done; wait' \
     sh "$n" "$@"
 }
 # One client for all /api/discord checks, so they share one quota deterministically
