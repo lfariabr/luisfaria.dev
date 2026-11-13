@@ -5,50 +5,31 @@
  */
 
 export const POSITIONING = {
+  /** Used by /about. */
   badge: 'Education Data · Applied ML · Agentic Delivery',
-  headline: 'I build data systems that survive real users, audits, and handover.',
+  /** The pill above the homepage headline. */
+  eyebrow: 'Senior Software Engineer · Sydney',
+  /** The homepage headline: `lead` plain, `accent` in emerald. One fixed line (#442). */
+  headline: { lead: 'Ten years of shipping software that', accent: 'real people depend on.' },
   subline:
-    'Sydney-based Senior Software Engineer and Data & Systems Specialist. Current work spans SQL Server, Power BI, Next.js, secure school data products, applied ML, and agentic AI workflows documented in public.',
+    "I'm Luis. Right now I'm building a parent portal used by 2,000 families, the data systems behind a school, and a master's in software engineering with AI. I ship with agentic tooling, and I write up how it works in public.",
 } as const;
-
-/** Full, static canonical phrase - the accessible/SEO text rendered in the hero <h1>. */
-export const HERO_CANONICAL_PHRASE = POSITIONING.headline;
-
-export type HeroFrame = { lens: string; clause: string };
-
-/**
- * Rotating hero frames: lens label (pill) + green clause.
- * Production Proof is canonical and renders first (SSR + no-JS + reduced-motion).
- */
-export const HERO_FRAMES: HeroFrame[] = [
-  { lens: 'Education Data', clause: 'with privacy boundaries.' },
-  { lens: 'Applied ML', clause: 'with honest metrics.' },
-  { lens: 'Agentic AI', clause: 'with public receipts.' },
-  { lens: 'Production Proof', clause: 'that survive go-live.' },
-];
-
-/** Index of the canonical frame used for first paint and reduced-motion. */
-export const HERO_CANONICAL_INDEX = 3;
 
 export type HeroMetric = { value: string; label: string; accent?: boolean; href?: string };
 
 /** Concrete proof points shown as a 4-card metrics row under the hero headline. */
 export const HERO_METRICS: HeroMetric[] = [
-  { value: '10+ yrs', label: 'shipping software, data, and automation systems' },
+  { value: '10+ yrs', label: 'shipping software, data and automation systems' },
   {
-    value: '2,000 users',
-    label: 'pentested parent portal, shipped solo in 8 weeks',
+    value: '2,000',
+    label: 'parents on a pentested portal I shipped solo in 8 weeks',
     accent: true,
     href: 'https://dev.to/lfariaus/2000-parents-1-rule-0-leaks-a-pentested-school-parent-portal-in-8-weeks-2bp8',
   },
-  {
-    value: '200+',
-    label: 'ReviewPulse commits turning coursework into an inspectable NLP lab',
-    href: 'https://github.com/lfariabr/review-pulse',
-  },
+  { value: '2,000+', label: 'PRs merged to production with an agentic workflow' },
   {
     value: '1,400+',
-    label: 'commits on an open-source agentic study pipeline',
+    label: "commits on my open-source master's pipeline",
     href: 'https://dev.to/lfariaus/12-modules-12-weeks-1-pipeline-studying-a-masters-with-agentic-ai-1ohg',
   },
 ];

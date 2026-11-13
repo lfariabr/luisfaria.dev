@@ -121,16 +121,6 @@
   }
 }
 
-/* Hero rotating-headline progress bar: fills left→right over one rotation interval. */
-@keyframes hero-progress {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
-  }
-}
-
 /*
  * Google Maps InfoWindow follows the site theme. Google draws a white bubble whatever the
  * page theme, so in dark mode our inherited light text vanished on it. These are Google's

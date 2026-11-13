@@ -4,30 +4,34 @@ import HomePage from '@/app/page';
 import { renderWithProviders } from '@/utils/test-utils';
 
 describe('Home Page', () => {
-  it('renders the static canonical h1 (SEO/no-JS safe)', () => {
+  it('renders one fixed h1 headline, with no rotating frames', () => {
     renderWithProviders(<HomePage />);
 
     const heroHeading = screen.getByRole('heading', { level: 1 });
-    expect(heroHeading).toBeInTheDocument();
     expect(heroHeading).toHaveTextContent(
-      /I build data systems that survive real users, audits, and handover\./i
+      /^Ten years of shipping software that real people depend on\.$/
     );
+    // The old rotating lens pills are gone
+    expect(screen.queryByText('Production Proof')).not.toBeInTheDocument();
   });
 
-  it('renders the rotating lens pill frames (canonical Production Proof first)', () => {
+  it('renders the eyebrow and the first-person subline', () => {
     renderWithProviders(<HomePage />);
 
-    // All frames are in the DOM (grid-stacked); the canonical one is shown on first paint.
-    expect(screen.getByText('Production Proof')).toBeInTheDocument();
-    expect(screen.getAllByText('Applied ML').length).toBeGreaterThan(0);
+    expect(screen.getByText('Senior Software Engineer · Sydney')).toBeInTheDocument();
+    expect(screen.getByText(/^I'm Luis\./)).toBeInTheDocument();
   });
 
-  it('renders the hero subline', () => {
+  it('renders one metrics row with the four agreed cards', () => {
     renderWithProviders(<HomePage />);
 
-    expect(
-      screen.getByText(/SQL Server, Power BI, Next\.js, secure school data products/i)
-    ).toBeInTheDocument();
+    const metrics = screen.getAllByRole('term').map((dt) => dt.textContent);
+    expect(metrics).toEqual(['10+ yrs', '2,000', '2,000+', '1,400+']);
+
+    const portal = screen.getByText(/parents on a pentested portal/i).closest('a');
+    expect(portal).toHaveAttribute('href', expect.stringContaining('dev.to/lfariaus/2000-parents'));
+    // The PR count is private work: no link
+    expect(screen.getByText(/PRs merged to production/i).closest('a')).toBeNull();
   });
 
   it('renders CTA buttons', () => {
@@ -58,10 +62,10 @@ describe('Home Page', () => {
     expect(screen.getAllByText('TypeScript').length).toBeGreaterThan(0);
   });
 
-  it('renders the MetricsSection', () => {
+  it('no longer renders the second metrics section', () => {
     renderWithProviders(<HomePage />);
 
-    expect(screen.getByRole('heading', { name: /^impact$/i })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /^impact$/i })).not.toBeInTheDocument();
   });
 
   it('renders the TimelineSection', () => {
