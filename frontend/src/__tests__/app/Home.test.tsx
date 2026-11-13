@@ -44,22 +44,59 @@ describe('Home Page', () => {
     expect(chatbotButton).toHaveAttribute('href', '/chatbot');
   });
 
-  it('renders the "What I do" pillars', () => {
+  it('renders "What I\'m building now" with the three first-person cards', () => {
     renderWithProviders(<HomePage />);
 
-    expect(screen.getByText('What I do')).toBeInTheDocument();
-    expect(screen.getByText('Secure education systems')).toBeInTheDocument();
-    expect(screen.getByText('Data engineering & analytics')).toBeInTheDocument();
+    const section = screen
+      .getByRole('heading', { name: /what i’m building now/i })
+      .closest('section') as HTMLElement;
+    const titles = within(section)
+      .getAllByRole('heading', { level: 3 })
+      .map((h) => h.textContent);
+    expect(titles).toEqual([
+      'A parent portal for 2,000 families',
+      'Coursework that turns into real software',
+      'Fixing the tools I use, upstream',
+    ]);
+    expect(screen.queryByRole('heading', { name: /current proof/i })).not.toBeInTheDocument();
   });
 
-  it('renders the core stack grouped by pillar', () => {
+  it('states only the measured load-test sizes and credits the talk', () => {
     renderWithProviders(<HomePage />);
 
-    expect(screen.getByText(/core stack/i)).toBeInTheDocument();
-    // Stack-only tech (not present in any pillar tag list)
-    expect(screen.getByText('pandas')).toBeInTheDocument();
-    // Common techs appear in both pillars and the stack, so assert >= 1
-    expect(screen.getAllByText('TypeScript').length).toBeGreaterThan(0);
+    expect(screen.getByText(/1, 10, 100 and 500 parents at once/)).toBeInTheDocument();
+    // 1,000 was never measured
+    expect(screen.queryByText(/1,000 parents/)).not.toBeInTheDocument();
+
+    const credit = screen.getByRole('link', { name: /scaling slack and github with maude lemaire/i });
+    expect(credit).toHaveAttribute('href', 'https://youtu.be/x6WqD4qHxSc');
+  });
+
+  it('links the open source card to merged PRs on other people\'s repos', () => {
+    renderWithProviders(<HomePage />);
+
+    const link = screen.getByRole('link', { name: /see my contributions/i });
+    expect(link).toHaveAttribute('href', expect.stringContaining('is%3Amerged+-user%3Alfariabr'));
+  });
+
+  it('renders "How I ship" with the human deciding what merges', () => {
+    renderWithProviders(<HomePage />);
+
+    expect(screen.getByRole('heading', { name: /how i ship/i })).toBeInTheDocument();
+    const roles = within(screen.getByRole('list', { name: /agent roles/i })).getAllByRole('listitem');
+    expect(roles).toHaveLength(7);
+    expect(roles[roles.length - 1]).toHaveTextContent(/^medecides what merges$/);
+    expect(screen.getByText(/more than 2,000 pull requests/)).toBeInTheDocument();
+  });
+
+  it('lists each work area once, with no separate pillars or stack sections', () => {
+    renderWithProviders(<HomePage />);
+
+    expect(screen.getByRole('heading', { name: /what i work with/i })).toBeInTheDocument();
+    expect(screen.getAllByText('Production systems')).toHaveLength(1);
+    expect(screen.getAllByText('TypeScript')).toHaveLength(1);
+    expect(screen.queryByText('What I do')).not.toBeInTheDocument();
+    expect(screen.queryByText(/core stack/i)).not.toBeInTheDocument();
   });
 
   it('no longer renders the second metrics section', () => {

@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { HERO_METRICS } from "@/content/profile";
 import { HeroHeadline } from "@/components/sections/HeroHeadline";
-import { CurrentProofSection } from "@/components/sections/CurrentProofSection";
-import { PillarsSection } from "@/components/sections/PillarsSection";
-import { StackSection } from "@/components/sections/StackSection";
+import { BuildingNowSection } from "@/components/sections/BuildingNowSection";
+import { HowIShipSection } from "@/components/sections/HowIShipSection";
+import { WorkWithSection } from "@/components/sections/WorkWithSection";
 import { TimelineSection } from "@/components/sections/TimelineSection";
 import { sanitizeJsonLd } from '@/lib/seo/metadata';
 
@@ -130,13 +130,11 @@ export default function Home() {
             </div>
           </div>
 
-          <CurrentProofSection />
+          <BuildingNowSection />
 
-          {/* What I do - pillars */}
-          <PillarsSection />
+          <HowIShipSection />
 
-          {/* Core stack grouped by pillar */}
-          <StackSection />
+          <WorkWithSection />
 
           <TimelineSection limit={4} showViewAll />
         </div>
