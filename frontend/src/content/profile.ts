@@ -34,117 +34,91 @@ export const HERO_METRICS: HeroMetric[] = [
   },
 ];
 
-export type Pillar = {
-  key: string;
-  /** lucide-react icon name, mapped to a component at render time. */
-  icon: 'Code2' | 'Database' | 'Workflow' | 'Sparkles';
-  title: string;
-  blurb: string;
-  tags: string[];
-};
+export type WorkArea = { label: string; blurb: string; items: string[] };
 
-export const PILLARS: Pillar[] = [
-  {
-    key: 'software',
-    icon: 'Code2',
-    title: 'Secure education systems',
-    blurb: 'School-facing products and internal tools where authorization, privacy, auditability, and handover are part of the design - not cleanup work after launch.',
-    tags: ['Next.js', 'TypeScript', 'SQL Server', 'Microsoft Entra ID', 'Python'],
-  },
-  {
-    key: 'data',
-    icon: 'Database',
-    title: 'Data engineering & analytics',
-    blurb: 'SQL Server, Power BI, ETL, and reporting workflows built close to operations: finance, enrolments, academic data, support, and stakeholder dashboards.',
-    tags: ['SQL Server', 'T-SQL', 'Power BI', 'Power Query', 'ETL'],
-  },
-  {
-    key: 'automation',
-    icon: 'Workflow',
-    title: 'Applied ML systems',
-    blurb: 'Models handled like production assets: evaluation contracts, artifact provenance, failure visibility, and interfaces that make trade-offs inspectable.',
-    tags: ['PyTorch', 'scikit-learn', 'Transformers', 'Streamlit', 'FastAPI'],
-  },
-  {
-    key: 'ai',
-    icon: 'Sparkles',
-    title: 'Agentic AI delivery',
-    blurb: 'Claude Code and Codex workflows used with explicit source truth, review gates, redaction, and public write-ups showing what the agent did and what stayed human-owned.',
-    tags: ['Claude Code', 'Codex', 'GitHub', 'Dev.to', 'AI security'],
-  },
-];
-
-export type StackGroup = { label: string; items: string[] };
-
-export const STACK_GROUPS: StackGroup[] = [
+/** "What I work with": the four areas, each listed once (#490 merged Pillars + Stack). */
+export const WORK_AREAS: WorkArea[] = [
   {
     label: 'Production systems',
+    blurb: 'Secure, auditable, handed over',
     items: ['Next.js', 'TypeScript', 'Python', 'SQL Server', 'Microsoft Entra ID'],
   },
   {
     label: 'Data & analytics',
+    blurb: 'Built close to operations',
     items: ['T-SQL', 'Power BI', 'Power Query', 'SSIS / ETL', 'pandas', 'PySpark'],
   },
   {
     label: 'Applied ML',
+    blurb: 'Models handled like products',
     items: ['PyTorch', 'scikit-learn', 'Transformers', 'Streamlit', 'FastAPI'],
   },
   {
     label: 'Delivery & agents',
-    items: ['Docker', 'GitHub Actions', 'Nginx', 'Sentry', 'Claude Code / Codex'],
+    blurb: 'How it gets to production',
+    items: ['Claude Code', 'Codex', 'Docker', 'GitHub Actions', 'Nginx', 'Sentry'],
   },
 ];
 
-export type CurrentProof = {
-  title: string;
+export type BuildingNow = {
   eyebrow: string;
+  title: string;
   summary: string;
-  bullets: string[];
-  href?: string;
-  cta?: string;
+  href: string;
+  cta: string;
+  /** Optional small credit line under the summary. */
+  credit?: { lead: string; label: string; href: string };
 };
 
-export const CURRENT_PROOF: CurrentProof[] = [
+/** "What I'm building now": three first-person cards (#490). */
+export const BUILDING_NOW: BuildingNow[] = [
   {
-    eyebrow: 'Education data products',
-    title: 'Secure systems for real school operations',
+    eyebrow: 'School data products',
+    title: 'A parent portal for 2,000 families',
     summary:
-      'Current work is production-facing: parent access, student-profile views, support workflows, academic reporting, and portal migration support in a regulated school environment.',
-    bullets: [
-      'Pentested 2,000-parent portal with authorization rechecked at the data boundary.',
-      'Student360-style profile surfaces built around mock/public safety and local-only live-data gates.',
-      'FreshService kiosk and Schoolbox data support shipped with operational handover in mind.',
-    ],
-    href: '/work/st-catherines-data-systems',
-    cta: 'Read education case study',
+      'Seven modules reading live school data, pentested before launch, with authorization rechecked at the data boundary. I built it solo in 8 weeks and it has kept shipping: parents now notify absences online, live since 11 November. I load-tested the morning rush at 1, 10, 100 and 500 parents at once. Every request was answered, every absence notice landed, zero errors. Making it faster under load is the next job.',
+    credit: {
+      lead: 'Load test inspired by',
+      label: 'Scaling Slack and GitHub with Maude Lemaire (The Pragmatic Engineer)',
+      href: 'https://youtu.be/x6WqD4qHxSc',
+    },
+    href: 'https://dev.to/lfariaus/2000-parents-1-rule-0-leaks-a-pentested-school-parent-portal-in-8-weeks-2bp8',
+    cta: 'Read the write-up',
   },
   {
-    eyebrow: 'Applied ML systems',
-    title: 'Models treated as products, not notebook trophies',
+    eyebrow: 'Master’s, shipped',
+    title: 'Coursework that turns into real software',
     summary:
-      'Recent ML work focuses on leakage-safe evaluation, model selection, artifact provenance, deployment trade-offs, and interfaces that expose where predictions fail.',
-    bullets: [
-      'ReviewPulse v3: aspect-based sentiment lab with six model paths and token-level evidence.',
-      'Sommelier API: 22 model/treatment runs before replacing the shipped classifier.',
-      'Churn analysis: optimized for recall and cost trade-offs instead of vanity accuracy.',
-    ],
+      'ReviewPulse for sentiment analysis you can inspect, Sommelier API for model governance, and churn analysis tuned for recall and cost instead of vanity accuracy.',
     href: '/work/review-pulse-v3',
-    cta: 'See ML proof',
+    cta: 'See the ML work',
   },
   {
-    eyebrow: 'Agentic AI + security',
-    title: 'Agentic AI workflows with public receipts',
+    eyebrow: 'Open source',
+    title: 'Fixing the tools I use, upstream',
     summary:
-      'I use agents to compress throughput, but I document where the human owns judgment: assessment decisions, source truth, defensive controls, and privacy boundaries.',
-    bullets: [
-      'Public agentic study pipeline: map, notes, compression, active recall, one-pagers, assessment checks.',
-      'Technical reconstruction of the OpenAI-Hugging Face agent incident from public sources.',
-      'Preference for explicit contracts, redaction, auditability, and default-deny thinking.',
-    ],
-    href: 'https://dev.to/lfariaus/12-modules-12-weeks-1-pipeline-studying-a-masters-with-agentic-ai-1ohg',
-    cta: 'Read agentic AI write-up',
+      'My fix to node-mssql, the SQL Server driver behind the parent portal, shipped in 12.7.14, and a second is in review. This site is open source down to its ADRs, and so is the pull-up timer I train with.',
+    href: 'https://github.com/search?q=author%3Alfariabr+is%3Apr+is%3Amerged+-user%3Alfariabr&type=pullrequests',
+    cta: 'See my contributions',
   },
 ];
+
+/** "How I ship": the agent roles, and the human who decides (#490). */
+export const HOW_I_SHIP = {
+  paragraphs: [
+    'My workflow is agentic: a handful of AI agents, each with one job and written rules for doing it. One plans, one implements, others review architecture, security and UX. They draft. I decide what merges, and I’m the engineer of record for all of it.',
+    'That workflow has merged more than 2,000 pull requests to production since May 2026. My master’s runs on the same idea in the open: a 1,400-commit study pipeline anyone can read.',
+  ],
+  roles: [
+    { role: 'lead engineer', does: 'plans' },
+    { role: 'delivery', does: 'builds' },
+    { role: 'architecture', does: 'audits' },
+    { role: 'security', does: 'reviews' },
+    { role: 'pr review', does: 'gates' },
+    { role: 'ux', does: 'reviews' },
+    { role: 'me', does: 'decides what merges', human: true },
+  ],
+} as const;
 
 /** First-person narrative for the About page (problem/outcome-led, grounded). */
 export const ABOUT_BIO: string[] = [

@@ -3,8 +3,7 @@ import Link from 'next/link';
 import { Github, Linkedin, Mail, PenLine, MapPin, GraduationCap } from 'lucide-react';
 import { MainLayout } from '@/components/layouts/MainLayout';
 import { Button } from '@/components/ui/button';
-import { PillarsSection } from '@/components/sections/PillarsSection';
-import { StackSection } from '@/components/sections/StackSection';
+import { WorkWithSection } from '@/components/sections/WorkWithSection';
 import { ABOUT_BIO, SOCIALS, POSITIONING } from '@/content/profile';
 import { sanitizeJsonLd } from '@/lib/seo/metadata';
 
@@ -75,11 +74,7 @@ export default function AboutPage() {
           </p>
         </section>
 
-        {/* Pillars */}
-        <PillarsSection heading="What I do" />
-
-        {/* Stack */}
-        <StackSection heading="Tools I work with" />
+        <WorkWithSection />
 
         {/* Links */}
         <section className="space-y-4 text-center">
