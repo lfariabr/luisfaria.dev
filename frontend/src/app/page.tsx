@@ -8,7 +8,6 @@ import { HeroHeadline } from "@/components/sections/HeroHeadline";
 import { CurrentProofSection } from "@/components/sections/CurrentProofSection";
 import { PillarsSection } from "@/components/sections/PillarsSection";
 import { StackSection } from "@/components/sections/StackSection";
-import { MetricsSection } from "@/components/sections/MetricsSection";
 import { TimelineSection } from "@/components/sections/TimelineSection";
 import { sanitizeJsonLd } from '@/lib/seo/metadata';
 
@@ -139,7 +138,6 @@ export default function Home() {
           {/* Core stack grouped by pillar */}
           <StackSection />
 
-          <MetricsSection />
           <TimelineSection limit={4} showViewAll />
         </div>
       </div>
