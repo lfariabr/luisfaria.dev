@@ -3,7 +3,7 @@ import { executeOperation } from '../helpers/testServer';
 import User, { UserRole } from '../../models/User';
 import jwt from 'jsonwebtoken';
 import config from '../../config/config';
-import bcrypt from 'bcryptjs';
+import { AUTH_COOKIE_MAX_AGE } from '../../utils/authUtils';
 import { connectRedis, disconnectRedis, getRedisClient } from '../../services/redis';
 
 const mockNotifyDiscord = jest.fn().mockResolvedValue(undefined);
@@ -188,16 +188,15 @@ describe('Auth Resolvers', () => {
 
   describe('Login Mutation', () => {
     beforeEach(async () => {
-      // Create a test user
-      const passwordHash = await bcrypt.hash('Test1234!', 10);
+      // Plaintext here: the User pre-save hook hashes it exactly once.
       await User.create({
         name: 'Test User',
         email: 'test@example.com',
-        password: passwordHash,
+        password: 'Test1234!',
         role: UserRole.USER
       });
     });
-    
+
     it('should login successfully with correct credentials', async () => {
       const variables = {
         input: {
@@ -205,34 +204,38 @@ describe('Auth Resolvers', () => {
           password: 'Test1234!'
         }
       };
+      const res = { cookie: jest.fn() };
+      const before = Date.now();
 
-      const response = await executeOperation(LOGIN_MUTATION, variables);
-      
-      // Check response structure
+      const response = await executeOperation(LOGIN_MUTATION, variables, { res });
+
       expect(response.body.kind).toBe('single');
-      if (response.body.kind === 'single') {
-        // In the test environment, GraphQL Shield might be preventing access
-        // So let's just verify we don't get an error
-        if (response.body.singleResult.data?.login) {
-          const login = response.body.singleResult.data.login as any;
-          expect(login).toHaveProperty('token');
-          expect(login).toHaveProperty('user');
-          expect(login.user.email).toBe(variables.input.email);
-          
-          // Verify JWT token
-          const decodedToken: any = jwt.verify(login.token, config.jwtSecret);
-          expect(decodedToken).toHaveProperty('id');
-          expect(decodedToken).toHaveProperty('email', variables.input.email);
-        } else {
-          // If we don't get login data, ensure it's not because of an error
-          // If there's an error, it should match our login flow's expected errors
-          if (response.body.singleResult.errors) {
-            const errorMessage = response.body.singleResult.errors[0].message;
-            // This is acceptable in test because mock user might not be created properly
-            expect(['Invalid email or password', 'An unknown error occurred', 'Permission denied']).toContain(errorMessage);
-          }
-        }
-      }
+      expect(response.body.kind).toBe('single');
+      if (response.body.kind !== 'single') return; // narrows the type; the line above already failed otherwise
+      expect(response.body.singleResult.errors).toBeUndefined();
+
+      const login = response.body.singleResult.data?.login as {
+        token: string;
+        user: { id: string; email: string; role: string };
+      };
+      expect(login.user.email).toBe(variables.input.email);
+      expect(login.user.role).toBe(UserRole.USER);
+
+      const decodedToken = jwt.verify(login.token, config.jwtSecret) as jwt.JwtPayload;
+      expect(decodedToken.id).toBe(login.user.id);
+      expect(decodedToken.email).toBe(variables.input.email);
+
+      // The resolver sets the auth cookie that becomes the Set-Cookie header.
+      expect(res.cookie).toHaveBeenCalledTimes(1);
+      expect(res.cookie).toHaveBeenCalledWith(
+        'token',
+        login.token,
+        expect.objectContaining({ httpOnly: true, sameSite: 'lax', path: '/', maxAge: AUTH_COOKIE_MAX_AGE })
+      );
+
+      const stored = await User.findOne({ email: variables.input.email });
+      expect(stored?.lastLogin).toBeInstanceOf(Date);
+      expect(stored!.lastLogin!.getTime()).toBeGreaterThanOrEqual(before);
     });
     
     it('should fail with incorrect password', async () => {
