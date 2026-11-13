@@ -8,6 +8,8 @@ import { HeroHeadline } from "@/components/sections/HeroHeadline";
 import { BuildingNowSection } from "@/components/sections/BuildingNowSection";
 import { HowIShipSection } from "@/components/sections/HowIShipSection";
 import { WorkWithSection } from "@/components/sections/WorkWithSection";
+import { LatestWritingSection } from "@/components/sections/LatestWritingSection";
+import { OffTheClockSection } from "@/components/sections/OffTheClockSection";
 import { TimelineSection } from "@/components/sections/TimelineSection";
 import { sanitizeJsonLd } from '@/lib/seo/metadata';
 
@@ -135,6 +137,10 @@ export default function Home() {
           <HowIShipSection />
 
           <WorkWithSection />
+
+          <LatestWritingSection />
+
+          <OffTheClockSection />
 
           <TimelineSection limit={4} showViewAll />
         </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { screen, within } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 import HomePage from '@/app/page';
 import { renderWithProviders } from '@/utils/test-utils';
 
@@ -97,6 +97,46 @@ describe('Home Page', () => {
     expect(screen.getAllByText('TypeScript')).toHaveLength(1);
     expect(screen.queryByText('What I do')).not.toBeInTheDocument();
     expect(screen.queryByText(/core stack/i)).not.toBeInTheDocument();
+  });
+
+  it('lists the three newest articles, newest first, plus an all-writing link', () => {
+    renderWithProviders(<HomePage />);
+
+    const section = screen
+      .getByRole('heading', { name: /latest writing/i })
+      .closest('section') as HTMLElement;
+    const items = within(section).getAllByRole('listitem');
+    expect(items).toHaveLength(3);
+    expect(items[0]).toHaveTextContent(/01 Nov 2026/);
+    expect(within(items[0]).getByRole('link')).toHaveAttribute(
+      'href',
+      expect.stringContaining('dev.to/lfariaus/i-attempted-2000-pull-ups'),
+    );
+    expect(within(section).getByRole('link', { name: /all writing on dev\.to/i })).toHaveAttribute(
+      'href',
+      'https://dev.to/lfariaus',
+    );
+  });
+
+  it('renders "Off the clock" with the timer link and the two dialog triggers', () => {
+    renderWithProviders(<HomePage />);
+
+    const section = screen
+      .getByRole('heading', { name: /off the clock/i })
+      .closest('section') as HTMLElement;
+    expect(within(section).getByRole('link', { name: /pull-ups/i })).toHaveAttribute(
+      'href',
+      'https://emom-pullups.vercel.app',
+    );
+    expect(within(section).getByRole('button', { name: /goggins mode/i })).toBeInTheDocument();
+    expect(within(section).getByRole('button', { name: /picture of the day/i })).toBeInTheDocument();
+  });
+
+  it('opens the Goggins dialog from "Off the clock"', async () => {
+    renderWithProviders(<HomePage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /goggins mode/i }));
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
   });
 
   it('no longer renders the second metrics section', () => {

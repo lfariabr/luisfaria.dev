@@ -120,6 +120,47 @@ export const HOW_I_SHIP = {
   ],
 } as const;
 
+export type Article = { date: string; title: string; href: string };
+
+/**
+ * "Latest writing": the three newest dev.to articles, newest first (#491).
+ * Static for now; making it update itself is #336.
+ */
+export const LATEST_WRITING: Article[] = [
+  {
+    date: '2026-11-01',
+    title: 'I attempted 2,000 pull-ups. The next morning, I open-sourced my timer.',
+    href: 'https://dev.to/lfariaus/i-attempted-2000-pull-ups-the-next-morning-i-open-sourced-my-timer-31h',
+  },
+  {
+    date: '2026-10-19',
+    title: '35 seconds to log a coffee: what one screen recording taught me about iPhone Safari',
+    href: 'https://dev.to/lfariaus/35-seconds-to-log-a-coffee-what-one-screen-recording-taught-me-about-iphone-safari-32a5',
+  },
+  {
+    date: '2026-08-28',
+    title: 'What happens between a token and a prediction? Making sentiment models inspectable',
+    href: 'https://dev.to/lfariaus/what-happens-between-a-token-and-a-prediction-making-sentiment-models-inspectable-2p0c',
+  },
+];
+
+/** "Off the clock": a small personal strip (#491). */
+export const OFF_THE_CLOCK = {
+  pullUps: {
+    title: 'Pull-ups',
+    blurb: 'EMOM sessions, the timer I built for them, and one attempt at 2,000.',
+    href: 'https://emom-pullups.vercel.app',
+  },
+  goggins: {
+    title: 'Goggins mode',
+    blurb: 'Ask the site to email you a motivational scream. Two a day, max.',
+  },
+  apod: {
+    title: 'Picture of the day',
+    blurb: 'NASA’s astronomy photo, one click away.',
+  },
+} as const;
+
 /** First-person narrative for the About page (problem/outcome-led, grounded). */
 export const ABOUT_BIO: string[] = [
   'I’m Luis Faria, a software and data engineer based in Sydney. For 10+ years I’ve built systems that turn manual, messy processes into automated, measurable products - across healthcare, marketing agencies, tech, and education.',
