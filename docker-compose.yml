@@ -24,7 +24,8 @@ services:
       - webapp
       - api
     networks:
-      - app-net
+      - web
+      - internal
     restart: always
     deploy:
       resources:
@@ -47,7 +48,7 @@ services:
       - NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID=${NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID}
       - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
     networks:
-      - app-net
+      - web
     restart: always
     deploy:
       resources:
@@ -91,7 +92,8 @@ services:
     depends_on:
       - cache
     networks:
-      - app-net
+      - internal
+      - egress
     restart: always
     deploy:
       resources:
@@ -109,7 +111,7 @@ services:
     volumes:
       - redis-data:/data
     networks:
-      - app-net
+      - internal
     restart: always
     deploy:
       resources:
@@ -123,5 +125,14 @@ services:
 volumes:
   redis-data:
 
+# Network isolation (#476, from #40). Only nginx joins both sides.
+#   web:      nginx + frontend. Published ports live here; the frontend's SSR
+#             calls https://luisfaria.dev/graphql through it, like any visitor.
+#   internal: nginx + backend + redis. No route out, and the frontend isn't on
+#             it, so it can't reach backend_api:4000 or Redis directly.
+#   egress:   backend only, for MongoDB Atlas, Stripe, OpenAI and the other APIs.
 networks:
-  app-net:
+  web:
+  internal:
+    internal: true
+  egress:
