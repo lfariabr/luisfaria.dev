@@ -21,7 +21,7 @@ const scriptArgsSchema = z.array(z.string()).superRefine((args, ctx) => {
   const unknownFlags = args.filter((arg) => arg.startsWith('--') && arg !== '--dry-run');
   for (const flag of unknownFlags) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: 'custom',
       message: `Unknown flag "${flag}"`,
     });
   }
@@ -29,7 +29,7 @@ const scriptArgsSchema = z.array(z.string()).superRefine((args, ctx) => {
   const dryRunFlags = args.filter((arg) => arg === '--dry-run');
   if (dryRunFlags.length > 1) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: 'custom',
       message: 'Provide --dry-run at most once.',
     });
   }
@@ -37,7 +37,7 @@ const scriptArgsSchema = z.array(z.string()).superRefine((args, ctx) => {
   const identifiers = args.filter((arg) => !arg.startsWith('--'));
   if (identifiers.length !== 1) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: 'custom',
       message: 'Provide exactly one email or name fragment.',
     });
     return;
@@ -46,17 +46,18 @@ const scriptArgsSchema = z.array(z.string()).superRefine((args, ctx) => {
   const identifier = identifiers[0].trim();
   if (!identifier) {
     ctx.addIssue({
-      code: z.ZodIssueCode.custom,
+      code: 'custom',
       message: 'Identifier cannot be empty.',
     });
   }
 
   if (identifier.length > IDENTIFIER_MAX_LENGTH) {
     ctx.addIssue({
-      code: z.ZodIssueCode.too_big,
+      code: 'too_big',
       maximum: IDENTIFIER_MAX_LENGTH,
       inclusive: true,
-      type: 'string',
+      origin: 'string',
+      input: identifier,
       message: `Identifier must be ${IDENTIFIER_MAX_LENGTH} characters or fewer.`,
     });
   }

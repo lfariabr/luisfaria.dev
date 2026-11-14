@@ -163,13 +163,13 @@ export async function fetchApodFromApi(
       ...logContext,
       statusCode,
       latencyMs: latency,
-      validationErrors: parsed.error.errors,
+      validationErrors: parsed.error.issues,
     });
     throw new ApodServiceError(
       "NASA API response failed schema validation",
       "VALIDATION_ERROR",
       statusCode,
-      parsed.error.errors
+      parsed.error.issues
     );
   }
 
