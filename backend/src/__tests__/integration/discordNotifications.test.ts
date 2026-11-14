@@ -8,8 +8,7 @@ jest.mock('../../services/discord', () => ({
   notifyDiscord: (...args: unknown[]) => mockNotifyDiscord(...args),
 }));
 
-jest.mock('../../services/openai', () => ({
-  chatWithGogginsMode: jest.fn().mockResolvedValue('This is a mock AI response'),
+jest.mock('../../services/claude', () => ({
 }));
 
 const REGISTER_MUTATION = `

@@ -57,12 +57,6 @@ const staticRoutes: MetadataRoute.Sitemap = [
     priority: 0.8,
   },
   {
-    url: `${BASE_URL}/chatbot`,
-    lastModified: STATIC_LAST_MODIFIED,
-    changeFrequency: 'monthly',
-    priority: 0.6,
-  },
-  {
     url: `${BASE_URL}/privacy`,
     lastModified: STATIC_LAST_MODIFIED,
     changeFrequency: 'yearly',

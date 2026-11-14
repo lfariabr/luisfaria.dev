@@ -1,7 +1,7 @@
 import Scream from '../../models/Scream';
 import { Errors } from '../../utils/errors';
 import { enforceRateLimit, Subject } from '../../rateLimiting';
-import { chatWithGogginsMode } from '../../services/openai';
+import { pickScream } from '../../data/gogginsScreams';
 import { sendGogginsEmail } from '../../services/resendMailer';
 import { notifyDiscord } from '../../services/discord';
 import { logger } from '../../utils/logger';
@@ -9,14 +9,6 @@ import { logger } from '../../utils/logger';
 // Simple email normalization/validation (replace later with zod schema)
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
 const isValidEmail = (email: string) => /.+@.+\..+/.test(email);
-
-const buildPrompt = (explicitMode: boolean) => {
-  if (explicitMode) {
-    return `Generate one short motivational scream (150-200 chars or 1-3 sentences). Unleash brutal truths about self-improvement: own your failures, embrace pain, grind relentlessly. Use profanity (e.g., "f#ck", "f#ck#n", "m*t#f*c#n") for raw intensity.`;
-  }
-
-  return `Generate one short motivational scream (150-200 chars or 1-3 sentences). Deliver brutal truths about self-improvement: own your failures, embrace pain, grind relentlessly. Keep it intense, clean, no profanity.`;
-};
 
 export const activateGogginsMode = async (_: any, { input }: any) => {
   const userEmailRaw = input?.userEmail;
@@ -30,10 +22,10 @@ export const activateGogginsMode = async (_: any, { input }: any) => {
 
   const rateLimitInfo = await enforceRateLimit('goggins', Subject.email(userEmail));
 
-  // Generate scream via OpenAI
-  const modelUsed = 'gpt-3.5-turbo'; // keep aligned with chatWithAI's default
-  const prompt = buildPrompt(explicitMode);
-  const text = await chatWithGogginsMode(prompt);
+  // Pick a static message, never the one this email got last (#497)
+  const modelUsed = 'static';
+  const previous = await Scream.findOne({ userEmail }).sort({ createdAt: -1 }).select('text').lean();
+  const text = pickScream(explicitMode, previous?.text);
 
   // Persist
   const isSubscriber = true; // TODO: replace with Stripe/customer check

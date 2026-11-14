@@ -6,9 +6,8 @@ import * as dbHandler from '../helpers/dbHandler';
 import { executeOperation } from '../helpers/testServer';
 import { connectRedis, disconnectRedis, getRedisClient } from '../../services/redis';
 
-jest.mock('../../services/openai', () => ({
+jest.mock('../../services/claude', () => ({
   chatWithAI: jest.fn().mockResolvedValue('mock answer'),
-  chatWithGogginsMode: jest.fn().mockResolvedValue('mock scream'),
 }));
 
 jest.mock('../../services/apod/', () => {

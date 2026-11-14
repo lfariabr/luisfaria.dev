@@ -69,7 +69,8 @@ services:
       - MONGODB_URI=${MONGODB_URI}
       - REDIS_URL=${REDIS_URL}
       - JWT_SECRET=${JWT_SECRET}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - AI_MODEL=${AI_MODEL:-claude-haiku-5-5}
       - RESEND_API_KEY=${RESEND_API_KEY}
       - NASA_API_KEY=${NASA_API_KEY}
       - SENTRY_DSN=${SENTRY_DSN}
@@ -130,7 +131,7 @@ volumes:
 #             calls https://luisfaria.dev/graphql through it, like any visitor.
 #   internal: nginx + backend + redis. No route out, and the frontend isn't on
 #             it, so it can't reach backend_api:4000 or Redis directly.
-#   egress:   backend only, for MongoDB Atlas, Stripe, OpenAI and the other APIs.
+#   egress:   backend only, for MongoDB Atlas, Stripe, Anthropic and the other APIs.
 networks:
   web:
   internal:
