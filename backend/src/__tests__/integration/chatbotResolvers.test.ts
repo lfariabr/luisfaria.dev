@@ -1,3 +1,4 @@
+import config from '../../config/config';
 import * as dbHandler from '../helpers/dbHandler';
 import { executeOperation } from '../helpers/testServer';
 import User, { UserRole } from '../../models/User';
@@ -118,7 +119,7 @@ describe('Chatbot Resolvers', () => {
         // Check message properties
         expect(askQuestion.message.question).toBe(variables.question);
         expect(askQuestion.message.answer).toBe('This is a mock AI response');
-        expect(askQuestion.message.modelUsed).toBe('claude-haiku-5-5');
+        expect(askQuestion.message.modelUsed).toBe(config.aiModel);
         
         // Check rate limit info
         expect(askQuestion.rateLimitInfo.limit).toBe(rateLimits.chatbot.limits.user);
