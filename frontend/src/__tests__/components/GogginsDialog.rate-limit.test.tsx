@@ -44,10 +44,33 @@ describe('GogginsDialog - rate limit paths', () => {
       },
     ]);
 
-    expect(await screen.findByText(/Rate limit exceeded/i)).toBeInTheDocument();
+    expect(await screen.findByText(/all your Goggins for today/i)).toBeInTheDocument();
     expect(screen.getByText(/Try again in 01:05/i)).toBeInTheDocument();
     expect(screen.getByText('0/2')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /wait 01:05/i })).toBeDisabled();
+  });
+
+  it('over the limit as production sends it: HTTP 429 networkError still shows the limit and countdown (#501)', async () => {
+    // Apollo Client 3 turns a non-2xx response into a networkError; the GraphQL error is in its result.
+    const http429 = Object.assign(new Error('Response not successful: Received status code 429'), {
+      name: 'ServerError',
+      statusCode: 429,
+      result: {
+        data: null,
+        errors: [
+          {
+            message: 'Rate limit exceeded',
+            extensions: { code: 'RATE_LIMITED', limit: 2, remaining: 0, resetTime: inSeconds(65) },
+          },
+        ],
+      },
+    });
+    await renderAndSubmit([{ request, error: http429 }]);
+
+    expect(await screen.findByText(/all your Goggins for today/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Something went wrong/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/Try again in 01:05/i)).toBeInTheDocument();
+    expect(screen.getByText('0/2')).toBeInTheDocument();
   });
 
   it('last scream used: shows the result, 0/limit and a countdown from resetTime, with no error', async () => {
