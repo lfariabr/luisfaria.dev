@@ -10,7 +10,7 @@ import { sanitizeJsonLd } from '@/lib/seo/metadata';
 export const metadata: Metadata = {
   title: 'About - Luis Faria',
   description:
-    'Luis Faria - software and data engineer in Sydney building secure education data products, applied ML systems, and production automation.',
+    'Luis Faria, senior software engineer in Sydney: a parent portal used by 2,000 families, the data systems behind a school, and applied ML.',
   alternates: { canonical: 'https://luisfaria.dev/about' },
 };
 
@@ -18,7 +18,7 @@ const personLd = {
   '@context': 'https://schema.org',
   '@type': 'Person',
   name: 'Luis Faria',
-  jobTitle: 'Software & Data Engineer / Data & Systems Specialist',
+  jobTitle: 'Senior Software Engineer',
   url: 'https://luisfaria.dev/about',
   address: { '@type': 'PostalAddress', addressLocality: 'Sydney', addressCountry: 'AU' },
   sameAs: [SOCIALS.github, SOCIALS.linkedin, SOCIALS.devto],

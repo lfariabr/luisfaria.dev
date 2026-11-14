@@ -7,7 +7,7 @@ import { SOCIALS } from '@/content/profile';
 export const metadata: Metadata = {
   title: 'Contact - Luis Faria',
   description:
-    'Get in touch with Luis Faria - software and data engineer in Sydney. Email, LinkedIn, GitHub, and dev.to.',
+    'Get in touch with Luis Faria, senior software engineer in Sydney. Email, LinkedIn, GitHub, and dev.to.',
   alternates: { canonical: 'https://luisfaria.dev/contact' },
 };
 
