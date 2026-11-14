@@ -114,20 +114,13 @@ export default function Home() {
               })}
             </dl>
 
-            {/* Primary CTAs - AI assistant gets visual priority (emerald ring + tint). */}
+            {/* Primary CTAs. The AI assistant button is hidden while the chatbot is off (#497). */}
             <div className="flex flex-wrap justify-center gap-3">
               <Button asChild className="rounded-full px-6">
                 <Link href="/work">See my work</Link>
               </Button>
               <Button asChild variant="outline" className="rounded-full px-6">
                 <Link href="/about">About me</Link>
-              </Button>
-              <Button
-                asChild
-                variant="ghost"
-                className="rounded-full px-6 ring-2 ring-emerald-500 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/15 dark:text-emerald-400 dark:hover:bg-emerald-500/15"
-              >
-                <Link href="/chatbot">Try my AI assistant</Link>
               </Button>
             </div>
           </div>

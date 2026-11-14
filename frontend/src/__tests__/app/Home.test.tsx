@@ -38,10 +38,11 @@ describe('Home Page', () => {
     renderWithProviders(<HomePage />);
 
     const workButton = screen.getByRole('link', { name: /see my work/i });
-    const chatbotButton = screen.getByRole('link', { name: /try my ai assistant/i });
+
 
     expect(workButton).toHaveAttribute('href', '/work');
-    expect(chatbotButton).toHaveAttribute('href', '/chatbot');
+    // The chatbot is hidden for now (#497)
+    expect(screen.queryByRole('link', { name: /ai assistant/i })).not.toBeInTheDocument();
   });
 
   it('renders "What I\'m building now" with the three first-person cards', () => {

@@ -9,7 +9,6 @@ jest.mock('../../services/discord', () => ({
 }));
 
 jest.mock('../../services/claude', () => ({
-  chatWithGogginsMode: jest.fn().mockResolvedValue('This is a mock AI response'),
 }));
 
 const REGISTER_MUTATION = `

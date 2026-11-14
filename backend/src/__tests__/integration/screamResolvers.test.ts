@@ -2,11 +2,6 @@ import * as dbHandler from '../helpers/dbHandler';
 import { executeOperation } from '../helpers/testServer';
 import { connectRedis, disconnectRedis, getRedisClient } from '../../services/redis';
 
-// Mock the Claude service
-jest.mock('../../services/claude', () => ({
-  chatWithGogginsMode: jest.fn().mockResolvedValue('This is a mock AI response'),
-}));
-
 // Define test queries and mutations
 const ACTIVATE_GOGGINS_MODE_MUTATION = `
   mutation ActivateGogginsMode($input: ScreamInput!) {
@@ -107,8 +102,8 @@ it('should successfully input an email and get a response', async () => {
        // Check message properties
        expect(activateGogginsMode.userEmail).toBe(variables.input.userEmail);
        expect(activateGogginsMode.explicitMode).toBe(variables.input.explicitMode);
-       expect(activateGogginsMode.text).toBe('This is a mock AI response');
-       expect(activateGogginsMode.modelUsed).toBe('claude-haiku-5-5');
+       expect(activateGogginsMode.text).toMatch(/- Goggins Mode$/);
+       expect(activateGogginsMode.modelUsed).toBe('static');
        
        // Check rate limit info
        expect(activateGogginsMode.rateLimitInfo.limit).toBe(2);

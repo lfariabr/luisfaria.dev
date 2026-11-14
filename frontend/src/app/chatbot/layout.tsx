@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import { resolveOgImage } from '@/lib/seo/metadata';
 
 const ogImage = resolveOgImage();
@@ -26,6 +27,10 @@ export const metadata: Metadata = {
   },
 };
 
+/** The chatbot is hidden for now (#497): the route 404s. Delete the notFound() call to bring it back. */
+const CHATBOT_HIDDEN = true;
+
 export default function ChatbotLayout({ children }: { children: React.ReactNode }) {
+  if (CHATBOT_HIDDEN) notFound();
   return children;
 }

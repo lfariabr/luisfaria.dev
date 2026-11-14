@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Full-stack TypeScript portfolio application (luisfaria.dev) with a Next.js frontend and Node.js/Express/Apollo GraphQL backend. MongoDB for data, Redis for caching and rate limiting, Claude (Anthropic API) for the AI chatbot and Goggins mode, Resend for email.
+Full-stack TypeScript portfolio application (luisfaria.dev) with a Next.js frontend and Node.js/Express/Apollo GraphQL backend. MongoDB for data, Redis for caching and rate limiting, Claude (Anthropic API) for the AI chatbot (hidden for now), Resend for email.
 
 ## Build & Development Commands
 
@@ -125,10 +125,10 @@ A new rate-limited feature adds an entry to `rateLimits.ts`, not a new key or li
 
 ## Environment Variables
 
-Backend requires: `MONGODB_URI`, `REDIS_URL`, `JWT_SECRET`, `ANTHROPIC_API_KEY`, `RESEND_API_KEY`, `NASA_API_KEY`, `DISCORD_WEBHOOK_URL`
+Backend requires: `MONGODB_URI`, `REDIS_URL`, `JWT_SECRET`, `RESEND_API_KEY`, `NASA_API_KEY`, `DISCORD_WEBHOOK_URL`
 Frontend requires: `NEXT_PUBLIC_GRAPHQL_URL` (defaults to `http://localhost:4000/graphql`)
 
-See `backend/.env.example` for full template.
+`ANTHROPIC_API_KEY` is optional while the chatbot is hidden. See `backend/.env.example` for full template.
 
 ## Code Style
 Mechanical rules are enforced by ESLint (`--max-warnings` caps `any`; raw `new GraphQLError` is banned outside the error infrastructure). Judgement calls are in `CODING_STANDARDS.md`.

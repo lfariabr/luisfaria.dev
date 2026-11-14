@@ -392,7 +392,7 @@ jobs:
             git reset --hard origin/master
 
             # Fail fast if a required production secret is missing in server .env
-            for key in TURNSTILE_SECRET_KEY ANTHROPIC_API_KEY; do
+            for key in TURNSTILE_SECRET_KEY; do
               if ! grep -q "^$key=" .env || [ -z "$(grep "^$key=" .env | cut -d'=' -f2-)" ]; then
                 echo "❌ $key is missing or empty in /var/www/portfolio/.env"
                 exit 1

@@ -2,14 +2,13 @@ import Anthropic from '@anthropic-ai/sdk';
 import config from '../config/config';
 import luisProfile from '../data/luis-profile.json';
 
-const anthropic = new Anthropic({ apiKey: config.anthropicApiKey });
+// Created on first use: the key is optional while the chatbot is hidden, and the SDK
+// throws at construction when it has no key.
+let client: Anthropic | null = null;
+const getClient = (): Anthropic => (client ??= new Anthropic({ apiKey: config.anthropicApiKey }));
 
 // Cache the stringified profile to avoid repeated JSON.stringify
 let cachedProfile: string | null = null;
-
-const getGogginsModePrompt = (): string => {
-  return `You're Goggins Mode - a ruthless, no-excuses motivator. Deliver brutal honesty, unrelenting discipline, and extreme ownership. Annihilate weakness, demand action, and embrace the grind. Keep responses raw, intense and soul-shaking paragraphs. Sign off: - Goggins Mode.`;
-}
 
 const buildProfileContext = (): string => {
   const p = luisProfile as any;
@@ -81,7 +80,7 @@ const DECLINED_REPLY = 'Sorry, I can’t help with that one.';
  */
 const ask = async (system: string, prompt: string): Promise<string> => {
   try {
-    const response = await anthropic.messages.create({
+    const response = await getClient().messages.create({
       model: config.aiModel,
       max_tokens: 16000,
       output_config: { effort: 'low' },
@@ -103,7 +102,3 @@ const ask = async (system: string, prompt: string): Promise<string> => {
 
 /** Answer a visitor's question about Luis, grounded in his profile. */
 export const chatWithAI = (prompt: string): Promise<string> => ask(getSystemPrompt(), prompt);
-
-/** Write a Goggins Mode scream. */
-export const chatWithGogginsMode = (prompt: string): Promise<string> =>
-  ask(getGogginsModePrompt(), prompt);

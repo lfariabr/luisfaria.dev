@@ -4,7 +4,7 @@ jest.mock('@anthropic-ai/sdk', () =>
   jest.fn().mockImplementation(() => ({ messages: { create: mockCreate } })),
 );
 
-import { chatWithAI, chatWithGogginsMode } from '../../services/claude';
+import { chatWithAI } from '../../services/claude';
 
 const reply = (overrides: Record<string, unknown> = {}) => ({
   stop_reason: 'end_turn',
@@ -38,12 +38,6 @@ describe('claude service', () => {
   it('returns only the text blocks, joined', async () => {
     mockCreate.mockResolvedValue(reply());
     await expect(chatWithAI('hi')).resolves.toBe('Hello there');
-  });
-
-  it('uses the Goggins system prompt for screams', async () => {
-    mockCreate.mockResolvedValue(reply());
-    await chatWithGogginsMode('Motivate me');
-    expect(mockCreate.mock.calls[0][0].system).toContain('Goggins Mode');
   });
 
   it('answers politely when Claude declines', async () => {

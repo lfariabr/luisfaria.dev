@@ -8,7 +8,6 @@ import { connectRedis, disconnectRedis, getRedisClient } from '../../services/re
 
 jest.mock('../../services/claude', () => ({
   chatWithAI: jest.fn().mockResolvedValue('mock answer'),
-  chatWithGogginsMode: jest.fn().mockResolvedValue('mock scream'),
 }));
 
 jest.mock('../../services/apod/', () => {

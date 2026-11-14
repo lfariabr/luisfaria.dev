@@ -63,7 +63,6 @@ const requiredEnvVars = [
   'MONGODB_URI',
   'JWT_SECRET',
   'REDIS_URL',
-  'ANTHROPIC_API_KEY',
   'RESEND_API_KEY',
   'NASA_API_KEY',
 ];
