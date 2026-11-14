@@ -118,7 +118,7 @@ describe('Chatbot Resolvers', () => {
         // Check message properties
         expect(askQuestion.message.question).toBe(variables.question);
         expect(askQuestion.message.answer).toBe('This is a mock AI response');
-        expect(askQuestion.message.modelUsed).toBe('claude-opus-5-5');
+        expect(askQuestion.message.modelUsed).toBe('claude-haiku-5-5');
         
         // Check rate limit info
         expect(askQuestion.rateLimitInfo.limit).toBe(rateLimits.chatbot.limits.user);

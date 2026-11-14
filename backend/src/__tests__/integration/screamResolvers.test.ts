@@ -108,7 +108,7 @@ it('should successfully input an email and get a response', async () => {
        expect(activateGogginsMode.userEmail).toBe(variables.input.userEmail);
        expect(activateGogginsMode.explicitMode).toBe(variables.input.explicitMode);
        expect(activateGogginsMode.text).toBe('This is a mock AI response');
-       expect(activateGogginsMode.modelUsed).toBe('claude-opus-5-5');
+       expect(activateGogginsMode.modelUsed).toBe('claude-haiku-5-5');
        
        // Check rate limit info
        expect(activateGogginsMode.rateLimitInfo.limit).toBe(2);

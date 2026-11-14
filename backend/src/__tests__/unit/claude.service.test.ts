@@ -1,7 +1,7 @@
 const mockCreate = jest.fn();
 
 jest.mock('@anthropic-ai/sdk', () =>
-  jest.fn().mockImplementation(() => ({ beta: { messages: { create: mockCreate } } })),
+  jest.fn().mockImplementation(() => ({ messages: { create: mockCreate } })),
 );
 
 import { chatWithAI, chatWithGogginsMode } from '../../services/claude';
@@ -19,21 +19,19 @@ const reply = (overrides: Record<string, unknown> = {}) => ({
 describe('claude service', () => {
   beforeEach(() => mockCreate.mockReset());
 
-  it('sends one user turn to the configured model at low effort, with refusal fallbacks', async () => {
+  it('sends one user turn to the configured model at low effort', async () => {
     mockCreate.mockResolvedValue(reply());
 
     await chatWithAI('What does Luis build?');
 
     const params = mockCreate.mock.calls[0][0];
     expect(params).toMatchObject({
-      model: 'claude-opus-5-5',
+      model: 'claude-haiku-5-5',
       output_config: { effort: 'low' },
-      betas: ['server-side-fallback-2026-07-01'],
-      fallbacks: 'default',
       messages: [{ role: 'user', content: 'What does Luis build?' }],
     });
     expect(params.system).toContain('Luis Faria');
-    // Opus 5.5 rejects sampling parameters
+    // Current models reject a non-default temperature
     expect(params).not.toHaveProperty('temperature');
   });
 
@@ -48,7 +46,7 @@ describe('claude service', () => {
     expect(mockCreate.mock.calls[0][0].system).toContain('Goggins Mode');
   });
 
-  it('answers politely when the whole fallback chain declines', async () => {
+  it('answers politely when Claude declines', async () => {
     mockCreate.mockResolvedValue(reply({ stop_reason: 'refusal', content: [] }));
     await expect(chatWithAI('hi')).resolves.toMatch(/can’t help/);
   });

@@ -95,7 +95,7 @@ const config: Config = {
     jwtSecret: process.env.JWT_SECRET || '',
     redisUrl: process.env.REDIS_URL || '',
     anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
-    aiModel: process.env.AI_MODEL || 'claude-opus-5-5',
+    aiModel: process.env.AI_MODEL || 'claude-haiku-5-5',
     resendApiKey: process.env.RESEND_API_KEY || '',
     nasaApiKey: process.env.NASA_API_KEY || '',
     frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',

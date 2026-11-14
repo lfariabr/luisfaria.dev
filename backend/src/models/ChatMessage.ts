@@ -26,7 +26,7 @@ const ChatMessageSchema: Schema = new Schema(
     modelUsed: { 
       type: String, 
       required: true,
-      default: 'claude-opus-5-5' 
+      default: 'claude-haiku-5-5' 
     },
   },
   { timestamps: true }

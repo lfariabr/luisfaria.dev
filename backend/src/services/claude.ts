@@ -75,18 +75,16 @@ const DECLINED_REPLY = 'Sorry, I can’t help with that one.';
 
 /**
  * One Claude request: a system prompt and a single user turn.
- * Short, conversational replies, so effort is `low`. Thinking stays on (it can't be
- * turned off on Opus 5.5) and counts toward `max_tokens`, so the cap is generous.
- * A policy decline is retried on Anthropic's default fallback chain.
+ * Short, conversational replies, so effort is `low`. Thinking is on by default and
+ * counts toward `max_tokens`, so the cap is generous. No sampling parameters: current
+ * models reject a non-default `temperature`.
  */
 const ask = async (system: string, prompt: string): Promise<string> => {
   try {
-    const response = await anthropic.beta.messages.create({
+    const response = await anthropic.messages.create({
       model: config.aiModel,
       max_tokens: 16000,
       output_config: { effort: 'low' },
-      betas: ['server-side-fallback-2026-07-01'],
-      fallbacks: 'default',
       system,
       messages: [{ role: 'user', content: prompt }],
     });

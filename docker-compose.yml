@@ -70,7 +70,7 @@ services:
       - REDIS_URL=${REDIS_URL}
       - JWT_SECRET=${JWT_SECRET}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - AI_MODEL=${AI_MODEL:-claude-opus-5-5}
+      - AI_MODEL=${AI_MODEL:-claude-haiku-5-5}
       - RESEND_API_KEY=${RESEND_API_KEY}
       - NASA_API_KEY=${NASA_API_KEY}
       - SENTRY_DSN=${SENTRY_DSN}
