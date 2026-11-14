@@ -6,7 +6,7 @@ import { logger } from '../utils/logger';
  * Formats a ZodError into a user-friendly error message
  */
 export const formatZodError = (error: ZodError): string => {
-  return error.errors
+  return error.issues
     .map((err) => {
       const field = err.path.join('.');
       return `${field}: ${err.message}`;
@@ -45,7 +45,7 @@ export const validateInput = <T>(schema: ZodSchema<T>, inputName: string = 'inpu
         throw new GraphQLError(`Validation error: ${formatZodError(error)}`, {
           extensions: {
             code: 'BAD_USER_INPUT',
-            validationErrors: error.errors,
+            validationErrors: error.issues,
           },
         });
       }

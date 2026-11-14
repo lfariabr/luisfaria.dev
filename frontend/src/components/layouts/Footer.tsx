@@ -13,7 +13,7 @@ export function Footer() {
           <div className="space-y-3">
             <h3 className="text-lg font-medium">Luis Faria</h3>
             <p className="text-sm text-muted-foreground">
-              Software and data engineer - building secure education data products, applied ML systems, and production automation.
+              Senior software engineer in Sydney, shipping software that real people depend on.
             </p>
           </div>
           

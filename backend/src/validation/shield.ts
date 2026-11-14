@@ -118,7 +118,7 @@ const validateNoteFilters = rule({ cache: 'no_cache' })(
   async (_parent: unknown, args: unknown) => {
     const result = noteFiltersSchema.safeParse(args);
     if (!result.success) {
-      return new GraphQLError(`Validation error: ${result.error.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ')}`, {
+      return new GraphQLError(`Validation error: ${result.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ')}`, {
         extensions: { code: 'BAD_USER_INPUT' },
       });
     }

@@ -21,7 +21,7 @@ const personLd = {
   '@context': 'https://schema.org',
   '@type': 'Person',
   name: 'Luis Faria',
-  jobTitle: 'Software & Data Engineer / Data & Systems Specialist',
+  jobTitle: 'Senior Software Engineer',
   url: 'https://luisfaria.dev',
   sameAs: [
     'https://github.com/lfariabr',
@@ -36,7 +36,7 @@ const websiteLd = {
   name: 'Luis Faria',
   url: 'https://luisfaria.dev',
   description:
-    'Portfolio of Luis Faria - software and data engineer building secure education data products, applied ML systems, and production automation.',
+    'Portfolio of Luis Faria, a senior software engineer in Sydney: a parent portal used by 2,000 families, school data systems, and applied ML.',
 };
 
 const organizationLd = {
