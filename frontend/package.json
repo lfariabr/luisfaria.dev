@@ -84,6 +84,9 @@
     "serialize-javascript": "7.0.3",
     "immutable": "3.8.4",
     "tar": "7.5.22",
-    "postcss": "^8.5.10"
+    "postcss": "^8.5.10",
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "^11.0.1"
+    }
   }
 }
