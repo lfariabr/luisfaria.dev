@@ -27,6 +27,7 @@
     "node": ">=20.19.0"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.8.0",
     "@apollo/server": "^5.4.0",
     "@as-integrations/express4": "^1.1.2",
     "@graphql-tools/schema": "^10.1.5",
@@ -45,7 +46,6 @@
     "jsonwebtoken": "^9.0.2",
     "jws": "^4.0.1",
     "mongoose": "^8.15.0",
-    "openai": "^4.103.0",
     "path": "^0.12.7",
     "redis": "^5.1.0",
     "resend": "^6.0.1",

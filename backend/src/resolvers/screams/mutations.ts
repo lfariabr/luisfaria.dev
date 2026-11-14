@@ -1,7 +1,8 @@
+import config from '../../config/config';
 import Scream from '../../models/Scream';
 import { Errors } from '../../utils/errors';
 import { enforceRateLimit, Subject } from '../../rateLimiting';
-import { chatWithGogginsMode } from '../../services/openai';
+import { chatWithGogginsMode } from '../../services/claude';
 import { sendGogginsEmail } from '../../services/resendMailer';
 import { notifyDiscord } from '../../services/discord';
 import { logger } from '../../utils/logger';
@@ -31,7 +32,7 @@ export const activateGogginsMode = async (_: any, { input }: any) => {
   const rateLimitInfo = await enforceRateLimit('goggins', Subject.email(userEmail));
 
   // Generate scream via OpenAI
-  const modelUsed = 'gpt-3.5-turbo'; // keep aligned with chatWithAI's default
+  const modelUsed = config.aiModel;
   const prompt = buildPrompt(explicitMode);
   const text = await chatWithGogginsMode(prompt);
 

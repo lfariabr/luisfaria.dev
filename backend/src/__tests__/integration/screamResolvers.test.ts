@@ -2,8 +2,8 @@ import * as dbHandler from '../helpers/dbHandler';
 import { executeOperation } from '../helpers/testServer';
 import { connectRedis, disconnectRedis, getRedisClient } from '../../services/redis';
 
-// Mock OpenAI service
-jest.mock('../../services/openai', () => ({
+// Mock the Claude service
+jest.mock('../../services/claude', () => ({
   chatWithGogginsMode: jest.fn().mockResolvedValue('This is a mock AI response'),
 }));
 
@@ -108,7 +108,7 @@ it('should successfully input an email and get a response', async () => {
        expect(activateGogginsMode.userEmail).toBe(variables.input.userEmail);
        expect(activateGogginsMode.explicitMode).toBe(variables.input.explicitMode);
        expect(activateGogginsMode.text).toBe('This is a mock AI response');
-       expect(activateGogginsMode.modelUsed).toBe('gpt-3.5-turbo');
+       expect(activateGogginsMode.modelUsed).toBe('claude-opus-5-5');
        
        // Check rate limit info
        expect(activateGogginsMode.rateLimitInfo.limit).toBe(2);

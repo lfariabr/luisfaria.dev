@@ -1,11 +1,8 @@
-import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
 import config from '../config/config';
 import luisProfile from '../data/luis-profile.json';
 
-// Creating openAi client
-const openai = new OpenAI({
-    apiKey: config.openaiApiKey,
-});
+const anthropic = new Anthropic({ apiKey: config.anthropicApiKey });
 
 // Cache the stringified profile to avoid repeated JSON.stringify
 let cachedProfile: string | null = null;
@@ -74,65 +71,41 @@ ${cachedProfile}
 - If a question falls outside Luis's profile, say so honestly rather than guessing.`;
 };
 
-/**
- * Chat with AI using OpenAI's GPT models
- * @param prompt User's question
- * @param modelName Model to use (defaults to gpt-3.5-turbo)
- * @returns AI response
- */
-export const chatWithAI = async (
-    prompt: string, 
-    modelName: string = 'gpt-3.5-turbo'
-  ): Promise<string> => {
-    try {
-      const response = await openai.chat.completions.create({
-        model: modelName,
-        messages: [
-          {
-            role: 'system',
-            content: getSystemPrompt(),
-          },
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        max_tokens: 500,
-        temperature: 0.7,
-      });
-  
-      return response.choices[0]?.message?.content || 'Sorry, I could not generate a response.';
-    } catch (error: any) {
-      console.error('OpenAI API error:', error.message);
-      throw new Error('Failed to get response from AI service', { cause: error });
-    }
-  };
+const DECLINED_REPLY = 'Sorry, I can’t help with that one.';
 
-  export const chatWithGogginsMode = async (
-    prompt: string
-  ): Promise<string> => {
-    try {
-      const response = await openai.chat.completions.create({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          {
-            role: 'system',
-            content: getGogginsModePrompt(),
-          },
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        max_tokens: 500,
-        temperature: 0.7,
-      });
-  
-      return response.choices[0]?.message?.content || 'Sorry, I could not generate a response.';
-    } catch (error: any) {
-      console.error('OpenAI API error:', error.message);
-      throw new Error('Failed to get response from AI service', { cause: error });
-    }
-  };
-  
-  export default openai;
+/**
+ * One Claude request: a system prompt and a single user turn.
+ * Short, conversational replies, so effort is `low`. Thinking stays on (it can't be
+ * turned off on Opus 5.5) and counts toward `max_tokens`, so the cap is generous.
+ * A policy decline is retried on Anthropic's default fallback chain.
+ */
+const ask = async (system: string, prompt: string): Promise<string> => {
+  try {
+    const response = await anthropic.beta.messages.create({
+      model: config.aiModel,
+      max_tokens: 16000,
+      output_config: { effort: 'low' },
+      betas: ['server-side-fallback-2026-07-01'],
+      fallbacks: 'default',
+      system,
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    if (response.stop_reason === 'refusal') return DECLINED_REPLY;
+
+    const text = response.content
+      .flatMap((block) => (block.type === 'text' ? [block.text] : []))
+      .join('')
+      .trim();
+    return text || 'Sorry, I could not generate a response.';
+  } catch (error) {
+    throw new Error('Failed to get response from AI service', { cause: error });
+  }
+};
+
+/** Answer a visitor's question about Luis, grounded in his profile. */
+export const chatWithAI = (prompt: string): Promise<string> => ask(getSystemPrompt(), prompt);
+
+/** Write a Goggins Mode scream. */
+export const chatWithGogginsMode = (prompt: string): Promise<string> =>
+  ask(getGogginsModePrompt(), prompt);

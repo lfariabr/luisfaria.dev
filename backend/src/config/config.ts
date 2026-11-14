@@ -15,7 +15,9 @@ interface Config {
     mongodbUri: string;
     jwtSecret: string;
     redisUrl: string;
-    openaiApiKey: string;
+    anthropicApiKey: string;
+    /** Claude model for the chatbot and Goggins mode. */
+    aiModel: string;
     resendApiKey: string;
     nasaApiKey: string;
     frontendUrl: string;
@@ -61,7 +63,7 @@ const requiredEnvVars = [
   'MONGODB_URI',
   'JWT_SECRET',
   'REDIS_URL',
-  'OPENAI_API_KEY',
+  'ANTHROPIC_API_KEY',
   'RESEND_API_KEY',
   'NASA_API_KEY',
 ];
@@ -92,7 +94,8 @@ const config: Config = {
     mongodbUri: process.env.MONGODB_URI || '',
     jwtSecret: process.env.JWT_SECRET || '',
     redisUrl: process.env.REDIS_URL || '',
-    openaiApiKey: process.env.OPENAI_API_KEY || '',
+    anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
+    aiModel: process.env.AI_MODEL || 'claude-opus-5-5',
     resendApiKey: process.env.RESEND_API_KEY || '',
     nasaApiKey: process.env.NASA_API_KEY || '',
     frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',

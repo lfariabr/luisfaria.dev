@@ -1,9 +1,10 @@
+import config from '../../config/config';
 import { Errors } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 import { checkAuth } from '../../utils/authUtils';
 import { enforceRateLimit, Subject } from '../../rateLimiting';
 import ChatMessage from '../../models/ChatMessage';
-import { chatWithAI } from '../../services/openai';
+import { chatWithAI } from '../../services/claude';
 import mongoose from 'mongoose';
 
 export const chatbotMutations = {
@@ -23,7 +24,7 @@ export const chatbotMutations = {
         userId: new mongoose.Types.ObjectId(user.id),
         question,
         answer,
-        modelUsed: 'gpt-3.5-turbo',
+        modelUsed: config.aiModel,
       });
       
       await chatMessage.save();

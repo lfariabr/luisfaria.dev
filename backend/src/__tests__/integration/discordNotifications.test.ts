@@ -8,7 +8,7 @@ jest.mock('../../services/discord', () => ({
   notifyDiscord: (...args: unknown[]) => mockNotifyDiscord(...args),
 }));
 
-jest.mock('../../services/openai', () => ({
+jest.mock('../../services/claude', () => ({
   chatWithGogginsMode: jest.fn().mockResolvedValue('This is a mock AI response'),
 }));
 

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Full-stack TypeScript portfolio application (luisfaria.dev) with a Next.js frontend and Node.js/Express/Apollo GraphQL backend. MongoDB for data, Redis for caching and rate limiting, OpenAI for AI chatbot, Resend for email.
+Full-stack TypeScript portfolio application (luisfaria.dev) with a Next.js frontend and Node.js/Express/Apollo GraphQL backend. MongoDB for data, Redis for caching and rate limiting, Claude (Anthropic API) for the AI chatbot and Goggins mode, Resend for email.
 
 ## Build & Development Commands
 
@@ -58,7 +58,7 @@ docker-compose down          # Stop
 - **REST routes**: `backend/src/routes/` — `health.ts`, `stripeWebhook.ts` (raw-body Stripe webhook, mounted before JSON parsing)
 - **Models**: `backend/src/models/` — Mongoose schemas (User, Article, Project, ChatMessage, Scream, Note, Pin, Payment)
 - **Rate limiting**: `backend/src/rateLimiting/` — the list of Rate limits, `consume`/`enforceRateLimit`, the Redis Lua counter (see `CONTEXT.md`, `docs/adr/0001-rate-limiting-domain.md`)
-- **Services**: `backend/src/services/` — redis client, openai client, resendMailer + emailLayout, apod, stripe (checkout), payments (webhook side effects), discord, turnstile
+- **Services**: `backend/src/services/` — redis client, claude client, resendMailer + emailLayout, apod, stripe (checkout), payments (webhook side effects), discord, turnstile
 - **Error handling**: `backend/src/utils/errors/` — shared error factories, `createErrorHandler` wrapper
 - **Authorization**: `backend/src/validation/shield.ts` — GraphQL Shield rules
 - **Validation**: `backend/src/validation/schemas/` — Zod schemas
@@ -74,7 +74,7 @@ docker-compose down          # Stop
 Browser → Next.js (SSR/CSR) → Apollo Client → GraphQL API (port 4000)
                                                   ↓
                                     MongoDB (data) + Redis (rate limits/cache)
-                                    OpenAI (chatbot) + Resend (email) + NASA API (APOD)
+                                    Claude (chatbot) + Resend (email) + NASA API (APOD)
 ```
 
 ## Key Patterns
@@ -118,14 +118,14 @@ A new rate-limited feature adds an entry to `rateLimits.ts`, not a new key or li
 
 ## Testing
 
-- **Backend**: Jest + ts-jest, MongoDB Memory Server for in-memory DB, mocked external services (OpenAI, Resend, NASA). Needs a real Redis at `REDIS_URL` (local `.env` uses port 6381); `npm test` starts one via Docker when the host is localhost and the port is silent, and fails fast for an unreachable remote host. `cookieAuthE2E` has failed once in a full run and passed alone: suspected ordering flake, not yet diagnosed.
+- **Backend**: Jest + ts-jest, MongoDB Memory Server for in-memory DB, mocked external services (Claude, Resend, NASA). Needs a real Redis at `REDIS_URL` (local `.env` uses port 6381); `npm test` starts one via Docker when the host is localhost and the port is silent, and fails fast for an unreachable remote host. `cookieAuthE2E` has failed once in a full run and passed alone: suspected ordering flake, not yet diagnosed.
 - **Frontend**: Jest + React Testing Library + jsdom, Apollo Client mocks
 - **CI**: GitHub Actions runs lint + build/typecheck + tests per package in parallel with MongoDB 7 and Redis 7 services
 - **Pre-commit**: `.githooks/pre-commit` runs typecheck + lint for whichever package has staged files. Enable once per clone: `git config core.hooksPath .githooks`
 
 ## Environment Variables
 
-Backend requires: `MONGODB_URI`, `REDIS_URL`, `JWT_SECRET`, `OPENAI_API_KEY`, `RESEND_API_KEY`, `NASA_API_KEY`, `DISCORD_WEBHOOK_URL`
+Backend requires: `MONGODB_URI`, `REDIS_URL`, `JWT_SECRET`, `ANTHROPIC_API_KEY`, `RESEND_API_KEY`, `NASA_API_KEY`, `DISCORD_WEBHOOK_URL`
 Frontend requires: `NEXT_PUBLIC_GRAPHQL_URL` (defaults to `http://localhost:4000/graphql`)
 
 See `backend/.env.example` for full template.

@@ -94,7 +94,7 @@ jobs:
           JWT_SECRET: test-secret-for-ci
           MONGODB_URI: mongodb://localhost:27017/test
           REDIS_URL: redis://localhost:6379
-          OPENAI_API_KEY: test-openai-key
+          ANTHROPIC_API_KEY: test-anthropic-key
           RESEND_API_KEY: test-resend-key
           NASA_API_KEY: test-nasa-key
           STRIPE_SECRET_KEY: test-stripe-key
@@ -391,11 +391,13 @@ jobs:
             git fetch --prune origin
             git reset --hard origin/master
 
-            # Fail fast if required production secret is missing in server .env
-            if ! grep -q '^TURNSTILE_SECRET_KEY=' .env || [ -z "$(grep '^TURNSTILE_SECRET_KEY=' .env | cut -d'=' -f2-)" ]; then
-              echo "❌ TURNSTILE_SECRET_KEY is missing or empty in /var/www/portfolio/.env"
-              exit 1
-            fi
+            # Fail fast if a required production secret is missing in server .env
+            for key in TURNSTILE_SECRET_KEY ANTHROPIC_API_KEY; do
+              if ! grep -q "^$key=" .env || [ -z "$(grep "^$key=" .env | cut -d'=' -f2-)" ]; then
+                echo "❌ $key is missing or empty in /var/www/portfolio/.env"
+                exit 1
+              fi
+            done
             
             # Login to GHCR (to pull private images)
             echo "🔐 Logging into GHCR..."

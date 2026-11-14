@@ -6,8 +6,8 @@ import bcrypt from 'bcryptjs';
 import { connectRedis, disconnectRedis, getRedisClient } from '../../services/redis';
 import { rateLimits, resetCount, Subject } from '../../rateLimiting';
 
-// Mock OpenAI service
-jest.mock('../../services/openai', () => ({
+// Mock the Claude service
+jest.mock('../../services/claude', () => ({
   chatWithAI: jest.fn().mockResolvedValue('This is a mock AI response'),
 }));
 
@@ -118,7 +118,7 @@ describe('Chatbot Resolvers', () => {
         // Check message properties
         expect(askQuestion.message.question).toBe(variables.question);
         expect(askQuestion.message.answer).toBe('This is a mock AI response');
-        expect(askQuestion.message.modelUsed).toBe('gpt-3.5-turbo');
+        expect(askQuestion.message.modelUsed).toBe('claude-opus-5-5');
         
         // Check rate limit info
         expect(askQuestion.rateLimitInfo.limit).toBe(rateLimits.chatbot.limits.user);
