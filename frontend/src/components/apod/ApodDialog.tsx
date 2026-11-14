@@ -12,6 +12,7 @@ import {
 import { Rocket, Calendar, ExternalLink, AlertCircle, RefreshCw, Lock, ChevronDown, ChevronUp, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from '@apollo/client';
+import { firstGraphQLError, isRateLimited as isRateLimitedError } from '@/lib/apollo/graphqlError';
 import { GET_TODAYS_APOD, GET_APOD_BY_DATE } from '@/lib/graphql/queries/apod.queries';
 import type { Apod } from '@/lib/graphql/types/apod.types';
 import { useAuth } from '@/lib/auth/AuthContext';
@@ -112,12 +113,12 @@ export function ApodDialog({ open, onOpenChange }: ApodDialogProps) {
   
   // Rate limit derived state
   const isRateLimited = secondsUntilReset !== null && secondsUntilReset > 0;
-  const isRateLimitError = dateError?.graphQLErrors?.[0]?.extensions?.code === 'RATE_LIMITED';
+  const isRateLimitError = isRateLimitedError(firstGraphQLError(dateError));
 
   // Extract rate limit info from GraphQL errors
   useEffect(() => {
     if (dateError) {
-      const gqlError = dateError.graphQLErrors?.[0];
+      const gqlError = firstGraphQLError(dateError);
       const ext = gqlError?.extensions as Record<string, unknown> | undefined;
       if (ext?.code === 'RATE_LIMITED') {
         const limit = ext.limit as number;
@@ -159,7 +160,7 @@ export function ApodDialog({ open, onOpenChange }: ApodDialogProps) {
     if (!error) return;
     if (isHistorical && isRateLimitError) return;
 
-    const extCode = error.graphQLErrors?.[0]?.extensions?.code;
+    const extCode = firstGraphQLError(error)?.extensions?.code;
     trackClientEvent('apod_fetch_error', {
       date: selectedDate,
       isHistorical,

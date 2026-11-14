@@ -1,4 +1,4 @@
-import { createGraphQLError, ErrorCodes } from '../../utils/errors/graphqlErrors';
+import { createGraphQLError, ErrorCodes, Errors } from '../../utils/errors/graphqlErrors';
 import { CLIENT_GRAPHQL_ERROR_CODES, isClientGraphQLError } from '../../utils/sentryFilter';
 
 // Apollo's own errors (BadRequestError, ...) aren't exported; they're GraphQLErrors
@@ -19,6 +19,10 @@ describe('isClientGraphQLError', () => {
   it('filters our own auth and input errors', () => {
     expect(isClientGraphQLError(createGraphQLError('no', { code: ErrorCodes.UNAUTHENTICATED }))).toBe(true);
     expect(isClientGraphQLError(createGraphQLError('no', { code: ErrorCodes.BAD_USER_INPUT }))).toBe(true);
+  });
+
+  it('filters a used-up Rate limit (#501)', () => {
+    expect(isClientGraphQLError(Errors.rateLimited({ limit: 2, remaining: 0, resetTime: new Date() }))).toBe(true);
   });
 
   it('reports server errors and errors without a code', () => {

@@ -8,6 +8,8 @@ export const CLIENT_GRAPHQL_ERROR_CODES: ReadonlySet<string> = new Set([
   'UNAUTHENTICATED',
   'FORBIDDEN',
   'BAD_USER_INPUT',
+  // A visitor using up a Rate limit is the limit working, not a bug (#501)
+  'RATE_LIMITED',
   // Apollo rejecting a malformed request (empty query, bad JSON, unknown field)
   'BAD_REQUEST',
   'GRAPHQL_PARSE_FAILED',

@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@apollo/client';
 import { ACTIVATE_GOGGINS_MODE } from '@/lib/graphql/mutations/scream.mutations';
+import { firstGraphQLError, isRateLimited, type GraphQLErrorLike } from '@/lib/apollo/graphqlError';
 import Image from 'next/image';
 
 import {
@@ -28,7 +29,6 @@ const schema = z.object({
   explicitMode: z.boolean().default(false),
 });
 
-type GraphQLErrorLike = { message?: string; extensions?: Record<string, unknown> };
 
 export type GogginsDialogProps = {
   open: boolean;
@@ -155,6 +155,14 @@ export function GogginsDialog({ open, onOpenChange }: GogginsDialogProps) {
       if (typeof ext?.remaining === 'number') setRemaining(ext.remaining);
       if (ext?.code === 'RATE_LIMITED') setSecondsUntilReset(secondsUntil(ext.resetTime));
     };
+    const showError = (gqError: GraphQLErrorLike | undefined) => {
+      applyRateLimitExtensions(gqError?.extensions);
+      setErrorText(
+        isRateLimited(gqError)
+          ? "That's all your Goggins for today."
+          : gqError?.message || 'Something went wrong',
+      );
+    };
     try {
       const { data, errors } = await mutate({
         variables: { input: values },
@@ -164,8 +172,7 @@ export function GogginsDialog({ open, onOpenChange }: GogginsDialogProps) {
       // If GraphQL returned errors with 200 OK (e.g., Shield rate limit), surface them
       const gqError = errors?.[0];
       if (gqError) {
-        applyRateLimitExtensions(gqError.extensions);
-        setErrorText(gqError.message || 'Something went wrong');
+        showError(gqError);
         return; // stop; we already showed the error
       }
 
@@ -183,9 +190,8 @@ export function GogginsDialog({ open, onOpenChange }: GogginsDialogProps) {
         setSecondsUntilReset(rem === 0 ? secondsUntil(scream.rateLimitInfo?.resetTime) : null);
       }
     } catch (e) {
-      const gqError = (e as { graphQLErrors?: ReadonlyArray<GraphQLErrorLike> } | null)?.graphQLErrors?.[0];
-      applyRateLimitExtensions(gqError?.extensions);
-      setErrorText(gqError?.message || 'Something went wrong');
+      // A 429 rate limit lands here as a networkError; firstGraphQLError reads its body.
+      showError(firstGraphQLError(e));
     }
   };
 
