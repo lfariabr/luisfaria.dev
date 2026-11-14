@@ -44,7 +44,7 @@ describe('APOD Service - fetchApod (Orchestrator)', () => {
     title: 'Cosmic Wonder',
     url: 'https://apod.nasa.gov/apod/image.jpg',
     hdurl: 'https://apod.nasa.gov/apod/image_hd.jpg',
-    apod_url: 'https://apod.nasa.gov/apod/ap240115.html',
+    apod_url: 'https://science.nasa.gov/apod/?date=240115',
   };
 
   const mockFallbackResponse = {
@@ -55,7 +55,7 @@ describe('APOD Service - fetchApod (Orchestrator)', () => {
     title: 'Fallback Title',
     url: 'https://apod.nasa.gov/apod/fallback.jpg',
     hdurl: 'https://apod.nasa.gov/apod/fallback.jpg',
-    apod_url: 'https://apod.nasa.gov/apod/ap240115.html',
+    apod_url: 'https://science.nasa.gov/apod/?date=240115',
   };
 
   describe('API Success', () => {
@@ -65,7 +65,7 @@ describe('APOD Service - fetchApod (Orchestrator)', () => {
       const result = await fetchApod();
 
       expect(result).toMatchObject(mockApodResponse);
-      expect(result.apod_url).toBe('https://apod.nasa.gov/apod/ap240115.html');
+      expect(result.apod_url).toBe('https://science.nasa.gov/apod/?date=240115');
       expect(mockFetchApodFromApi).toHaveBeenCalledTimes(1);
       expect(mockFetchApodHtmlFallback).not.toHaveBeenCalled();
     });
@@ -83,7 +83,7 @@ describe('APOD Service - fetchApod (Orchestrator)', () => {
 
       expect(result.date).toBe('2026-01-13');
       expect(result.url).toBeUndefined();
-      expect(result.apod_url).toBe('https://apod.nasa.gov/apod/ap260113.html');
+      expect(result.apod_url).toBe('https://science.nasa.gov/apod/?date=260113');
       expect(mockFetchApodHtmlFallback).not.toHaveBeenCalled();
     });
 
@@ -131,7 +131,7 @@ describe('APOD Service - fetchApod (Orchestrator)', () => {
       const result = await fetchApod();
 
       expect(result).toMatchObject(mockFallbackResponse);
-      expect(result.apod_url).toBe('https://apod.nasa.gov/apod/ap240115.html');
+      expect(result.apod_url).toBe('https://science.nasa.gov/apod/?date=240115');
       expect(mockFetchApodFromApi).toHaveBeenCalledTimes(1);
       expect(mockFetchApodHtmlFallback).toHaveBeenCalledTimes(1);
       expect(logger.warn).toHaveBeenCalledWith(
@@ -149,7 +149,17 @@ describe('APOD Service - fetchApod (Orchestrator)', () => {
       const result = await fetchApod();
 
       expect(result).toMatchObject(mockFallbackResponse);
-      expect(result.apod_url).toBe('https://apod.nasa.gov/apod/ap240115.html');
+      expect(result.apod_url).toBe('https://science.nasa.gov/apod/?date=240115');
+    });
+
+    it('should fall back for a historical date too, asking for that day', async () => {
+      mockFetchApodFromApi.mockRejectedValueOnce(new Error('API failed'));
+      mockFetchApodHtmlFallback.mockResolvedValueOnce({ ...mockFallbackResponse, date: '2023-12-25' });
+
+      const result = await fetchApod({ date: '2023-12-25' });
+
+      expect(mockFetchApodHtmlFallback).toHaveBeenCalledWith('2023-12-25');
+      expect(result.apod_url).toBe('https://science.nasa.gov/apod/?date=231225');
     });
 
     it('should throw if both API and fallback fail', async () => {
@@ -167,7 +177,7 @@ describe('APOD Service - fetchApod (Orchestrator)', () => {
         media_type: 'video' as const,
         url: 'https://youtube.com/embed/xyz',
         hdurl: undefined,
-        apod_url: 'https://apod.nasa.gov/apod/ap240115.html',
+        apod_url: 'https://science.nasa.gov/apod/?date=240115',
       };
       mockFetchApodFromApi.mockResolvedValueOnce(videoResponse);
 
