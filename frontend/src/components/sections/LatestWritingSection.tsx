@@ -1,5 +1,5 @@
 import { ArrowRight } from 'lucide-react';
-import { LATEST_WRITING, SOCIALS } from '@/content/profile';
+import { SOCIALS, type Article } from '@/content/profile';
 
 const dateFormat = new Intl.DateTimeFormat('en-AU', {
   day: '2-digit',
@@ -8,8 +8,8 @@ const dateFormat = new Intl.DateTimeFormat('en-AU', {
   timeZone: 'UTC',
 });
 
-/** "Latest writing": the three newest dev.to articles (#491). */
-export function LatestWritingSection() {
+/** "Latest writing": the newest dev.to posts (#491), fetched by the page (#512). */
+export function LatestWritingSection({ articles }: { articles: Article[] }) {
   return (
     <section aria-labelledby="latest-writing-heading">
       <h2
@@ -19,7 +19,7 @@ export function LatestWritingSection() {
         Latest writing
       </h2>
       <ul className="divide-y rounded-2xl border bg-card">
-        {LATEST_WRITING.map((article) => (
+        {articles.map((article) => (
           <li key={article.href}>
             <a
               href={article.href}
