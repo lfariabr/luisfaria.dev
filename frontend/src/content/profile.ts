@@ -128,6 +128,11 @@ export type Article = { date: string; title: string; href: string };
  */
 export const LATEST_WRITING: Article[] = [
   {
+    date: '2026-11-16',
+    title: "My server didn't go down. Chasing the false alarm hardened everything else.",
+    href: 'https://dev.to/lfariaus/my-server-didnt-go-down-chasing-the-false-alarm-hardened-everything-else-feo',
+  },
+  {
     date: '2026-11-01',
     title: 'I attempted 2,000 pull-ups. The next morning, I open-sourced my timer.',
     href: 'https://dev.to/lfariaus/i-attempted-2000-pull-ups-the-next-morning-i-open-sourced-my-timer-31h',
@@ -136,11 +141,6 @@ export const LATEST_WRITING: Article[] = [
     date: '2026-10-19',
     title: '35 seconds to log a coffee: what one screen recording taught me about iPhone Safari',
     href: 'https://dev.to/lfariaus/35-seconds-to-log-a-coffee-what-one-screen-recording-taught-me-about-iphone-safari-32a5',
-  },
-  {
-    date: '2026-08-28',
-    title: 'What happens between a token and a prediction? Making sentiment models inspectable',
-    href: 'https://dev.to/lfariaus/what-happens-between-a-token-and-a-prediction-making-sentiment-models-inspectable-2p0c',
   },
 ];
 
