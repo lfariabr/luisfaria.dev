@@ -123,8 +123,8 @@ export const HOW_I_SHIP = {
 export type Article = { date: string; title: string; href: string };
 
 /**
- * "Latest writing": the three newest dev.to articles, newest first (#491).
- * Static for now; making it update itself is #336.
+ * "Latest writing" fallback: shown only when dev.to can't be read (#512). The live list
+ * comes from `getLatestWriting` in `lib/devto/latestWriting.ts`; this one needn't track it.
  */
 export const LATEST_WRITING: Article[] = [
   {

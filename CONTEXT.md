@@ -81,3 +81,20 @@ _Avoid_: Relationship Map, Pins map
 The script that catches the Places map up from a CSV export of the spending sheet. It geocodes rows without coordinates and upserts on place name + date + amount, so re-running it adds no duplicates. `--preview` geocodes and classifies every row without writing.
 _Lives in_: `backend/scripts/seed-pins.ts`
 _Avoid_: Seeder, Sync
+
+### Writing
+
+**Post**:
+A piece of writing published on dev.to under `lfariaus`. dev.to is where Posts live: the site reads them and never publishes them (ADR 0002).
+_Lives in_: dev.to; drafts in `_docs/buildInPublic/devTo/`
+_Avoid_: Blog post, Article (that is the on-site copy below)
+
+**Latest writing**:
+The three newest Posts, shown on the homepage. Read from dev.to's public API on the server and refreshed at most hourly. When dev.to can't be read, the static fallback list shows instead.
+_Lives in_: `frontend/src/lib/devto/latestWriting.ts`, `frontend/src/components/sections/LatestWritingSection.tsx`; fallback `LATEST_WRITING` in `frontend/src/content/profile.ts`
+_Avoid_: Recent posts, Blog feed
+
+**Article**:
+A copy of a Post stored in MongoDB and shown at `/articles`, managed in `/admin/articles`. Articles are not synced with dev.to, and some Posts have none.
+_Lives in_: `backend/src/models/Article.ts`, `frontend/src/app/articles/`
+_Avoid_: Post (the dev.to original)

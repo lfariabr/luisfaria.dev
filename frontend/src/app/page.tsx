@@ -9,6 +9,7 @@ import { BuildingNowSection } from "@/components/sections/BuildingNowSection";
 import { HowIShipSection } from "@/components/sections/HowIShipSection";
 import { WorkWithSection } from "@/components/sections/WorkWithSection";
 import { LatestWritingSection } from "@/components/sections/LatestWritingSection";
+import { getLatestWriting } from "@/lib/devto/latestWriting";
 import { OffTheClockSection } from "@/components/sections/OffTheClockSection";
 import { TimelineSection } from "@/components/sections/TimelineSection";
 import { sanitizeJsonLd } from '@/lib/seo/metadata';
@@ -52,7 +53,9 @@ const organizationLd = {
   ],
 };
 
-export default function Home() {
+export default async function Home() {
+  const latestWriting = await getLatestWriting();
+
   return (
     <MainLayout>
       <script
@@ -131,7 +134,7 @@ export default function Home() {
 
           <WorkWithSection />
 
-          <LatestWritingSection />
+          <LatestWritingSection articles={latestWriting} />
 
           <OffTheClockSection />
 

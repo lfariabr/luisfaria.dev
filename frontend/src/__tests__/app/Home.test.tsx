@@ -1,11 +1,31 @@
-import React from 'react';
 import { fireEvent, screen, within } from '@testing-library/react';
 import HomePage from '@/app/page';
 import { renderWithProviders } from '@/utils/test-utils';
 
+// The page fetches Latest writing from dev.to; tests serve a fixed list instead (#512).
+jest.mock('@/lib/devto/latestWriting', () => ({
+  getLatestWriting: jest.fn(async () => [
+    {
+      date: '2026-11-16T19:32:13Z',
+      title: "My server didn't go down. Chasing the false alarm hardened everything else.",
+      href: 'https://dev.to/lfariaus/my-server-didnt-go-down-chasing-the-false-alarm-hardened-everything-else-feo',
+    },
+    {
+      date: '2026-11-01T19:04:43Z',
+      title: 'I attempted 2,000 pull-ups. The next morning, I open-sourced my timer.',
+      href: 'https://dev.to/lfariaus/i-attempted-2000-pull-ups-the-next-morning-i-open-sourced-my-timer-31h',
+    },
+    {
+      date: '2026-10-19T17:52:30Z',
+      title: '35 seconds to log a coffee: what one screen recording taught me about iPhone Safari',
+      href: 'https://dev.to/lfariaus/35-seconds-to-log-a-coffee-what-one-screen-recording-taught-me-about-iphone-safari-32a5',
+    },
+  ]),
+}));
+
 describe('Home Page', () => {
-  it('renders one fixed h1 headline, with no rotating frames', () => {
-    renderWithProviders(<HomePage />);
+  it('renders one fixed h1 headline, with no rotating frames', async () => {
+    renderWithProviders(await HomePage());
 
     const heroHeading = screen.getByRole('heading', { level: 1 });
     expect(heroHeading).toHaveTextContent(
@@ -15,15 +35,15 @@ describe('Home Page', () => {
     expect(screen.queryByText('Production Proof')).not.toBeInTheDocument();
   });
 
-  it('renders the eyebrow and the first-person subline', () => {
-    renderWithProviders(<HomePage />);
+  it('renders the eyebrow and the first-person subline', async () => {
+    renderWithProviders(await HomePage());
 
     expect(screen.getByText('Senior Software Engineer · Sydney')).toBeInTheDocument();
     expect(screen.getByText(/^I'm Luis\./)).toBeInTheDocument();
   });
 
-  it('renders one metrics row with the four agreed cards', () => {
-    renderWithProviders(<HomePage />);
+  it('renders one metrics row with the four agreed cards', async () => {
+    renderWithProviders(await HomePage());
 
     const metrics = screen.getAllByRole('term').map((dt) => dt.textContent);
     expect(metrics).toEqual(['10+ yrs', '2,000', '2,000+', '1,400+']);
@@ -34,8 +54,8 @@ describe('Home Page', () => {
     expect(screen.getByText(/PRs merged to production/i).closest('a')).toBeNull();
   });
 
-  it('renders CTA buttons', () => {
-    renderWithProviders(<HomePage />);
+  it('renders CTA buttons', async () => {
+    renderWithProviders(await HomePage());
 
     const workButton = screen.getByRole('link', { name: /see my work/i });
 
@@ -45,8 +65,8 @@ describe('Home Page', () => {
     expect(screen.queryByRole('link', { name: /ai assistant/i })).not.toBeInTheDocument();
   });
 
-  it('renders "What I\'m building now" with the three first-person cards', () => {
-    renderWithProviders(<HomePage />);
+  it('renders "What I\'m building now" with the three first-person cards', async () => {
+    renderWithProviders(await HomePage());
 
     const section = screen
       .getByRole('heading', { name: /what i’m building now/i })
@@ -62,8 +82,8 @@ describe('Home Page', () => {
     expect(screen.queryByRole('heading', { name: /current proof/i })).not.toBeInTheDocument();
   });
 
-  it('states only the measured load-test sizes and credits the talk', () => {
-    renderWithProviders(<HomePage />);
+  it('states only the measured load-test sizes and credits the talk', async () => {
+    renderWithProviders(await HomePage());
 
     expect(screen.getByText(/1, 10, 100 and 500 parents at once/)).toBeInTheDocument();
     // 1,000 was never measured
@@ -73,15 +93,15 @@ describe('Home Page', () => {
     expect(credit).toHaveAttribute('href', 'https://youtu.be/x6WqD4qHxSc');
   });
 
-  it('links the open source card to merged PRs on other people\'s repos', () => {
-    renderWithProviders(<HomePage />);
+  it('links the open source card to merged PRs on other people\'s repos', async () => {
+    renderWithProviders(await HomePage());
 
     const link = screen.getByRole('link', { name: /see my contributions/i });
     expect(link).toHaveAttribute('href', expect.stringContaining('is%3Amerged+-user%3Alfariabr'));
   });
 
-  it('renders "How I ship" with the human deciding what merges', () => {
-    renderWithProviders(<HomePage />);
+  it('renders "How I ship" with the human deciding what merges', async () => {
+    renderWithProviders(await HomePage());
 
     expect(screen.getByRole('heading', { name: /how i ship/i })).toBeInTheDocument();
     const roles = within(screen.getByRole('list', { name: /agent roles/i })).getAllByRole('listitem');
@@ -90,8 +110,8 @@ describe('Home Page', () => {
     expect(screen.getByText(/more than 2,000 pull requests/)).toBeInTheDocument();
   });
 
-  it('lists each work area once, with no separate pillars or stack sections', () => {
-    renderWithProviders(<HomePage />);
+  it('lists each work area once, with no separate pillars or stack sections', async () => {
+    renderWithProviders(await HomePage());
 
     expect(screen.getByRole('heading', { name: /what i work with/i })).toBeInTheDocument();
     expect(screen.getAllByText('Production systems')).toHaveLength(1);
@@ -100,8 +120,8 @@ describe('Home Page', () => {
     expect(screen.queryByText(/core stack/i)).not.toBeInTheDocument();
   });
 
-  it('lists the three newest articles, newest first, plus an all-writing link', () => {
-    renderWithProviders(<HomePage />);
+  it('lists the three newest articles, newest first, plus an all-writing link', async () => {
+    renderWithProviders(await HomePage());
 
     const section = screen
       .getByRole('heading', { name: /latest writing/i })
@@ -121,8 +141,8 @@ describe('Home Page', () => {
     );
   });
 
-  it('renders "Off the clock" with the timer link and the two dialog triggers', () => {
-    renderWithProviders(<HomePage />);
+  it('renders "Off the clock" with the timer link and the two dialog triggers', async () => {
+    renderWithProviders(await HomePage());
 
     const section = screen
       .getByRole('heading', { name: /off the clock/i })
@@ -136,20 +156,20 @@ describe('Home Page', () => {
   });
 
   it('opens the Goggins dialog from "Off the clock"', async () => {
-    renderWithProviders(<HomePage />);
+    renderWithProviders(await HomePage());
 
     fireEvent.click(screen.getByRole('button', { name: /goggins mode/i }));
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
   });
 
-  it('no longer renders the second metrics section', () => {
-    renderWithProviders(<HomePage />);
+  it('no longer renders the second metrics section', async () => {
+    renderWithProviders(await HomePage());
 
     expect(screen.queryByRole('heading', { name: /^impact$/i })).not.toBeInTheDocument();
   });
 
-  it('renders the TimelineSection', () => {
-    renderWithProviders(<HomePage />);
+  it('renders the TimelineSection', async () => {
+    renderWithProviders(await HomePage());
 
     const timelineHeading = screen.getByRole('heading', { name: /timeline at a glance/i });
     expect(timelineHeading).toBeInTheDocument();
@@ -158,8 +178,8 @@ describe('Home Page', () => {
     expect(timeline).toBeInTheDocument();
   });
 
-  it('has the updated navigation links in the header', () => {
-    renderWithProviders(<HomePage />);
+  it('has the updated navigation links in the header', async () => {
+    renderWithProviders(await HomePage());
 
     const navigation = screen.getByRole('navigation');
 
