@@ -3,7 +3,6 @@ import * as dbHandler from '../helpers/dbHandler';
 import { executeOperation } from '../helpers/testServer';
 import User, { UserRole } from '../../models/User';
 import ChatMessage from '../../models/ChatMessage';
-import bcrypt from 'bcryptjs';
 import { connectRedis, disconnectRedis, getRedisClient } from '../../services/redis';
 import { rateLimits, resetCount, Subject } from '../../rateLimiting';
 
@@ -72,11 +71,11 @@ describe('Chatbot Resolvers', () => {
     await connectRedis();
     
     // Create a test user
-    const passwordHash = await bcrypt.hash('Test1234!', 10);
+    const testPassword = 'Test1234!'; // plain text: the User pre-save hook hashes it once
     testUser = await User.create({
       name: 'Test User',
       email: 'test@example.com',
-      password: passwordHash,
+      password: testPassword,
       role: UserRole.USER
     });
     
@@ -166,11 +165,11 @@ describe('Chatbot Resolvers', () => {
 
     beforeAll(async () => {
       // Create a fresh user for security tests to avoid rate limit issues
-      const passwordHash = await bcrypt.hash('Test1234!', 10);
+      const testPassword = 'Test1234!'; // plain text: the User pre-save hook hashes it once
       freshUser = await User.create({
         name: 'Security Test User',
         email: 'security@example.com',
-        password: passwordHash,
+        password: testPassword,
         role: UserRole.USER
       });
       

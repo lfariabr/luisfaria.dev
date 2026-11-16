@@ -4,7 +4,6 @@ import { createTestApp } from '../../test-helpers/testApp';
 import User, { UserRole } from '../../models/User';
 import jwt from 'jsonwebtoken';
 import config from '../../config/config';
-import bcrypt from 'bcryptjs';
 import { Express } from 'express';
 import type { ApolloServer } from '@apollo/server';
 
@@ -65,19 +64,19 @@ describe('Cookie Auth E2E - Full HTTP Flow', () => {
   });
 
   beforeEach(async () => {
-    const passwordHash = await bcrypt.hash('Test1234!', 10);
+    const testPassword = 'Test1234!'; // plain text: the User pre-save hook hashes it once
     
     testUser = await User.create({
       name: 'Test User',
       email: 'test@example.com',
-      password: passwordHash,
+      password: testPassword,
       role: UserRole.USER
     });
 
     adminUser = await User.create({
       name: 'Admin User',
       email: 'admin@example.com',
-      password: passwordHash,
+      password: testPassword,
       role: UserRole.ADMIN
     });
 
@@ -117,6 +116,12 @@ describe('Cookie Auth E2E - Full HTTP Flow', () => {
   afterAll(async () => {
     await server.stop();
     await dbHandler.closeDatabase();
+  });
+
+  it('fixture users can log in with their plain-text password (#486)', async () => {
+    // The pre-save hook hashes once; a pre-hashed fixture would be hashed twice and never match.
+    expect(await testUser.comparePassword('Test1234!')).toBe(true);
+    expect(await adminUser.comparePassword('Test1234!')).toBe(true);
   });
 
   describe('me Query - Full Cookie Flow', () => {

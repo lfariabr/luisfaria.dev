@@ -2,7 +2,6 @@ import * as dbHandler from '../helpers/dbHandler';
 import { executeOperation } from '../helpers/testServer';
 import User, { UserRole } from '../../models/User';
 import Note from '../../models/Note';
-import bcrypt from 'bcryptjs';
 
 const getDocId = (doc: { _id: unknown }) => String(doc._id);
 
@@ -91,17 +90,17 @@ describe('Notes Resolvers', () => {
   beforeEach(async () => {
     await dbHandler.clearDatabase();
 
-    const passwordHash = await bcrypt.hash('Pass1234!', 10);
+    const testPassword = 'Pass1234!'; // plain text: the User pre-save hook hashes it once
     const userA = await User.create({
       name: 'User A',
       email: 'user-a@example.com',
-      password: passwordHash,
+      password: testPassword,
       role: UserRole.USER,
     });
     const userB = await User.create({
       name: 'User B',
       email: 'user-b@example.com',
-      password: passwordHash,
+      password: testPassword,
       role: UserRole.USER,
     });
 
