@@ -2,11 +2,13 @@
 
 **Tags:** `buildinpublic` `devops` `nginx` `docker`
 
+**Published:** [dev.to, 16 Nov 2026](https://dev.to/lfariaus/my-server-didnt-go-down-chasing-the-false-alarm-hardened-everything-else-feo)
+
 On November 7, Discord pinged me: **🔴 Container(s) Down: backend_api.** I opened my site on my phone and it didn't load. That looked like proof.
 
-It wasn't. I asked Claude Code to SSH into the droplet and read the logs. Every container had been up the whole time. My phone's 4G had dropped out, and the alert was false.
+It wasn't. I SSHed into the droplet and read the logs. Every container had been up the whole time. My phone's 4G had dropped out, and the alert was false.
 
-That should have been a five-minute investigation. It turned into two days and 13 pull requests, because every fix exposed the next thing nobody had looked at. This post is the trail: what was wrong, how each fix was checked on the live server, and the surprises, which taught me more than the plan did.
+That should have been a five-minute investigation, but it turned into two days and 13 pull requests, because every fix exposed the next thing nobody had looked at. This post is the trail: what was wrong, how each fix was checked on the live server, and the surprises, which taught me more than the plan did.
 
 ---
 
@@ -30,18 +32,8 @@ That should have been a five-minute investigation. It turned into two days and 1
 
 My portfolio, [luisfaria.dev](https://luisfaria.dev), runs on one DigitalOcean droplet: 1 vCPU, 2 GB of RAM, Docker Compose. CI deploys by SSHing in, running `git reset --hard origin/master`, pulling images and recreating the containers.
 
-```mermaid
-flowchart LR
-    U["Browser"] --> N["nginx_gateway<br/>:80 / :443"]
-    N --> F["frontend_app<br/>Next.js :3000"]
-    N --> B["backend_api<br/>Express + Apollo :4000"]
-    B --> R["redis_cache"]
-    B --> A[("MongoDB Atlas")]
-    F -. "SSR calls /graphql<br/>through nginx" .-> N
-    M["mongodb_db<br/>mongo:4.4"]
-    C["cron: monitor<br/>every 5 min"] -. "docker ps<br/>/health/ready" .-> N
-    C -. "alerts" .-> D["Discord"]
-```
+
+![Mermaid Flowchart of the Stack](https://dev-to-uploads.s3.us-east-2.amazonaws.com/uploads/articles/6rqnld7pw8fsmpa7hvwx.png)
 
 *Fig 1 - The stack as it was on November 7. Keep an eye on `mongodb_db`: nothing points at it.*
 
@@ -107,13 +99,7 @@ That same morning I'd started an audit of the nginx config, and proving the serv
 
 **nginx: the last 5,000 requests covered only about eight hours** (Nov 6, 18:04 to Nov 7, 02:26 UTC). Here's who sent them:
 
-```mermaid
-pie showData
-    title Last 5,000 requests to nginx (~8 hours)
-    "One bot: GET /robots.txt, no User-Agent" : 2909
-    "Sentry uptime checks" : 502
-    "Everyone else" : 1589
-```
+![Pie Chart with Traffic Splits](https://dev-to-uploads.s3.us-east-2.amazonaws.com/uploads/articles/ygdpcpqom8hovgb17zb4.png)
 
 *Fig 2 - More than half of all traffic was a single bot asking for the same file.*
 
@@ -150,20 +136,8 @@ Tracking it meant writing a test that could actually prove things. `ops/nginx/te
 
 And the deploy got a gate:
 
-```mermaid
-sequenceDiagram
-    participant CI as GitHub Actions
-    participant S as Droplet
-    participant G as nginx_gateway
-    CI->>CI: test-config.sh (46 checks)
-    CI->>S: ssh: git reset --hard, docker compose pull
-    S->>S: nginx -t with the real certs
-    alt config invalid
-        S-->>CI: exit 1, nothing recreated
-    else config valid
-        S->>G: up -d --force-recreate
-    end
-```
+
+![Github Actions to Droplet to Nginx flow](https://dev-to-uploads.s3.us-east-2.amazonaws.com/uploads/articles/ie5sgxgnayj8zlcmvdhg.png)
 
 *Fig 3 - A bad nginx config now fails the deploy before the running gateway is replaced.*
 
@@ -254,21 +228,8 @@ So the fix was a deletion. CI also kept testing on `mongo:7`, because `mongo:8` 
 
 The fix was structural: cron now runs the monitor straight from the deploy's git checkout, so a deploy can't leave it behind.
 
-```mermaid
-flowchart TD
-    A["Nov 7: false 'Container Down' alert<br/>+ nginx audit"] --> B["Fix monitor: pipefail race"]
-    A --> C["Reading logs: :4000 scanned,<br/>robots.txt bot, SSR on one IP"]
-    C --> D["Close port; Docker skips ufw"]
-    D --> E["nginx config untracked"]
-    E --> F["Track + test + deploy gate"]
-    F --> G["Duplicate CORS, HTTP/1.1, no gzip, headers"]
-    F --> H["Rate limits; SSR shares one IP"]
-    F --> I["'Upgrade Mongo 4.4'"]
-    I --> J["Container is empty; data is on Atlas 8.0"]
-    J --> K["Remove it"]
-    K --> L["Stale monitor: 28 false alerts"]
-    L --> M["Monitor runs from the checkout"]
-```
+
+![The Fix chain from end to end](https://dev-to-uploads.s3.us-east-2.amazonaws.com/uploads/articles/j325n0ls6tf0xcefym39.png)
 
 *Fig 4 - Each fix exposed the next problem. The trail ends where it started: a false alert.*
 
