@@ -3,7 +3,6 @@ import { executeOperation } from '../helpers/testServer';
 import User, { UserRole } from '../../models/User';
 import Pin from '../../models/Pin';
 import config, { parseRelationshipHome } from '../../config/config';
-import bcrypt from 'bcryptjs';
 
 const getDocId = (doc: { _id: unknown }) => String(doc._id);
 
@@ -75,10 +74,10 @@ describe('Pin Resolvers', () => {
   beforeEach(async () => {
     await dbHandler.clearDatabase();
 
-    const hash = await bcrypt.hash('Pass1234!', 10);
-    const admin = await User.create({ name: 'Admin', email: 'admin@example.com', password: hash, role: UserRole.ADMIN });
-    const partner = await User.create({ name: 'Partner', email: 'partner@example.com', password: hash, role: UserRole.PARTNER });
-    const user = await User.create({ name: 'User', email: 'user@example.com', password: hash, role: UserRole.USER });
+    const testPassword = 'Pass1234!'; // plain text: the User pre-save hook hashes it once
+    const admin = await User.create({ name: 'Admin', email: 'admin@example.com', password: testPassword, role: UserRole.ADMIN });
+    const partner = await User.create({ name: 'Partner', email: 'partner@example.com', password: testPassword, role: UserRole.PARTNER });
+    const user = await User.create({ name: 'User', email: 'user@example.com', password: testPassword, role: UserRole.USER });
 
     adminContext = { user: { id: getDocId(admin as { _id: unknown }), email: admin.email, role: UserRole.ADMIN } };
     partnerContext = { user: { id: getDocId(partner as { _id: unknown }), email: partner.email, role: UserRole.PARTNER } };

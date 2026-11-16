@@ -3,7 +3,6 @@ import { executeOperation } from '../helpers/testServer';
 import User, { UserRole } from '../../models/User';
 import jwt from 'jsonwebtoken';
 import config from '../../config/config';
-import bcrypt from 'bcryptjs';
 
 // Define test queries
 const ME_QUERY = `
@@ -51,19 +50,19 @@ describe('Cookie-Based Auth - User Queries', () => {
 
   beforeEach(async () => {
     // Create test users
-    const passwordHash = await bcrypt.hash('Test1234!', 10);
+    const testPassword = 'Test1234!'; // plain text: the User pre-save hook hashes it once
     
     testUser = await User.create({
       name: 'Test User',
       email: 'test@example.com',
-      password: passwordHash,
+      password: testPassword,
       role: UserRole.USER
     });
 
     adminUser = await User.create({
       name: 'Admin User',
       email: 'admin@example.com',
-      password: passwordHash,
+      password: testPassword,
       role: UserRole.ADMIN
     });
 

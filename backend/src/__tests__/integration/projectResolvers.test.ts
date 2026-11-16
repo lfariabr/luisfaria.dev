@@ -2,7 +2,6 @@ import * as dbHandler from '../helpers/dbHandler';
 import { executeOperation } from '../helpers/testServer';
 import User, { UserRole } from '../../models/User';
 import Project from '../../models/Project';
-import bcrypt from 'bcryptjs';
 
 const CREATE_PROJECT_MUTATION = `
   mutation CreateProject($input: ProjectInput!) {
@@ -85,11 +84,11 @@ describe('Project Resolvers - Slug Generation', () => {
     await dbHandler.clearDatabase();
     
     // Create admin user for tests
-    const passwordHash = await bcrypt.hash('Admin1234!', 10);
+    const testPassword = 'Admin1234!'; // plain text: the User pre-save hook hashes it once
     adminUser = await User.create({
       name: 'Admin User',
       email: 'admin@example.com',
-      password: passwordHash,
+      password: testPassword,
       role: UserRole.ADMIN
     });
 
