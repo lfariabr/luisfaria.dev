@@ -108,11 +108,13 @@ describe('Home Page', () => {
       .closest('section') as HTMLElement;
     const items = within(section).getAllByRole('listitem');
     expect(items).toHaveLength(3);
-    expect(items[0]).toHaveTextContent(/01 Nov 2026/);
+    expect(items[0]).toHaveTextContent(/16 Nov 2026/);
     expect(within(items[0]).getByRole('link')).toHaveAttribute(
       'href',
-      expect.stringContaining('dev.to/lfariaus/i-attempted-2000-pull-ups'),
+      expect.stringContaining('dev.to/lfariaus/my-server-didnt-go-down'),
     );
+    expect(items[1]).toHaveTextContent(/01 Nov 2026/);
+    expect(items[2]).toHaveTextContent(/19 Oct 2026/);
     expect(within(section).getByRole('link', { name: /all writing on dev\.to/i })).toHaveAttribute(
       'href',
       'https://dev.to/lfariaus',
