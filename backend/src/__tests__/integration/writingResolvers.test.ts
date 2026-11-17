@@ -1,6 +1,8 @@
 import * as dbHandler from '../helpers/dbHandler';
 import { executeOperation } from '../helpers/testServer';
 import { connectRedis, disconnectRedis, getRedisClient } from '../../services/redis';
+import { writingCache } from '../../services/cache/writingCache';
+import type { Post } from '../../services/devto';
 import { DevtoServiceError } from '../../services/devto';
 
 // Only the dev.to call is faked; the Redis cache and error handling are real (#515).
@@ -79,26 +81,51 @@ describe('latestWriting', () => {
     expect(await getRedisClient().exists(CACHE_KEY)).toBe(0);
   });
   it('coalesces overlapping misses and releases failed fetches for retry', async () => {
+    let resolveFetch!: (posts: Post[]) => void;
     let rejectFetch!: (error: Error) => void;
+    const pendingFetch = new Promise<Post[]>((resolve, reject) => {
+      resolveFetch = resolve;
+      rejectFetch = reject;
+    });
     let started!: () => void;
     const fetching = new Promise<void>((resolve) => { started = resolve; });
+    let secondReadCompleted!: () => void;
+    const secondRead = new Promise<void>((resolve) => { secondReadCompleted = resolve; });
+    const get = writingCache.get.bind(writingCache);
+    let reads = 0;
+    const read = jest.spyOn(writingCache, 'get').mockImplementation(() => {
+      const result = get();
+      if (++reads === 2) {
+        // Notify after the resolver's await continuation has joined inFlight.
+        void result.then(() => queueMicrotask(secondReadCompleted));
+      }
+      return result;
+    });
     fetchLatestPosts.mockImplementation(() => {
       started();
-      return new Promise((_, reject) => { rejectFetch = reject; });
+      return pendingFetch;
     });
-    const first = run();
-    await fetching;
-    const second = run();
-    // Let the second GraphQL request finish its Redis read while the fetch is pending.
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    expect(fetchLatestPosts).toHaveBeenCalledTimes(1);
-    rejectFetch(new DevtoServiceError('offline', 'NETWORK_ERROR'));
-    const results = await Promise.all([first, second]);
-    results.forEach((result) => expect(result.errors?.[0]?.extensions?.code).toBe('SERVICE_UNAVAILABLE'));
+    const requests: ReturnType<typeof run>[] = [];
+    try {
+      requests.push(run());
+      await fetching;
+      requests.push(run());
+      await secondRead;
+      expect(fetchLatestPosts).toHaveBeenCalledTimes(1);
+      rejectFetch(new DevtoServiceError('offline', 'NETWORK_ERROR'));
+      const results = await Promise.all(requests);
+      results.forEach((result) => expect(result.errors?.[0]?.extensions?.code).toBe('SERVICE_UNAVAILABLE'));
 
-    fetchLatestPosts.mockResolvedValue(POSTS);
-    expect((await run()).data?.latestWriting).toEqual(POSTS);
-    expect(fetchLatestPosts).toHaveBeenCalledTimes(2);
+      fetchLatestPosts.mockResolvedValue(POSTS);
+      expect((await run()).data?.latestWriting).toEqual(POSTS);
+      expect(fetchLatestPosts).toHaveBeenCalledTimes(2);
+    } finally {
+      resolveFetch(POSTS);
+      started();
+      secondReadCompleted();
+      read.mockRestore();
+      await Promise.allSettled(requests);
+    }
   });
 
   it('returns fetched posts when Redis reads and writes stall', async () => {
