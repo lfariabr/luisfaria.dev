@@ -19,6 +19,7 @@ import { pinMutations } from './pins/mutations';
 import { paymentQueries } from './payments/queries';
 import Project from '../models/Project';
 import { slugify } from '../utils/slugUtils';
+import { isoDate } from '../utils/dates';
 import type { ApodResponse } from '../services/apod/';
 
 // Combine all resolvers
@@ -49,22 +50,37 @@ export const resolvers = {
     sendGogginsEmail: sendGogginsEmailMutation,
   },
   
+  // Every date field is ISO 8601; without these, GraphQL sends epoch-ms strings.
+  User: {
+    lastLogin: isoDate('lastLogin'),
+    createdAt: isoDate('createdAt'),
+    updatedAt: isoDate('updatedAt'),
+  },
+
+  Article: {
+    publishedAt: isoDate('publishedAt'),
+    createdAt: isoDate('createdAt'),
+    updatedAt: isoDate('updatedAt'),
+  },
+
   Note: {
-    date: (parent: { date?: Date }) => parent.date?.toISOString(),
-    createdAt: (parent: { createdAt?: Date }) => parent.createdAt?.toISOString(),
-    updatedAt: (parent: { updatedAt?: Date }) => parent.updatedAt?.toISOString(),
+    date: isoDate('date'),
+    createdAt: isoDate('createdAt'),
+    updatedAt: isoDate('updatedAt'),
   },
 
   Payment: {
-    createdAt: (parent: { createdAt?: Date }) => parent.createdAt?.toISOString(),
+    createdAt: isoDate('createdAt'),
   },
 
   Pin: {
-    date: (parent: { date?: Date }) => parent.date?.toISOString(),
-    createdAt: (parent: { createdAt?: Date }) => parent.createdAt?.toISOString(),
+    date: isoDate('date'),
+    createdAt: isoDate('createdAt'),
   },
 
   Project: {
+    createdAt: isoDate('createdAt'),
+    updatedAt: isoDate('updatedAt'),
     // Ensure non-null slug by backfilling if missing
     async slug(parent: any) {
       if (parent.slug) return parent.slug;

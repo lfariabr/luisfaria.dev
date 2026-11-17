@@ -9,9 +9,7 @@ import type { Article } from '@/lib/graphql/types/article.types';
 
 function formatDateSafe(dateString: string) {
   try {
-    const date = !isNaN(Number(dateString))
-      ? new Date(Number(dateString))
-      : parseISO(dateString);
+    const date = parseISO(dateString);
     if (isValid(date)) {
       return format(date, 'MMMM dd, yyyy');
     }

@@ -35,9 +35,8 @@ const pin = (overrides: Partial<Pin>): Pin =>
   ({ id: 'pin', placeName: 'Somewhere', date: ago(DAY), ...overrides }) as Pin;
 
 describe('toDate', () => {
-  it('parses ISO strings and epoch-ms strings to the same instant', () => {
+  it('parses the ISO strings the API sends', () => {
     const iso = '2026-10-01T00:00:00.000Z';
-    expect(toDate(String(Date.parse(iso))).toISOString()).toBe(iso);
     expect(toDate(iso).toISOString()).toBe(iso);
   });
 });
@@ -67,15 +66,15 @@ describe('recentFailedPayments', () => {
 });
 
 describe('recentDraftArticles', () => {
-  it('flags drafts updated within 30 days, including epoch-ms dates', () => {
+  it('flags drafts updated within 30 days', () => {
     const articles = [
       article({ id: 'recent' }),
-      article({ id: 'epoch', updatedAt: String(NOW.getTime() - 2 * DAY) }),
+      article({ id: 'older', updatedAt: ago(2 * DAY) }),
       article({ id: 'abandoned', updatedAt: ago(30 * DAY + 1) }),
       article({ id: 'published', published: true }),
     ];
 
-    expect(recentDraftArticles(articles, NOW).map((a) => a.id)).toEqual(['recent', 'epoch']);
+    expect(recentDraftArticles(articles, NOW).map((a) => a.id)).toEqual(['recent', 'older']);
   });
 });
 
@@ -107,7 +106,7 @@ describe('paymentsThisMonth', () => {
 
 describe('countNewSince', () => {
   it('counts items created within the window', () => {
-    const items = [{ createdAt: ago(7 * DAY) }, { createdAt: ago(7 * DAY + 1) }, { createdAt: String(NOW.getTime()) }];
+    const items = [{ createdAt: ago(7 * DAY) }, { createdAt: ago(7 * DAY + 1) }, { createdAt: ago(0) }];
 
     expect(countNewSince(items, 7, NOW)).toBe(2);
   });
