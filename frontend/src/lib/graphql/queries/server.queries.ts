@@ -74,3 +74,14 @@ export const CHECKOUT_SESSION_STATUS_QUERY = `
     }
   }
 `;
+
+/** Latest writing: the newest dev.to Posts, read by the backend (#515). */
+export const LATEST_WRITING_QUERY = `
+  query LatestWriting {
+    latestWriting {
+      title
+      url
+      publishedAt
+    }
+  }
+`;

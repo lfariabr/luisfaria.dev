@@ -1,6 +1,6 @@
 # 0002 — dev.to is where writing lives; the site reads it
 
-**Status:** Accepted, 2026-11-17 ([#336](https://github.com/lfariabr/luisfaria.dev/issues/336), implemented in [#512](https://github.com/lfariabr/luisfaria.dev/issues/512))
+**Status:** Accepted, 2026-11-17 ([#336](https://github.com/lfariabr/luisfaria.dev/issues/336), implemented in [#512](https://github.com/lfariabr/luisfaria.dev/issues/512), moved to the backend in [#515](https://github.com/lfariabr/luisfaria.dev/issues/515))
 
 ## Context
 
@@ -15,8 +15,8 @@ What Luis publishes was spread over five places:
 ## Decision
 
 1. **dev.to is the source of truth for Posts.** Luis writes and publishes there.
-2. **The site reads dev.to.** Latest writing fetches the newest Posts from the public API (`/api/articles?username=lfariaus`) on the server, cached and revalidated hourly. No API key is needed.
-3. **The site never breaks because of dev.to.** A timeout, non-2xx response, unexpected shape or empty list renders the static `LATEST_WRITING` fallback and logs a warning.
+2. **The site reads dev.to, in the backend.** `backend/src/services/devto/` fetches the newest Posts from the public API (`/api/articles?username=lfariaus`), caches them in Redis for an hour, and serves them as the `latestWriting` GraphQL query. No API key is needed. (#512 first did this fetch in the frontend; #515 moved it, because every other third-party API lives in `backend/src/services/`.)
+3. **The site never breaks because of dev.to.** If the `latestWriting` query fails for any reason (dev.to down or changed, backend down) or returns nothing, the homepage renders the static `LATEST_WRITING` fallback and logs a warning.
 4. **Articles stay as they are.** `/articles` and its MongoDB copies are kept, unsynced. This is accepted for now, not fixed.
 5. **Projects are a separate decision** (#513).
 

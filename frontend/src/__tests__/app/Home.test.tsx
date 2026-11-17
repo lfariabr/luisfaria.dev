@@ -2,26 +2,41 @@ import { fireEvent, screen, within } from '@testing-library/react';
 import HomePage from '@/app/page';
 import { renderWithProviders } from '@/utils/test-utils';
 
-// The page fetches Latest writing from dev.to; tests serve a fixed list instead (#512).
-jest.mock('@/lib/devto/latestWriting', () => ({
-  getLatestWriting: jest.fn(async () => [
-    {
-      date: '2026-11-16T19:32:13Z',
-      title: "My server didn't go down. Chasing the false alarm hardened everything else.",
-      href: 'https://dev.to/lfariaus/my-server-didnt-go-down-chasing-the-false-alarm-hardened-everything-else-feo',
-    },
-    {
-      date: '2026-11-01T19:04:43Z',
-      title: 'I attempted 2,000 pull-ups. The next morning, I open-sourced my timer.',
-      href: 'https://dev.to/lfariaus/i-attempted-2000-pull-ups-the-next-morning-i-open-sourced-my-timer-31h',
-    },
-    {
-      date: '2026-10-19T17:52:30Z',
-      title: '35 seconds to log a coffee: what one screen recording taught me about iPhone Safari',
-      href: 'https://dev.to/lfariaus/35-seconds-to-log-a-coffee-what-one-screen-recording-taught-me-about-iphone-safari-32a5',
-    },
-  ]),
-}));
+// The page reads Latest writing through the backend's latestWriting query (#515).
+jest.mock('@/lib/graphql/fetchGql', () => ({ fetchGql: jest.fn() }));
+jest.mock('@/lib/logger', () => ({ logger: { warn: jest.fn(), error: jest.fn(), info: jest.fn() } }));
+import { fetchGql } from '@/lib/graphql/fetchGql';
+import { logger } from '@/lib/logger';
+import { LATEST_WRITING } from '@/content/profile';
+
+const mockFetchGql = fetchGql as jest.Mock;
+const POSTS = [
+  {
+    title: "My server didn't go down. Chasing the false alarm hardened everything else.",
+    url: 'https://dev.to/lfariaus/my-server-didnt-go-down-chasing-the-false-alarm-hardened-everything-else-feo',
+    publishedAt: '2026-11-16T19:32:13Z',
+  },
+  {
+    title: 'I attempted 2,000 pull-ups. The next morning, I open-sourced my timer.',
+    url: 'https://dev.to/lfariaus/i-attempted-2000-pull-ups-the-next-morning-i-open-sourced-my-timer-31h',
+    publishedAt: '2026-11-01T19:04:43Z',
+  },
+  {
+    title: '35 seconds to log a coffee: what one screen recording taught me about iPhone Safari',
+    url: 'https://dev.to/lfariaus/35-seconds-to-log-a-coffee-what-one-screen-recording-taught-me-about-iphone-safari-32a5',
+    publishedAt: '2026-10-19T17:52:30Z',
+  },
+];
+
+beforeEach(() => {
+  mockFetchGql.mockReset();
+  mockFetchGql.mockResolvedValue({ latestWriting: POSTS });
+});
+
+const latestWritingItems = () =>
+  within(screen.getByRole('heading', { name: /latest writing/i }).closest('section') as HTMLElement).getAllByRole(
+    'listitem',
+  );
 
 describe('Home Page', () => {
   it('renders one fixed h1 headline, with no rotating frames', async () => {
@@ -138,6 +153,36 @@ describe('Home Page', () => {
     expect(within(section).getByRole('link', { name: /all writing on dev\.to/i })).toHaveAttribute(
       'href',
       'https://dev.to/lfariaus',
+    );
+  });
+
+  it('reads Latest writing from the backend query, cached for an hour', async () => {
+    renderWithProviders(await HomePage());
+
+    expect(mockFetchGql).toHaveBeenCalledWith(expect.stringContaining('latestWriting'), { revalidate: 3600, timeoutMs: 7000 });
+    expect(latestWritingItems().map((li) => li.querySelector('time')?.getAttribute('datetime'))).toEqual([
+      '2026-11-16T19:32:13Z',
+      '2026-11-01T19:04:43Z',
+      '2026-10-19T17:52:30Z',
+    ]);
+  });
+
+  it.each([
+    ['the request times out', () => mockFetchGql.mockRejectedValue(new DOMException('timeout', 'TimeoutError'))],
+    ['the backend is down', () => mockFetchGql.mockRejectedValue(new Error('GraphQL fetch failed: 502'))],
+    ['dev.to is down (the query errors)', () => mockFetchGql.mockRejectedValue(new Error('An unexpected error occurred while fetching posts from dev.to'))],
+    ['the query returns no posts', () => mockFetchGql.mockResolvedValue({ latestWriting: [] })],
+  ])('falls back to the static list when %s', async (_case, arrange) => {
+    arrange();
+
+    renderWithProviders(await HomePage());
+
+    const items = latestWritingItems();
+    expect(items).toHaveLength(LATEST_WRITING.length);
+    expect(items[0].querySelector('time')).toHaveAttribute('datetime', LATEST_WRITING[0].date);
+    expect(logger.warn).toHaveBeenCalledWith(
+      'Latest writing unavailable, using the static list',
+      expect.objectContaining({ error: expect.any(String) }),
     );
   });
 

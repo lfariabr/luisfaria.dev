@@ -154,6 +154,7 @@ export const permissions = shield(
       articlesByCategory: allow,
       articlesByTag: allow,
       checkoutSessionStatus: allow,
+      latestWriting: allow,
 
       // Protected queries
       me: isAuthenticated,

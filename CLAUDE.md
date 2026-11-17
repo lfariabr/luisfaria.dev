@@ -54,11 +54,11 @@ docker-compose down          # Stop
 - **Entry point**: `backend/src/index.ts` — Express server, MongoDB/Redis connections, Apollo setup
 - **Config**: `backend/src/config/config.ts`
 - **GraphQL schema**: `backend/src/schemas/typeDefs.ts` (composed from `schemas/types/`)
-- **Resolvers**: `backend/src/resolvers/index.ts` (composed from domain folders: `users/`, `articles/`, `projects/`, `chatbot/`, `apod/`, `resend/`, `screams/`, `notes/`, `pins/`, `stripe/`, `payments/`)
+- **Resolvers**: `backend/src/resolvers/index.ts` (composed from domain folders: `users/`, `articles/`, `projects/`, `chatbot/`, `apod/`, `writing/`, `resend/`, `screams/`, `notes/`, `pins/`, `stripe/`, `payments/`)
 - **REST routes**: `backend/src/routes/` — `health.ts`, `stripeWebhook.ts` (raw-body Stripe webhook, mounted before JSON parsing)
 - **Models**: `backend/src/models/` — Mongoose schemas (User, Article, Project, ChatMessage, Scream, Note, Pin, Payment)
 - **Rate limiting**: `backend/src/rateLimiting/` — the list of Rate limits, `consume`/`enforceRateLimit`, the Redis Lua counter (see `CONTEXT.md`, `docs/adr/0001-rate-limiting-domain.md`)
-- **Services**: `backend/src/services/` — redis client, claude client, resendMailer + emailLayout, apod, stripe (checkout), payments (webhook side effects), discord, turnstile
+- **Services**: `backend/src/services/` — redis client, claude client, resendMailer + emailLayout, apod, devto (Latest writing), stripe (checkout), payments (webhook side effects), discord, turnstile. Every third-party API is called from here, never from the frontend (see `CODING_STANDARDS.md`, Where code goes).
 - **Error handling**: `backend/src/utils/errors/` — shared error factories, `createErrorHandler` wrapper
 - **Authorization**: `backend/src/validation/shield.ts` — GraphQL Shield rules
 - **Validation**: `backend/src/validation/schemas/` — Zod schemas
@@ -74,7 +74,7 @@ docker-compose down          # Stop
 Browser → Next.js (SSR/CSR) → Apollo Client → GraphQL API (port 4000)
                                                   ↓
                                     MongoDB (data) + Redis (rate limits/cache)
-                                    Claude (chatbot) + Resend (email) + NASA API (APOD)
+                                    Claude (chatbot) + Resend (email) + NASA API (APOD) + dev.to (Latest writing)
 ```
 
 ## Key Patterns

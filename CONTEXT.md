@@ -90,8 +90,8 @@ _Lives in_: dev.to; drafts in `_docs/buildInPublic/devTo/`
 _Avoid_: Blog post, Article (that is the on-site copy below)
 
 **Latest writing**:
-The three newest Posts, shown on the homepage. Read from dev.to's public API on the server and refreshed at most hourly. When dev.to can't be read, the static fallback list shows instead.
-_Lives in_: `frontend/src/lib/devto/latestWriting.ts`, `frontend/src/components/sections/LatestWritingSection.tsx`; fallback `LATEST_WRITING` in `frontend/src/content/profile.ts`
+The three newest Posts, shown on the homepage. The backend reads them from dev.to's public API, caches them in Redis for an hour and serves them as the `latestWriting` query. When that query fails, the static fallback list shows instead.
+_Lives in_: `backend/src/services/devto/`, `backend/src/resolvers/writing/`, `frontend/src/components/sections/LatestWritingSection.tsx`; fallback `LATEST_WRITING` in `frontend/src/content/profile.ts`
 _Avoid_: Recent posts, Blog feed
 
 **Article**:

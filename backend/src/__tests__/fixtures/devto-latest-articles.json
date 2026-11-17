@@ -1,0 +1,56 @@
+[
+  {
+    "type_of": "article",
+    "id": 5025367,
+    "title": "My server didn't go down. Chasing the false alarm hardened everything else.",
+    "description": "On November 7, Discord pinged me: 🔴 Container(s) Down: backend_api. I opened my site on my phone and...",
+    "readable_publish_date": "Nov 16",
+    "slug": "my-server-didnt-go-down-chasing-the-false-alarm-hardened-everything-else-feo",
+    "url": "https://dev.to/lfariaus/my-server-didnt-go-down-chasing-the-false-alarm-hardened-everything-else-feo",
+    "published_at": "2026-11-16T19:32:13Z",
+    "published_timestamp": "2026-11-16T19:32:13Z",
+    "tag_list": [
+      "buildinpublic",
+      "devops",
+      "nginx",
+      "docker"
+    ],
+    "reading_time_minutes": 12
+  },
+  {
+    "type_of": "article",
+    "id": 4954551,
+    "title": "I attempted 2,000 pull-ups. The next morning, I open-sourced my timer.",
+    "description": "Paused at 1,124, during a \"service stop\" (my name for the breaks between blocks).  On October 24, I...",
+    "readable_publish_date": "Nov 1",
+    "slug": "i-attempted-2000-pull-ups-the-next-morning-i-open-sourced-my-timer-31h",
+    "url": "https://dev.to/lfariaus/i-attempted-2000-pull-ups-the-next-morning-i-open-sourced-my-timer-31h",
+    "published_at": "2026-11-01T19:04:43Z",
+    "published_timestamp": "2026-11-01T19:04:43Z",
+    "tag_list": [
+      "buildinpublic",
+      "nextjs",
+      "react",
+      "opensource"
+    ],
+    "reading_time_minutes": 5
+  },
+  {
+    "type_of": "article",
+    "id": 4879043,
+    "title": "35 seconds to log a coffee: what one screen recording taught me about iPhone Safari",
+    "description": "I asked my wife, who uses Places feature with me, to log a coffee run on her iPhone while recording...",
+    "readable_publish_date": "Oct 19",
+    "slug": "35-seconds-to-log-a-coffee-what-one-screen-recording-taught-me-about-iphone-safari-32a5",
+    "url": "https://dev.to/lfariaus/35-seconds-to-log-a-coffee-what-one-screen-recording-taught-me-about-iphone-safari-32a5",
+    "published_at": "2026-10-19T17:52:30Z",
+    "published_timestamp": "2026-10-19T17:52:30Z",
+    "tag_list": [
+      "webdev",
+      "ios",
+      "react",
+      "ux"
+    ],
+    "reading_time_minutes": 6
+  }
+]
