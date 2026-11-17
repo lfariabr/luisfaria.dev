@@ -78,4 +78,43 @@ describe('latestWriting', () => {
     expect(errors?.[0]?.extensions?.code).toBe('SERVICE_UNAVAILABLE');
     expect(await getRedisClient().exists(CACHE_KEY)).toBe(0);
   });
+  it('coalesces overlapping misses and releases failed fetches for retry', async () => {
+    let rejectFetch!: (error: Error) => void;
+    let started!: () => void;
+    const fetching = new Promise<void>((resolve) => { started = resolve; });
+    fetchLatestPosts.mockImplementation(() => {
+      started();
+      return new Promise((_, reject) => { rejectFetch = reject; });
+    });
+    const first = run();
+    await fetching;
+    const second = run();
+    // Let the second GraphQL request finish its Redis read while the fetch is pending.
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(fetchLatestPosts).toHaveBeenCalledTimes(1);
+    rejectFetch(new DevtoServiceError('offline', 'NETWORK_ERROR'));
+    const results = await Promise.all([first, second]);
+    results.forEach((result) => expect(result.errors?.[0]?.extensions?.code).toBe('SERVICE_UNAVAILABLE'));
+
+    fetchLatestPosts.mockResolvedValue(POSTS);
+    expect((await run()).data?.latestWriting).toEqual(POSTS);
+    expect(fetchLatestPosts).toHaveBeenCalledTimes(2);
+  });
+
+  it('returns fetched posts when Redis reads and writes stall', async () => {
+    const client = getRedisClient();
+    const read = jest.spyOn(client, 'get').mockImplementation(() => new Promise(() => {}));
+    const write = jest.spyOn(client, 'setEx').mockImplementation(() => new Promise(() => {}));
+    fetchLatestPosts.mockResolvedValue(POSTS);
+    try {
+      const result = await run();
+      expect(result.errors).toBeUndefined();
+      expect(result.data?.latestWriting).toEqual(POSTS);
+      expect(write).toHaveBeenCalledWith(CACHE_KEY, 3600, JSON.stringify(POSTS));
+    } finally {
+      read.mockRestore();
+      write.mockRestore();
+    }
+  });
+
 });

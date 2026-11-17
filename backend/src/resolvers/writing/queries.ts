@@ -1,11 +1,14 @@
 import { logger } from '../../utils/logger';
 import { fetchLatestPosts, withDevtoErrorHandling, LATEST_WRITING_CACHE_TTL_SECONDS } from '../../services/devto';
+import type { Post } from '../../services/devto';
 import { writingCache } from '../../services/cache/writingCache';
+
+let inFlight: Promise<Post[]> | undefined;
 
 export const WritingQueries = {
   /**
    * Latest writing: the newest Posts from dev.to (ADR 0002, #515).
-   * Public, no rate limit: the cache means visitors can't make it call dev.to more than once per TTL.
+   * Public, no rate limit: Redis caches results; concurrent misses share a fetch within this process.
    */
   latestWriting: async () => {
     const cached = await writingCache.get();
@@ -14,13 +17,20 @@ export const WritingQueries = {
       return cached;
     }
 
-    const posts = await withDevtoErrorHandling(() => fetchLatestPosts(), 'latestWriting');
-    await writingCache.set(posts, LATEST_WRITING_CACHE_TTL_SECONDS);
-    logger.info('Latest writing cache miss', {
-      resolver: 'latestWriting',
-      source: 'devto',
-      ttlSeconds: LATEST_WRITING_CACHE_TTL_SECONDS,
+    if (inFlight) return inFlight;
+
+    inFlight = (async () => {
+      const posts = await withDevtoErrorHandling(() => fetchLatestPosts(), 'latestWriting');
+      await writingCache.set(posts, LATEST_WRITING_CACHE_TTL_SECONDS);
+      logger.info('Latest writing cache miss', {
+        resolver: 'latestWriting',
+        source: 'devto',
+        ttlSeconds: LATEST_WRITING_CACHE_TTL_SECONDS,
+      });
+      return posts;
+    })().finally(() => {
+      inFlight = undefined;
     });
-    return posts;
+    return inFlight;
   },
 };

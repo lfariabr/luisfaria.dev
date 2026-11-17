@@ -76,3 +76,21 @@ describe('fetchLatestPosts', () => {
     await expect(fetchLatestPosts()).rejects.toMatchObject({ code: 'NETWORK_ERROR' });
   });
 });
+
+describe('response body failures', () => {
+  it.each([
+    [new SyntaxError('invalid JSON'), 'VALIDATION_ERROR'],
+    [Object.assign(new Error('timeout'), { name: 'TimeoutError' }), 'TIMEOUT'],
+    [Object.assign(new Error('aborted'), { name: 'AbortError' }), 'TIMEOUT'],
+    [new TypeError('connection closed'), 'NETWORK_ERROR'],
+  ])('classifies %s as %s', async (error, code) => {
+    mockFetch(async () => ({ ok: true, json: async () => { throw error; } }));
+    await expect(fetchLatestPosts()).rejects.toMatchObject({ code });
+  });
+
+  it('preserves service errors from body consumption', async () => {
+    const error = new DevtoServiceError('upstream unavailable', 'DEVTO_API_ERROR', 503);
+    mockFetch(async () => ({ ok: true, json: async () => { throw error; } }));
+    await expect(fetchLatestPosts()).rejects.toBe(error);
+  });
+});

@@ -15,14 +15,16 @@ const GRAPHQL_URL = resolveGraphqlUrl(RAW_GRAPHQL_URL);
 interface FetchGqlOptions {
   variables?: Record<string, unknown>;
   revalidate?: number;
+  timeoutMs?: number;
 }
 
 async function _fetchGql<T>(
   query: string,
-  { variables, revalidate = 3600 }: FetchGqlOptions = {},
+  { variables, revalidate = 3600, timeoutMs }: FetchGqlOptions = {},
 ): Promise<T> {
   const res = await fetch(GRAPHQL_URL, {
     method: 'POST',
+    signal: timeoutMs === undefined ? undefined : AbortSignal.timeout(timeoutMs),
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ query, variables }),
     next: { revalidate },

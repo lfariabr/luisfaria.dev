@@ -159,7 +159,7 @@ describe('Home Page', () => {
   it('reads Latest writing from the backend query, cached for an hour', async () => {
     renderWithProviders(await HomePage());
 
-    expect(mockFetchGql).toHaveBeenCalledWith(expect.stringContaining('latestWriting'), { revalidate: 3600 });
+    expect(mockFetchGql).toHaveBeenCalledWith(expect.stringContaining('latestWriting'), { revalidate: 3600, timeoutMs: 7000 });
     expect(latestWritingItems().map((li) => li.querySelector('time')?.getAttribute('datetime'))).toEqual([
       '2026-11-16T19:32:13Z',
       '2026-11-01T19:04:43Z',
@@ -168,6 +168,7 @@ describe('Home Page', () => {
   });
 
   it.each([
+    ['the request times out', () => mockFetchGql.mockRejectedValue(new DOMException('timeout', 'TimeoutError'))],
     ['the backend is down', () => mockFetchGql.mockRejectedValue(new Error('GraphQL fetch failed: 502'))],
     ['dev.to is down (the query errors)', () => mockFetchGql.mockRejectedValue(new Error('An unexpected error occurred while fetching posts from dev.to'))],
     ['the query returns no posts', () => mockFetchGql.mockResolvedValue({ latestWriting: [] })],

@@ -64,6 +64,7 @@ async function getLatestWriting(): Promise<Article[]> {
   try {
     const { latestWriting } = await fetchGql<{ latestWriting: Post[] }>(LATEST_WRITING_QUERY, {
       revalidate: 3600,
+      timeoutMs: 7000,
     });
     if (latestWriting.length === 0) throw new Error('latestWriting returned no posts');
     return latestWriting.map((post) => ({ date: post.publishedAt, title: post.title, href: post.url }));
