@@ -118,7 +118,7 @@ A new rate-limited feature adds an entry to `rateLimits.ts`, not a new key or li
 
 ## Testing
 
-- **Backend**: Jest + ts-jest, MongoDB Memory Server for in-memory DB, mocked external services (Claude, Resend, NASA). Needs a real Redis at `REDIS_URL` (local `.env` uses port 6381); `npm test` starts one via Docker when the host is localhost and the port is silent, and fails fast for an unreachable remote host. Tests and hooks get 20s (`testTimeout`), because suites that start MongoMemoryServer could pass Jest's 5s default under CPU load (#332).
+- **Backend**: Jest + ts-jest, MongoDB Memory Server for in-memory DB, mocked external services (Claude, Resend, NASA). Needs a real Redis at `REDIS_URL` (local `.env` uses port 6381); `npm test` starts one via Docker when the host is localhost and the port is silent, and fails fast for an unreachable remote host. Tests and hooks get 20s (`testTimeout`): under CPU load, a suite's MongoMemoryServer startup passed Jest's 5s default (#332). That is the suspected cause of the old `cookieAuthE2E` flake, which was never reproduced; if it fails again, capture the test name and error.
 - **Frontend**: Jest + React Testing Library + jsdom, Apollo Client mocks
 - **CI**: GitHub Actions runs lint + build/typecheck + tests per package in parallel with MongoDB 7 and Redis 7 services
 - **Pre-commit**: `.githooks/pre-commit` runs typecheck + lint for whichever package has staged files. Enable once per clone: `git config core.hooksPath .githooks`
