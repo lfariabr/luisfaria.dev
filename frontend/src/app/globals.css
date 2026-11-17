@@ -147,3 +147,20 @@
 .gm-style .gm-ui-hover-effect > span {
   background-color: var(--muted-foreground) !important;
 }
+
+/* Homepage hero: a faint dark-green grid, strongest at the top, fading out lower down (#521). */
+.bg-hero-grid {
+  --grid-line: oklch(0.5 0.12 150 / 0.14);
+  --grid-size: 40px;
+  background-image:
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: var(--grid-size) var(--grid-size);
+  background-position: center top;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
+}
+
+.dark .bg-hero-grid {
+  --grid-line: oklch(0.62 0.15 150 / 0.16);
+}

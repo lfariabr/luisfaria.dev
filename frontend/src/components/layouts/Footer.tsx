@@ -1,131 +1,79 @@
 'use client';
 
 import Link from 'next/link';
+import { Github, Linkedin, Mail, Newspaper, type LucideIcon } from 'lucide-react';
+
+const NAV_LINKS = [
+  { href: '/', label: 'Home' },
+  { href: '/work', label: 'Work' },
+  { href: '/projects', label: 'Projects' },
+  { href: '/articles', label: 'Articles' },
+  { href: '/timeline', label: 'Timeline' },
+  { href: '/about', label: 'About' },
+  { href: '/contact', label: 'Contact' },
+] as const;
+
+const SOCIAL_LINKS: { href: string; label: string; icon: LucideIcon; external: boolean }[] = [
+  { href: 'https://github.com/lfariabr', label: 'GitHub', icon: Github, external: true },
+  { href: 'https://linkedin.com/in/lfariabr', label: 'LinkedIn', icon: Linkedin, external: true },
+  { href: 'https://dev.to/lfariaus', label: 'dev.to', icon: Newspaper, external: true },
+  { href: 'mailto:lfariabr@gmail.com', label: 'Email', icon: Mail, external: false },
+];
+
+const linkClass = 'text-muted-foreground hover:text-foreground transition-colors';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
-  
+
   return (
     <footer className="border-t bg-background/95">
-      {/* <div className="container py-8 px-4 md:px-6"> */}
-      <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 py-8">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
+      <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 py-8 space-y-6">
+        <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
           <div className="space-y-3">
-            <h3 className="text-lg font-medium">Luis Faria</h3>
-            <p className="text-sm text-muted-foreground">
-              Senior software engineer in Sydney, shipping software that real people depend on.
-            </p>
-          </div>
-          
-          <div className="space-y-3">
-            <h3 className="text-sm font-medium">Navigation</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link href="/work" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Work
-                </Link>
-              </li>
-              <li>
-                <Link href="/projects" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Projects
-                </Link>
-              </li>
-              <li>
-                <Link href="/articles" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Articles
-                </Link>
-              </li>
-              <li>
-                <Link href="/timeline" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Timeline
-                </Link>
-              </li>
-              <li>
-                <Link href="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  About
-                </Link>
-              </li>
-              <li>
-                <Link href="/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Contact
-                </Link>
-              </li>
-            </ul>
-          </div>
-          
-          <div className="space-y-3">
-            <h3 className="text-sm font-medium">Social</h3>
-            <ul className="space-y-2">
-              <li>
-                <a 
-                  href="https://github.com/lfariabr" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  GitHub
-                </a>
-              </li>
-              <li>
-                <a 
-                  href="https://linkedin.com/in/lfariabr" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  LinkedIn
-                </a>
-              </li>
-              <li>
-                <a 
-                  href="https://dev.to/lfariaus" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Dev.to
-                </a>
-              </li>
-            </ul>
-          </div>
-          
-          <div className="space-y-3">
-            <h3 className="text-sm font-medium">Contact</h3>
-            <ul className="space-y-2">
-              <li>
-                <a 
-                  href="mailto:lfariabr@gmail.com" 
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  lfariabr@gmail.com
-                </a>
-              </li>
-              <li className="text-sm text-muted-foreground">
-                Sydney, Australia
-              </li>
-            </ul>
-          </div>
-        </div>
-        
-        <div className="mt-8 border-t pt-6">
-          <div className="flex flex-col sm:flex-row justify-between items-center">
-            <p className="text-xs text-muted-foreground">
-              {currentYear} Luis Faria. All rights reserved.
-            </p>
-            <div className="flex space-x-6 mt-4 sm:mt-0">
-              <Link href="/privacy" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-                Privacy Policy
-              </Link>
-              <Link href="/terms" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-                Terms of Service
-              </Link>
+            <div>
+              <p className="font-medium">Luis Faria</p>
+              <p className="text-sm text-muted-foreground">Senior Software Engineer · Sydney</p>
             </div>
+            <ul className="flex items-center gap-1 -ml-2" aria-label="Social">
+              {SOCIAL_LINKS.map(({ href, label, icon: Icon, external }) => (
+                <li key={label}>
+                  <a
+                    href={href}
+                    aria-label={label}
+                    title={label}
+                    {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                    className={`${linkClass} inline-flex h-10 w-10 items-center justify-center rounded-md hover:bg-accent`}
+                  >
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                  </a>
+                </li>
+              ))}
+            </ul>
           </div>
+
+          <nav aria-label="Footer">
+            <ul className="grid grid-cols-2 gap-x-10 gap-y-2 text-sm md:flex md:flex-wrap md:justify-end md:gap-x-6">
+              {NAV_LINKS.map(({ href, label }) => (
+                <li key={href}>
+                  <Link href={href} className={linkClass}>
+                    {label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t pt-4 text-xs text-muted-foreground">
+          <span>© {currentYear} Luis Faria</span>
+          <span aria-hidden="true">·</span>
+          <Link href="/privacy" className={linkClass}>
+            Privacy
+          </Link>
+          <span aria-hidden="true">·</span>
+          <Link href="/terms" className={linkClass}>
+            Terms
+          </Link>
         </div>
       </div>
     </footer>
