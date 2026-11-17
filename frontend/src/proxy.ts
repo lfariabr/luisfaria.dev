@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { jwtDecode } from 'jwt-decode';
 import { logger } from '@/lib/logger';
+import { NONCE_HEADER, buildCsp, createNonce } from '@/lib/security/csp';
 
 interface DecodedToken {
   id: string;
@@ -17,6 +18,21 @@ const canViewPlaces = (role?: string) => role === 'ADMIN' || role === 'PARTNER';
 const LEGACY_PLACES_PATHS = ['/relationship', '/admin/relationship'];
 const isLegacyPlacesPath = (pathname: string) =>
   LEGACY_PLACES_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+
+// Every page gets a fresh nonce and the CSP that names it (#479). Next.js reads
+// the nonce from the request's CSP header and stamps its own scripts with it.
+function nextWithCsp(request: NextRequest) {
+  const nonce = createNonce();
+  const csp = buildCsp(nonce, { isDev: process.env.NODE_ENV === 'development' });
+
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set(NONCE_HEADER, nonce);
+  requestHeaders.set('Content-Security-Policy', csp);
+
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
+  response.headers.set('Content-Security-Policy', csp);
+  return response;
+}
 
 export function proxy(request: NextRequest) {
   if (isLegacyPlacesPath(request.nextUrl.pathname)) {
@@ -74,10 +90,13 @@ export function proxy(request: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  return nextWithCsp(request);
 }
 
-// Configure which paths this proxy applies to
+// Every page, for the CSP. Skips route handlers (/api), build assets, image
+// optimisation and files served from /public or generated (icons, robots, sitemap).
 export const config = {
-  matcher: ['/admin/:path*', '/notes/:path*', '/places/:path*', '/relationship/:path*'],
+  matcher: [
+    '/((?!api/|_next/static|_next/image|favicon\\.ico|.*\\.(?:png|jpe?g|gif|svg|webp|avif|ico|txt|xml|webmanifest|js|css|map)$).*)',
+  ],
 };
