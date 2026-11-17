@@ -7,15 +7,21 @@ import Project from '../../models/Project';
 // Strict ISO 8601 as Date.prototype.toISOString writes it.
 const ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
 
-const resultOf = (response: any) => {
-  expect(response.body.kind).toBe('single');
+type OperationResponse = Awaited<ReturnType<typeof executeOperation>>;
+type AdminContext = { user: { id: string; email: string; role: UserRole } };
+type Dates = Record<string, string | null>;
+
+const resultOf = <T>(response: OperationResponse): T => {
+  if (response.body.kind !== 'single') {
+    throw new Error(`Expected a single GraphQL result, got ${response.body.kind}`);
+  }
   const { data, errors } = response.body.singleResult;
   expect(errors).toBeUndefined();
-  return data;
+  return data as T;
 };
 
 describe('Date fields are ISO 8601 (#322)', () => {
-  let adminContext: any;
+  let adminContext: AdminContext;
 
   beforeAll(async () => {
     await dbHandler.connect();
@@ -38,7 +44,7 @@ describe('Date fields are ISO 8601 (#322)', () => {
   });
 
   it('User: lastLogin, createdAt and updatedAt', async () => {
-    const data = resultOf(
+    const data = resultOf<{ users: Dates[] }>(
       await executeOperation('{ users { lastLogin createdAt updatedAt } }', {}, adminContext),
     );
     const [user] = data.users;
@@ -55,7 +61,7 @@ describe('Date fields are ISO 8601 (#322)', () => {
       excerpt: 'Excerpt',
       published: true,
     });
-    const data = resultOf(
+    const data = resultOf<{ publishedArticles: Dates[] }>(
       await executeOperation('{ publishedArticles { publishedAt createdAt updatedAt } }'),
     );
     const [article] = data.publishedArticles;
@@ -72,7 +78,7 @@ describe('Date fields are ISO 8601 (#322)', () => {
       technologies: ['TypeScript'],
       imageUrl: 'https://example.com/image.png',
     });
-    const data = resultOf(await executeOperation('{ projects { createdAt updatedAt } }'));
+    const data = resultOf<{ projects: Dates[] }>(await executeOperation('{ projects { createdAt updatedAt } }'));
     const [project] = data.projects;
     expect(project.createdAt).toMatch(ISO);
     expect(project.updatedAt).toMatch(ISO);
