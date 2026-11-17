@@ -1,3 +1,6 @@
+/**
+ * @jest-environment node
+ */
 // Types for mock responses
 interface MockResponse {
   status: number;
@@ -11,15 +14,18 @@ const mockRedirect = jest.fn<MockResponse, [URL, number?]>((url: URL, status = 3
   headers: { get: (key: string) => key === 'location' ? url.toString() : null },
 }));
 
-const mockNext = jest.fn<MockResponse, []>(() => ({
+type NextInit = { request?: { headers?: Headers } };
+
+// Mirrors NextResponse.next: a 200 whose headers the proxy can set.
+const mockNext = jest.fn<MockResponse & { headers: Headers }, [NextInit?]>(() => ({
   status: 200,
-  headers: { get: () => null },
+  headers: new Headers(),
 }));
 
 jest.mock('next/server', () => ({
   NextResponse: {
     redirect: (url: URL, status?: number) => mockRedirect(url, status),
-    next: () => mockNext(),
+    next: (init?: NextInit) => mockNext(init),
   },
 }));
 
@@ -35,6 +41,7 @@ function createMockRequest(pathname: string, token?: string): Parameters<typeof 
       pathname,
     },
     url: url.toString(),
+    headers: new Headers(),
     cookies: {
       get: (name: string) => {
         if (name === 'token' && token) {
@@ -326,5 +333,42 @@ describe('Middleware - Admin Route Protection', () => {
       expect(response.status).toBe(307);
       expect(response.headers.get('location')).toContain('/login');
     });
+  });
+});
+
+describe('Proxy - Content-Security-Policy (#479)', () => {
+  const scriptSrc = (csp: string) => csp.split('; ').find((d) => d.startsWith('script-src ')) ?? '';
+
+  beforeEach(() => mockNext.mockClear());
+
+  it('sends a nonce CSP on every page, and hands the same nonce to the render', () => {
+    const response = proxy(createMockRequest('/about'));
+    const csp = response.headers.get('Content-Security-Policy') ?? '';
+
+    const nonce = /'nonce-([^']+)'/.exec(csp)?.[1];
+    expect(nonce).toBeTruthy();
+    expect(scriptSrc(csp)).toContain("'strict-dynamic'");
+
+    const forwarded = mockNext.mock.calls[0][0]?.request?.headers;
+    expect(forwarded?.get('x-nonce')).toBe(nonce);
+    expect(forwarded?.get('Content-Security-Policy')).toBe(csp);
+  });
+
+  it('makes a new nonce for each request', () => {
+    const first = proxy(createMockRequest('/')).headers.get('Content-Security-Policy');
+    const second = proxy(createMockRequest('/')).headers.get('Content-Security-Policy');
+    expect(first).not.toBe(second);
+  });
+
+  it('allows no inline or eval scripts outside development', () => {
+    const csp = proxy(createMockRequest('/')).headers.get('Content-Security-Policy') ?? '';
+    expect(scriptSrc(csp)).not.toContain("'unsafe-inline'");
+    expect(scriptSrc(csp)).not.toContain("'unsafe-eval'");
+  });
+
+  it('also sets the CSP on protected pages that pass the auth check', () => {
+    const token = createMockToken({ id: '1', email: 'a@example.com', role: 'ADMIN', exp: Math.floor(Date.now() / 1000) + 3600 });
+    const response = proxy(createMockRequest('/admin', token));
+    expect(response.headers.get('Content-Security-Policy')).toMatch(/'nonce-/);
   });
 });

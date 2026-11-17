@@ -134,7 +134,11 @@ expect "Referrer-Policy keeps the origin cross-site" "strict-origin-when-cross-o
 expect "X-XSS-Protection is off (CSP replaces it)" "0" "$(header X-XSS-Protection luisfaria.dev /)"
 expect "Permissions-Policy denies unused features" "camera=(), microphone=(), geolocation=(), payment=(), usb=()" \
   "$(header Permissions-Policy luisfaria.dev /)"
-csp="$(header Content-Security-Policy luisfaria.dev /)"
+# Pages: Next.js sends the nonce CSP (frontend/src/proxy.ts); nginx must add none,
+# or the browser would enforce both and block the nonce'd scripts.
+expect "no CSP from nginx on pages (Next.js sends it)" "" "$(header Content-Security-Policy luisfaria.dev /)"
+expect "CSP on /graphql"                        "1" "$(header Content-Security-Policy luisfaria.dev /graphql | grep -c "default-src 'self'")"
+csp="$(header Content-Security-Policy luisfaria.dev /health)"
 for d in "object-src 'none'" "base-uri 'self'" "form-action 'self'" "frame-ancestors 'none'" "https://o4510868467417088.ingest.us.sentry.io"; do
   expect "CSP has $d" "1" "$(grep -cF -- "$d" <<< "$csp")"
 done
