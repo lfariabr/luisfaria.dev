@@ -9,9 +9,8 @@ export const PENDING_STALE_AFTER_HOURS = 24;
 export const ATTENTION_WINDOW_DAYS = 30;
 export const NEW_USERS_WINDOW_DAYS = 7;
 
-// Mongoose Date fields without a resolver serialize as epoch-ms strings; others are ISO.
-export const toDate = (value: string): Date =>
-  /^\d+$/.test(value) ? new Date(Number(value)) : new Date(value);
+// The API sends every date as ISO 8601 (#322).
+export const toDate = (value: string): Date => new Date(value);
 
 const ageMs = (value: string, now: Date) => now.getTime() - toDate(value).getTime();
 
