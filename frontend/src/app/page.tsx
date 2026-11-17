@@ -93,7 +93,8 @@ export default async function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: sanitizeJsonLd(organizationLd) }}
       />
-      <div className="flex flex-col items-center bg-gradient-to-b from-background to-slate-50 dark:from-background dark:to-slate-950">
+      <div className="relative isolate flex flex-col items-center overflow-x-clip bg-background">
+        <div aria-hidden="true" className="bg-hero-grid pointer-events-none absolute inset-x-0 top-0 -z-10 h-[900px]" />
         <div className="container max-w-4xl px-6 py-16 space-y-16">
           {/* Hero */}
           <div className="space-y-8 sm:space-y-10 text-center">

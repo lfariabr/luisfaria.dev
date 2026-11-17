@@ -53,7 +53,8 @@ describe('Home Page', () => {
   it('renders the eyebrow and the first-person subline', async () => {
     renderWithProviders(await HomePage());
 
-    expect(screen.getByText('Senior Software Engineer · Sydney')).toBeInTheDocument();
+    // The footer repeats this line; the hero eyebrow is the span.
+    expect(screen.getByText('Senior Software Engineer · Sydney', { selector: 'span' })).toBeInTheDocument();
     expect(screen.getByText(/^I'm Luis\./)).toBeInTheDocument();
   });
 
@@ -226,7 +227,10 @@ describe('Home Page', () => {
   it('has the updated navigation links in the header', async () => {
     renderWithProviders(await HomePage());
 
-    const navigation = screen.getByRole('navigation');
+    // The footer has its own labelled nav; this test is about the header's.
+    const [navigation] = screen
+      .getAllByRole('navigation')
+      .filter((nav) => nav.getAttribute('aria-label') !== 'Footer');
 
     const homeLink = within(navigation).getByText(/^home$/i);
     const workLink = within(navigation).getByText(/^work$/i);
