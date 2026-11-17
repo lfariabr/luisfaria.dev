@@ -123,8 +123,8 @@ export const HOW_I_SHIP = {
 export type Article = { date: string; title: string; href: string };
 
 /**
- * "Latest writing" fallback: shown only when dev.to can't be read (#512). The live list
- * comes from `getLatestWriting` in `lib/devto/latestWriting.ts`; this one needn't track it.
+ * "Latest writing" fallback: shown only when the backend's `latestWriting` query fails (#515).
+ * The live list comes from dev.to through the backend; this one needn't track it.
  */
 export const LATEST_WRITING: Article[] = [
   {

@@ -1,15 +1,19 @@
+export const dynamic = 'force-dynamic';
+
 import type { Metadata } from 'next';
 import Link from "next/link";
 import { MainLayout } from "@/components/layouts/MainLayout";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { HERO_METRICS } from "@/content/profile";
+import { HERO_METRICS, LATEST_WRITING, type Article } from "@/content/profile";
+import { fetchGql } from "@/lib/graphql/fetchGql";
+import { LATEST_WRITING_QUERY } from "@/lib/graphql/queries/server.queries";
+import { logger } from "@/lib/logger";
 import { HeroHeadline } from "@/components/sections/HeroHeadline";
 import { BuildingNowSection } from "@/components/sections/BuildingNowSection";
 import { HowIShipSection } from "@/components/sections/HowIShipSection";
 import { WorkWithSection } from "@/components/sections/WorkWithSection";
 import { LatestWritingSection } from "@/components/sections/LatestWritingSection";
-import { getLatestWriting } from "@/lib/devto/latestWriting";
 import { OffTheClockSection } from "@/components/sections/OffTheClockSection";
 import { TimelineSection } from "@/components/sections/TimelineSection";
 import { sanitizeJsonLd } from '@/lib/seo/metadata';
@@ -52,6 +56,24 @@ const organizationLd = {
     'https://x.com/luisfariabr',
   ],
 };
+
+type Post = { title: string; url: string; publishedAt: string };
+
+/** Latest writing from the backend (which reads dev.to); the static list when that fails (#515). */
+async function getLatestWriting(): Promise<Article[]> {
+  try {
+    const { latestWriting } = await fetchGql<{ latestWriting: Post[] }>(LATEST_WRITING_QUERY, {
+      revalidate: 3600,
+    });
+    if (latestWriting.length === 0) throw new Error('latestWriting returned no posts');
+    return latestWriting.map((post) => ({ date: post.publishedAt, title: post.title, href: post.url }));
+  } catch (error) {
+    logger.warn('Latest writing unavailable, using the static list', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return LATEST_WRITING;
+  }
+}
 
 export default async function Home() {
   const latestWriting = await getLatestWriting();

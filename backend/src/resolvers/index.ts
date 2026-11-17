@@ -9,6 +9,7 @@ import { chatbotMutations } from './chatbot/mutations';
 import { screamMutations } from './screams/mutations';
 import { sendGogginsEmailMutation } from './resend/mutations';
 import { ApodQueries } from './apod/queries';
+import { WritingQueries } from './writing/queries';
 import { stripeMutations } from './stripe/mutations';
 import { stripeQueries } from './stripe/queries';
 import { noteQueries } from './notes/queries';
@@ -28,6 +29,7 @@ export const resolvers = {
     ...userQueries,
     ...chatbotQueries,
     ...ApodQueries,
+    ...WritingQueries,
     ...stripeQueries,
     ...noteQueries,
     ...pinQueries,

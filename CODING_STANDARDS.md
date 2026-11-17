@@ -2,6 +2,10 @@
 
 Judgement calls a reviewer applies to a diff. Anything checkable by a machine lives in ESLint (`backend/eslint.config.mjs`, `frontend/eslint.config.mjs`), CI, or the pre-commit hook, not here. Vocabulary: `CONTEXT.md`. Navigation: `CLAUDE.md`.
 
+## Where code goes
+
+- A third-party API (NASA, dev.to, Resend, Stripe, OpenAI/Anthropic) is called from `backend/src/services/<name>/`, with its own error type, a `createErrorHandler` wrapper and a Redis cache where reads repeat. The frontend reads it through GraphQL (`fetchGql` or Apollo), never by fetching the third party itself. The `/api/discord` route is the one exception: a write-only webhook. `#515` exists because this rule was only implied.
+
 ## Errors
 
 - A resolver throws through `Errors.*` from `backend/src/utils/errors`, and is wrapped in `createErrorHandler` so unexpected failures map to `INTERNAL_SERVER_ERROR` with the resolver name logged. The lint rule bans raw `new GraphQLError` outside the error infrastructure; the reviewer checks the wrapper.
@@ -35,10 +39,11 @@ Judgement calls a reviewer applies to a diff. Anything checkable by a machine li
 
 - A behaviour change arrives with a test that was red before the change. Backend: integration test through the GraphQL schema for resolvers, unit test for services. Frontend: component test with Apollo mocks.
 - Rate-limited features test the limit boundary and the reset. Error paths are tested, not only the happy path.
-- External services (OpenAI, Resend, Stripe, NASA) are mocked; Redis and MongoDB are real (memory server, local Redis via `npm test`).
+- External services (Anthropic, Resend, Stripe, NASA, dev.to) are mocked; Redis and MongoDB are real (memory server, local Redis via `npm test`).
 
 ## Change hygiene
 
 - Every change references a GitHub issue; the commit subject closes it (`type(scope): summary (closes #N)`).
+- A PR description names the existing pattern it follows ("shaped like `services/apod/`"), or says plainly that it introduces a new one and why. A new pattern is a decision for the reviewer, not a detail in the diff.
 - A feature or chore ships with `_docs/featureBreakdown/vX.Y-slug.md` and `_docs/releaseNotes/v.X.Y.Z_Slug.md`, with the verification table filled from real runs.
 - New vocabulary goes into `CONTEXT.md` with a `_Lives in_` path; a decision with a rejected alternative goes into `docs/adr/`.
