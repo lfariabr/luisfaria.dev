@@ -1,0 +1,15 @@
+# Version updates (#525). Security updates for npm are on in the repo settings
+# and don't need entries here.
+version: 2
+updates:
+  # Image tags in docker-compose.yml: a new nginx release opens a PR, and merging
+  # it runs the nginx tests and deploys it.
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: weekly
+    ignore:
+      # Redis stays floating for now; a major Redis bump deserves a look first.
+      - dependency-name: redis
+    labels:
+      - dependencies
