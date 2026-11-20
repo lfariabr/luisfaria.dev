@@ -8,7 +8,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-IMAGE="${NGINX_IMAGE:-nginx:alpine}"   # same tag as docker-compose.yml
+IMAGE="${NGINX_IMAGE:-$("$ROOT/ops/nginx/image.sh")}"   # the image docker-compose.yml runs
 WORK="$(mktemp -d)"
 NET="nginx-test-$$"
 PORT_HTTP="${PORT_HTTP:-18080}"

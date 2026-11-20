@@ -180,7 +180,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Shellcheck
-        run: shellcheck ops/nginx/test-config.sh
+        run: shellcheck ops/nginx/test-config.sh ops/nginx/image.sh
 
       - name: nginx -t and routing tests
         run: bash ops/nginx/test-config.sh
@@ -414,7 +414,7 @@ jobs:
               --add-host frontend_app:127.0.0.1 --add-host backend_api:127.0.0.1 \
               -v "$PWD/nginx/conf:/etc/nginx/conf.d:ro" \
               -v "$PWD/certbot/conf:/etc/letsencrypt:ro" \
-              nginx:alpine nginx -t
+              "$(bash ops/nginx/image.sh)" nginx -t
             
             # Restart with new images
             echo "🔄 Restarting containers..."
