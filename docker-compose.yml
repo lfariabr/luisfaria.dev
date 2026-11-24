@@ -10,7 +10,7 @@ x-logging: &default-logging
 
 services:
   reverse-proxy:
-    image: nginx:alpine
+    image: nginx:1.31.9-alpine # the only place the nginx version is written (#525)
     container_name: nginx_gateway
     logging: *default-logging
     ports:
